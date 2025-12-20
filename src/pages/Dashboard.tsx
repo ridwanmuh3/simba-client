@@ -25,7 +25,7 @@ import {
 
 const statsCards = [
   {
-    title: "Total Barang",
+    title: "Total Bahan",
     value: "1,284",
     change: "+12%",
     trend: "up",
@@ -33,7 +33,7 @@ const statsCards = [
     color: "primary",
   },
   {
-    title: "Pengguna Aktif",
+    title: "Operator Aktif",
     value: "24",
     change: "+3",
     trend: "up",
@@ -41,61 +41,61 @@ const statsCards = [
     color: "success",
   },
   {
-    title: "Pendapatan Bulan Ini",
-    value: "Rp 45.2M",
+    title: "Porsi Terlayani",
+    value: "45,200",
     change: "+8.1%",
     trend: "up",
-    icon: Wallet,
+    icon: TrendingUp,
     color: "warning",
   },
   {
-    title: "Pengeluaran",
+    title: "Pengeluaran Bulan Ini",
     value: "Rp 12.8M",
-    change: "-2.3%",
-    trend: "down",
-    icon: TrendingDown,
+    change: "+5.2%",
+    trend: "up",
+    icon: Wallet,
     color: "destructive",
   },
 ];
 
-const revenueData = [
-  { name: "Jan", value: 32000000 },
-  { name: "Feb", value: 28000000 },
-  { name: "Mar", value: 35000000 },
-  { name: "Apr", value: 42000000 },
-  { name: "May", value: 38000000 },
-  { name: "Jun", value: 45200000 },
+const porsiData = [
+  { name: "Jan", value: 38000 },
+  { name: "Feb", value: 42000 },
+  { name: "Mar", value: 45000 },
+  { name: "Apr", value: 48000 },
+  { name: "May", value: 44000 },
+  { name: "Jun", value: 45200 },
 ];
 
 const itemsData = [
-  { name: "Elektronik", value: 340 },
-  { name: "Pakaian", value: 280 },
-  { name: "Makanan", value: 220 },
-  { name: "Peralatan", value: 180 },
-  { name: "Lainnya", value: 264 },
+  { name: "Beras", value: 450 },
+  { name: "Sayuran", value: 380 },
+  { name: "Protein", value: 320 },
+  { name: "Bumbu", value: 180 },
+  { name: "Lainnya", value: 154 },
 ];
 
 const recentActivities = [
   {
-    action: "Barang baru ditambahkan",
-    item: "Laptop ASUS ROG",
+    action: "Bahan baru ditambahkan",
+    item: "Beras Premium 50kg",
     time: "5 menit lalu",
     type: "add",
   },
   {
-    action: "Data keuangan diperbarui",
-    item: "Laporan Q2 2024",
+    action: "Stok diperbarui",
+    item: "Telur Ayam - 500 butir",
     time: "15 menit lalu",
     type: "update",
   },
   {
-    action: "Pengguna baru terdaftar",
-    item: "admin2@mbg.com",
+    action: "Operator baru terdaftar",
+    item: "dapur_central@mbg.com",
     time: "1 jam lalu",
     type: "user",
   },
   {
-    action: "Export data barang",
+    action: "Export laporan bahan",
     item: "Format Excel",
     time: "2 jam lalu",
     type: "export",
@@ -177,7 +177,7 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">
-                Pendapatan Bulanan
+                Porsi Terlayani Bulanan
               </CardTitle>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <TrendingUp className="w-4 h-4 text-success" />
@@ -187,7 +187,7 @@ export default function Dashboard() {
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueData}>
+                  <AreaChart data={porsiData}>
                     <defs>
                       <linearGradient
                         id="colorRevenue"
@@ -223,7 +223,7 @@ export default function Dashboard() {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                      tickFormatter={(value) => `${value / 1000000}M`}
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
                       contentStyle={{
@@ -232,8 +232,8 @@ export default function Dashboard() {
                         borderRadius: "8px",
                       }}
                       formatter={(value: number) => [
-                        `Rp ${(value / 1000000).toFixed(1)}M`,
-                        "Pendapatan",
+                        `${value.toLocaleString()} porsi`,
+                        "Terlayani",
                       ]}
                     />
                     <Area
@@ -259,7 +259,7 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">
-                Barang per Kategori
+                Bahan per Kategori
               </CardTitle>
               <BarChart3 className="w-5 h-5 text-muted-foreground" />
             </CardHeader>
@@ -292,7 +292,7 @@ export default function Dashboard() {
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
                       }}
-                      formatter={(value: number) => [`${value} items`, "Jumlah"]}
+                      formatter={(value: number) => [`${value} kg`, "Stok"]}
                     />
                     <Bar
                       dataKey="value"
