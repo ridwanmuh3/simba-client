@@ -36,10 +36,7 @@ import {
   Search,
   Download,
   Calendar,
-  TrendingUp,
-  TrendingDown,
   Wallet,
-  ArrowUpRight,
   ArrowDownRight,
   Lock,
   FileSpreadsheet,
@@ -48,6 +45,9 @@ import {
   BarChart3,
   Plus,
   Receipt,
+  ShoppingCart,
+  Utensils,
+  Package,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -56,8 +56,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -70,56 +70,51 @@ import {
 
 const financeStats = [
   {
-    title: "Total Pendapatan",
-    value: "Rp 245.8M",
-    change: "+12.5%",
-    trend: "up",
-    icon: TrendingUp,
-  },
-  {
-    title: "Total Pengeluaran",
-    value: "Rp 78.2M",
-    change: "-3.2%",
-    trend: "down",
-    icon: TrendingDown,
-  },
-  {
-    title: "Laba Bersih",
-    value: "Rp 167.6M",
-    change: "+18.3%",
-    trend: "up",
+    title: "Total Anggaran",
+    value: "Rp 500.0M",
+    description: "Anggaran Tahun Ini",
     icon: Wallet,
   },
   {
-    title: "Total Transaksi",
-    value: "1,234",
-    change: "+8.7%",
-    trend: "up",
-    icon: Receipt,
+    title: "Total Pengeluaran",
+    value: "Rp 245.8M",
+    description: "49.2% dari anggaran",
+    icon: ShoppingCart,
+  },
+  {
+    title: "Sisa Anggaran",
+    value: "Rp 254.2M",
+    description: "50.8% tersisa",
+    icon: Package,
+  },
+  {
+    title: "Total Porsi Terlayani",
+    value: "125,400",
+    description: "Porsi makanan",
+    icon: Utensils,
   },
 ];
 
-const revenueData = [
-  { month: "Jul", pendapatan: 35000000, pengeluaran: 12000000 },
-  { month: "Aug", pendapatan: 42000000, pengeluaran: 15000000 },
-  { month: "Sep", pendapatan: 38000000, pengeluaran: 11000000 },
-  { month: "Oct", pendapatan: 45000000, pengeluaran: 14000000 },
-  { month: "Nov", pendapatan: 48000000, pengeluaran: 13000000 },
-  { month: "Dec", pendapatan: 52000000, pengeluaran: 16000000 },
+const monthlyExpenseData = [
+  { month: "Jul", bahan: 28000000, operasional: 8000000 },
+  { month: "Aug", bahan: 32000000, operasional: 9000000 },
+  { month: "Sep", bahan: 30000000, operasional: 7500000 },
+  { month: "Oct", bahan: 35000000, operasional: 10000000 },
+  { month: "Nov", bahan: 38000000, operasional: 9500000 },
+  { month: "Dec", bahan: 42000000, operasional: 11000000 },
 ];
 
 const expenseCategories = [
-  { name: "Operasional", value: 35, color: "hsl(var(--chart-1))" },
-  { name: "Gaji", value: 40, color: "hsl(var(--chart-2))" },
-  { name: "Marketing", value: 15, color: "hsl(var(--chart-3))" },
-  { name: "Lainnya", value: 10, color: "hsl(var(--chart-4))" },
+  { name: "Bahan Makanan", value: 55, color: "hsl(var(--chart-1))" },
+  { name: "Bahan Pendukung", value: 20, color: "hsl(var(--chart-2))" },
+  { name: "Operasional", value: 15, color: "hsl(var(--chart-3))" },
+  { name: "Logistik", value: 10, color: "hsl(var(--chart-4))" },
 ];
 
 interface Transaction {
   id: number;
   description: string;
   amount: number;
-  type: "income" | "expense";
   date: string;
   status: "completed" | "locked";
   note: string;
@@ -129,52 +124,56 @@ interface Transaction {
 const initialTransactions: Transaction[] = [
   {
     id: 1,
-    description: "Penjualan Laptop ASUS",
-    amount: 18500000,
-    type: "income",
+    description: "Pembelian Beras 500kg",
+    amount: 7500000,
     date: "2024-01-15",
     status: "completed",
-    note: "Nota #INV-001 - Pembeli: PT ABC",
-    category: "Penjualan",
+    note: "Nota #PO-001 - Supplier: UD Tani Makmur",
+    category: "Bahan Makanan",
   },
   {
     id: 2,
-    description: "Pembelian Stok iPhone",
-    amount: 72000000,
-    type: "expense",
+    description: "Pembelian Sayuran Segar",
+    amount: 3500000,
     date: "2024-01-14",
     status: "completed",
-    note: "Nota #PO-045 - Supplier: CV Tech",
-    category: "Pembelian Stok",
+    note: "Nota #PO-002 - Supplier: Pasar Induk",
+    category: "Bahan Makanan",
   },
   {
     id: 3,
-    description: "Gaji Karyawan Januari",
-    amount: 25000000,
-    type: "expense",
-    date: "2024-01-10",
+    description: "Pembelian Daging Ayam 200kg",
+    amount: 12000000,
+    date: "2024-01-13",
     status: "completed",
-    note: "Slip Gaji Januari 2024 - 5 Karyawan",
-    category: "Gaji",
+    note: "Nota #PO-003 - Supplier: PT Ayam Segar",
+    category: "Bahan Makanan",
   },
   {
     id: 4,
-    description: "Penjualan Bulk Batik",
-    amount: 15750000,
-    type: "income",
-    date: "2024-01-09",
+    description: "Pembelian Minyak Goreng",
+    amount: 2800000,
+    date: "2024-01-12",
     status: "completed",
-    note: "Nota #INV-002 - Pembeli: Toko Batik Jaya",
-    category: "Penjualan",
+    note: "Nota #PO-004 - Supplier: CV Mitra Oil",
+    category: "Bahan Pendukung",
   },
   {
     id: 5,
-    description: "Biaya Sewa Gudang",
-    amount: 8000000,
-    type: "expense",
-    date: "2024-01-05",
+    description: "Biaya Transportasi Distribusi",
+    amount: 5000000,
+    date: "2024-01-10",
     status: "locked",
-    note: "Kwitansi Sewa - Periode Jan 2024",
+    note: "Kwitansi Transport - Periode Jan 2024",
+    category: "Logistik",
+  },
+  {
+    id: 6,
+    description: "Pembelian Gas LPG 50 Tabung",
+    amount: 7500000,
+    date: "2024-01-08",
+    status: "locked",
+    note: "Nota #PO-005 - Supplier: Agen Gas Jaya",
     category: "Operasional",
   },
 ];
@@ -186,11 +185,11 @@ const scheduledReports = [
 ];
 
 const transactionCategories = [
-  "Penjualan",
-  "Pembelian Stok",
-  "Gaji",
+  "Bahan Makanan",
+  "Bahan Pendukung",
   "Operasional",
-  "Marketing",
+  "Logistik",
+  "Peralatan",
   "Lainnya",
 ];
 
@@ -201,7 +200,6 @@ export default function Finance() {
   const [newTransaction, setNewTransaction] = useState({
     description: "",
     amount: "",
-    type: "income" as "income" | "expense",
     note: "",
     category: "",
   });
@@ -223,7 +221,6 @@ export default function Finance() {
       id: transactions.length + 1,
       description: newTransaction.description,
       amount: parseFloat(newTransaction.amount),
-      type: newTransaction.type,
       date: new Date().toISOString().split("T")[0],
       status: "completed",
       note: newTransaction.note,
@@ -234,7 +231,6 @@ export default function Finance() {
     setNewTransaction({
       description: "",
       amount: "",
-      type: "income",
       note: "",
       category: "",
     });
@@ -259,7 +255,7 @@ export default function Finance() {
   return (
     <DashboardLayout
       title="Kelola Keuangan"
-      subtitle="Input transaksi dari nota dan pantau laporan keuangan"
+      subtitle="Catat pengeluaran dari nota pembelian bahan MBG"
     >
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -278,22 +274,9 @@ export default function Finance() {
                       {stat.title}
                     </p>
                     <p className="text-2xl font-bold">{stat.value}</p>
-                    <div className="flex items-center mt-2">
-                      {stat.trend === "up" ? (
-                        <ArrowUpRight className="w-4 h-4 text-success" />
-                      ) : (
-                        <ArrowDownRight className="w-4 h-4 text-destructive" />
-                      )}
-                      <span
-                        className={`text-sm font-medium ${
-                          stat.trend === "up"
-                            ? "text-success"
-                            : "text-destructive"
-                        }`}
-                      >
-                        {stat.change}
-                      </span>
-                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {stat.description}
+                    </p>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                     <stat.icon className="w-5 h-5" />
@@ -307,7 +290,7 @@ export default function Finance() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Revenue vs Expense Chart */}
+        {/* Monthly Expense Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -317,23 +300,23 @@ export default function Finance() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">
-                Pendapatan vs Pengeluaran
+                Pengeluaran Bulanan
               </CardTitle>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-primary" />
-                  <span className="text-muted-foreground">Pendapatan</span>
+                  <span className="text-muted-foreground">Bahan</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-destructive" />
-                  <span className="text-muted-foreground">Pengeluaran</span>
+                  <div className="w-3 h-3 rounded-full bg-chart-2" />
+                  <span className="text-muted-foreground">Operasional</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={revenueData}>
+                  <BarChart data={monthlyExpenseData}>
                     <CartesianGrid
                       strokeDasharray="3 3"
                       stroke="hsl(var(--border))"
@@ -361,21 +344,17 @@ export default function Finance() {
                         `Rp ${(value / 1000000).toFixed(1)}M`,
                       ]}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="pendapatan"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--primary))", strokeWidth: 0 }}
+                    <Bar
+                      dataKey="bahan"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="pengeluaran"
-                      stroke="hsl(var(--destructive))"
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--destructive))", strokeWidth: 0 }}
+                    <Bar
+                      dataKey="operasional"
+                      fill="hsl(var(--chart-2))"
+                      radius={[4, 4, 0, 0]}
                     />
-                  </LineChart>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
@@ -450,7 +429,7 @@ export default function Finance() {
         <Tabs defaultValue="transactions" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <TabsList>
-              <TabsTrigger value="transactions">Transaksi</TabsTrigger>
+              <TabsTrigger value="transactions">Transaksi Pengeluaran</TabsTrigger>
               <TabsTrigger value="reports">Laporan Terjadwal</TabsTrigger>
             </TabsList>
 
@@ -459,46 +438,19 @@ export default function Finance() {
                 <DialogTrigger asChild>
                   <Button size="sm">
                     <Plus className="w-4 h-4 mr-2" />
-                    Input Transaksi
+                    Input Pengeluaran
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <DialogHeader>
-                    <DialogTitle>Input Transaksi dari Nota</DialogTitle>
+                    <DialogTitle>Input Pengeluaran dari Nota</DialogTitle>
                     <DialogDescription>
-                      Masukkan data transaksi berdasarkan nota atau bukti transaksi
+                      Catat pengeluaran pembelian bahan atau kebutuhan MBG berdasarkan nota
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="type">Jenis Transaksi</Label>
-                      <Select
-                        value={newTransaction.type}
-                        onValueChange={(value: "income" | "expense") =>
-                          setNewTransaction({ ...newTransaction, type: value })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih jenis transaksi" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="income">
-                            <div className="flex items-center gap-2">
-                              <ArrowUpRight className="w-4 h-4 text-success" />
-                              Pemasukan
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="expense">
-                            <div className="flex items-center gap-2">
-                              <ArrowDownRight className="w-4 h-4 text-destructive" />
-                              Pengeluaran
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="category">Kategori</Label>
+                      <Label htmlFor="category">Kategori Pengeluaran</Label>
                       <Select
                         value={newTransaction.category}
                         onValueChange={(value) =>
@@ -518,10 +470,10 @@ export default function Finance() {
                       </Select>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="description">Deskripsi Transaksi</Label>
+                      <Label htmlFor="description">Deskripsi Pengeluaran</Label>
                       <Input
                         id="description"
-                        placeholder="Contoh: Penjualan Laptop ASUS"
+                        placeholder="Contoh: Pembelian Beras 500kg"
                         value={newTransaction.description}
                         onChange={(e) =>
                           setNewTransaction({
@@ -536,7 +488,7 @@ export default function Finance() {
                       <Input
                         id="amount"
                         type="number"
-                        placeholder="Contoh: 15000000"
+                        placeholder="Contoh: 7500000"
                         value={newTransaction.amount}
                         onChange={(e) =>
                           setNewTransaction({
@@ -547,10 +499,10 @@ export default function Finance() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="note">Catatan Nota / Bukti Transaksi</Label>
+                      <Label htmlFor="note">Catatan Nota / Bukti Pembelian</Label>
                       <Textarea
                         id="note"
-                        placeholder="Contoh: Nota #INV-001 - Pembeli: PT ABC"
+                        placeholder="Contoh: Nota #PO-001 - Supplier: UD Tani Makmur"
                         value={newTransaction.note}
                         onChange={(e) =>
                           setNewTransaction({
@@ -568,7 +520,7 @@ export default function Finance() {
                     </Button>
                     <Button onClick={handleAddTransaction}>
                       <Receipt className="w-4 h-4 mr-2" />
-                      Simpan Transaksi
+                      Simpan Pengeluaran
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -636,18 +588,8 @@ export default function Finance() {
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div
-                              className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                tx.type === "income"
-                                  ? "bg-success/10 text-success"
-                                  : "bg-destructive/10 text-destructive"
-                              }`}
-                            >
-                              {tx.type === "income" ? (
-                                <ArrowUpRight className="w-4 h-4" />
-                              ) : (
-                                <ArrowDownRight className="w-4 h-4" />
-                              )}
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-destructive/10 text-destructive">
+                              <ArrowDownRight className="w-4 h-4" />
                             </div>
                             <div>
                               <span className="font-medium block">{tx.description}</span>
@@ -661,15 +603,8 @@ export default function Finance() {
                         <TableCell className="text-muted-foreground">
                           {tx.date}
                         </TableCell>
-                        <TableCell
-                          className={`text-right font-medium ${
-                            tx.type === "income"
-                              ? "text-success"
-                              : "text-destructive"
-                          }`}
-                        >
-                          {tx.type === "income" ? "+" : "-"}
-                          {formatCurrency(tx.amount)}
+                        <TableCell className="text-right font-medium text-destructive">
+                          -{formatCurrency(tx.amount)}
                         </TableCell>
                         <TableCell className="text-center">
                           {tx.status === "locked" ? (
@@ -693,6 +628,7 @@ export default function Finance() {
                               size="sm"
                               onClick={() => handleLockTransaction(tx.id)}
                               className="text-muted-foreground hover:text-foreground"
+                              title="Kunci transaksi"
                             >
                               <Lock className="w-4 h-4" />
                             </Button>
