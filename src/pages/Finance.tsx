@@ -4,6 +4,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -15,6 +17,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Search,
   Download,
   Calendar,
@@ -23,12 +41,13 @@ import {
   Wallet,
   ArrowUpRight,
   ArrowDownRight,
-  RefreshCw,
   Lock,
   FileSpreadsheet,
   FileText,
   Clock,
   BarChart3,
+  Plus,
+  Receipt,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -72,11 +91,11 @@ const financeStats = [
     icon: Wallet,
   },
   {
-    title: "Saldo Rekening",
-    value: "Rp 89.4M",
-    change: "+5.1%",
+    title: "Total Transaksi",
+    value: "1,234",
+    change: "+8.7%",
     trend: "up",
-    icon: Wallet,
+    icon: Receipt,
   },
 ];
 
@@ -96,7 +115,18 @@ const expenseCategories = [
   { name: "Lainnya", value: 10, color: "hsl(var(--chart-4))" },
 ];
 
-const recentTransactions = [
+interface Transaction {
+  id: number;
+  description: string;
+  amount: number;
+  type: "income" | "expense";
+  date: string;
+  status: "completed" | "locked";
+  note: string;
+  category: string;
+}
+
+const initialTransactions: Transaction[] = [
   {
     id: 1,
     description: "Penjualan Laptop ASUS",
@@ -104,22 +134,28 @@ const recentTransactions = [
     type: "income",
     date: "2024-01-15",
     status: "completed",
+    note: "Nota #INV-001 - Pembeli: PT ABC",
+    category: "Penjualan",
   },
   {
     id: 2,
     description: "Pembelian Stok iPhone",
-    amount: -72000000,
+    amount: 72000000,
     type: "expense",
     date: "2024-01-14",
     status: "completed",
+    note: "Nota #PO-045 - Supplier: CV Tech",
+    category: "Pembelian Stok",
   },
   {
     id: 3,
     description: "Gaji Karyawan Januari",
-    amount: -25000000,
+    amount: 25000000,
     type: "expense",
     date: "2024-01-10",
     status: "completed",
+    note: "Slip Gaji Januari 2024 - 5 Karyawan",
+    category: "Gaji",
   },
   {
     id: 4,
@@ -128,14 +164,18 @@ const recentTransactions = [
     type: "income",
     date: "2024-01-09",
     status: "completed",
+    note: "Nota #INV-002 - Pembeli: Toko Batik Jaya",
+    category: "Penjualan",
   },
   {
     id: 5,
     description: "Biaya Sewa Gudang",
-    amount: -8000000,
+    amount: 8000000,
     type: "expense",
     date: "2024-01-05",
     status: "locked",
+    note: "Kwitansi Sewa - Periode Jan 2024",
+    category: "Operasional",
   },
 ];
 
@@ -145,8 +185,26 @@ const scheduledReports = [
   { name: "Laporan Bulanan", frequency: "Setiap tanggal 1", nextRun: "1 Feb 06:00" },
 ];
 
+const transactionCategories = [
+  "Penjualan",
+  "Pembelian Stok",
+  "Gaji",
+  "Operasional",
+  "Marketing",
+  "Lainnya",
+];
+
 export default function Finance() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newTransaction, setNewTransaction] = useState({
+    description: "",
+    amount: "",
+    type: "income" as "income" | "expense",
+    note: "",
+    category: "",
+  });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -156,10 +214,52 @@ export default function Finance() {
     }).format(Math.abs(value));
   };
 
+  const handleAddTransaction = () => {
+    if (!newTransaction.description || !newTransaction.amount || !newTransaction.category) {
+      return;
+    }
+
+    const transaction: Transaction = {
+      id: transactions.length + 1,
+      description: newTransaction.description,
+      amount: parseFloat(newTransaction.amount),
+      type: newTransaction.type,
+      date: new Date().toISOString().split("T")[0],
+      status: "completed",
+      note: newTransaction.note,
+      category: newTransaction.category,
+    };
+
+    setTransactions([transaction, ...transactions]);
+    setNewTransaction({
+      description: "",
+      amount: "",
+      type: "income",
+      note: "",
+      category: "",
+    });
+    setIsAddDialogOpen(false);
+  };
+
+  const handleLockTransaction = (id: number) => {
+    setTransactions(
+      transactions.map((tx) =>
+        tx.id === id ? { ...tx, status: "locked" as const } : tx
+      )
+    );
+  };
+
+  const filteredTransactions = transactions.filter(
+    (tx) =>
+      tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      tx.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <DashboardLayout
       title="Kelola Keuangan"
-      subtitle="Pantau pendapatan, pengeluaran, dan laporan keuangan"
+      subtitle="Input transaksi dari nota dan pantau laporan keuangan"
     >
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -355,10 +455,124 @@ export default function Finance() {
             </TabsList>
 
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Tarik Data Rekening
-              </Button>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Input Transaksi
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Input Transaksi dari Nota</DialogTitle>
+                    <DialogDescription>
+                      Masukkan data transaksi berdasarkan nota atau bukti transaksi
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="type">Jenis Transaksi</Label>
+                      <Select
+                        value={newTransaction.type}
+                        onValueChange={(value: "income" | "expense") =>
+                          setNewTransaction({ ...newTransaction, type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih jenis transaksi" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="income">
+                            <div className="flex items-center gap-2">
+                              <ArrowUpRight className="w-4 h-4 text-success" />
+                              Pemasukan
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="expense">
+                            <div className="flex items-center gap-2">
+                              <ArrowDownRight className="w-4 h-4 text-destructive" />
+                              Pengeluaran
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="category">Kategori</Label>
+                      <Select
+                        value={newTransaction.category}
+                        onValueChange={(value) =>
+                          setNewTransaction({ ...newTransaction, category: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih kategori" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {transactionCategories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="description">Deskripsi Transaksi</Label>
+                      <Input
+                        id="description"
+                        placeholder="Contoh: Penjualan Laptop ASUS"
+                        value={newTransaction.description}
+                        onChange={(e) =>
+                          setNewTransaction({
+                            ...newTransaction,
+                            description: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="amount">Jumlah (Rp)</Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        placeholder="Contoh: 15000000"
+                        value={newTransaction.amount}
+                        onChange={(e) =>
+                          setNewTransaction({
+                            ...newTransaction,
+                            amount: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="note">Catatan Nota / Bukti Transaksi</Label>
+                      <Textarea
+                        id="note"
+                        placeholder="Contoh: Nota #INV-001 - Pembeli: PT ABC"
+                        value={newTransaction.note}
+                        onChange={(e) =>
+                          setNewTransaction({
+                            ...newTransaction,
+                            note: e.target.value,
+                          })
+                        }
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      Batal
+                    </Button>
+                    <Button onClick={handleAddTransaction}>
+                      <Receipt className="w-4 h-4 mr-2" />
+                      Simpan Transaksi
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -387,7 +601,7 @@ export default function Finance() {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      placeholder="Cari transaksi..."
+                      placeholder="Cari transaksi, nota, atau kategori..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-9"
@@ -404,13 +618,15 @@ export default function Finance() {
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableHead>Deskripsi</TableHead>
+                      <TableHead>Kategori</TableHead>
                       <TableHead>Tanggal</TableHead>
                       <TableHead className="text-right">Jumlah</TableHead>
                       <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="text-center">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentTransactions.map((tx, index) => (
+                    {filteredTransactions.map((tx, index) => (
                       <motion.tr
                         key={tx.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -433,8 +649,14 @@ export default function Finance() {
                                 <ArrowDownRight className="w-4 h-4" />
                               )}
                             </div>
-                            <span className="font-medium">{tx.description}</span>
+                            <div>
+                              <span className="font-medium block">{tx.description}</span>
+                              <span className="text-xs text-muted-foreground">{tx.note}</span>
+                            </div>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{tx.category}</Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {tx.date}
@@ -464,6 +686,18 @@ export default function Finance() {
                             </Badge>
                           )}
                         </TableCell>
+                        <TableCell className="text-center">
+                          {tx.status !== "locked" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleLockTransaction(tx.id)}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Lock className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </TableCell>
                       </motion.tr>
                     ))}
                   </TableBody>
@@ -476,7 +710,7 @@ export default function Finance() {
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  {scheduledReports.map((report, index) => (
+                  {scheduledReports.map((report) => (
                     <div
                       key={report.name}
                       className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
