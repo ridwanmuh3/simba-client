@@ -54,47 +54,82 @@ import {
 const mockItems = [
   {
     id: 1,
-    code: "ITM-001",
-    name: "Laptop ASUS ROG Strix",
-    category: "Elektronik",
-    stock: 15,
-    price: 18500000,
+    code: "BHN-001",
+    name: "Beras Premium",
+    category: "Karbohidrat",
+    stock: 500,
+    unit: "kg",
+    pricePerUnit: 14000,
     status: "active",
   },
   {
     id: 2,
-    code: "ITM-002",
-    name: "iPhone 15 Pro Max",
-    category: "Elektronik",
-    stock: 8,
-    price: 24000000,
+    code: "BHN-002",
+    name: "Ayam Potong",
+    category: "Protein",
+    stock: 150,
+    unit: "kg",
+    pricePerUnit: 38000,
     status: "active",
   },
   {
     id: 3,
-    code: "ITM-003",
-    name: "Kemeja Batik Premium",
-    category: "Pakaian",
-    stock: 45,
-    price: 350000,
+    code: "BHN-003",
+    name: "Telur Ayam",
+    category: "Protein",
+    stock: 200,
+    unit: "kg",
+    pricePerUnit: 28000,
     status: "active",
   },
   {
     id: 4,
-    code: "ITM-004",
-    name: "Meja Kerja Minimalis",
-    category: "Peralatan",
+    code: "BHN-004",
+    name: "Tempe",
+    category: "Protein",
     stock: 0,
-    price: 1200000,
+    unit: "kg",
+    pricePerUnit: 18000,
     status: "locked",
   },
   {
     id: 5,
-    code: "ITM-005",
-    name: "Snack Box Premium",
-    category: "Makanan",
-    stock: 120,
-    price: 75000,
+    code: "BHN-005",
+    name: "Kangkung",
+    category: "Sayuran",
+    stock: 80,
+    unit: "ikat",
+    pricePerUnit: 5000,
+    status: "active",
+  },
+  {
+    id: 6,
+    code: "BHN-006",
+    name: "Wortel",
+    category: "Sayuran",
+    stock: 45,
+    unit: "kg",
+    pricePerUnit: 12000,
+    status: "active",
+  },
+  {
+    id: 7,
+    code: "BHN-007",
+    name: "Minyak Goreng",
+    category: "Pendukung",
+    stock: 100,
+    unit: "liter",
+    pricePerUnit: 18000,
+    status: "active",
+  },
+  {
+    id: 8,
+    code: "BHN-008",
+    name: "Gula Pasir",
+    category: "Pendukung",
+    stock: 30,
+    unit: "kg",
+    pricePerUnit: 16000,
     status: "active",
   },
 ];
@@ -113,15 +148,15 @@ export default function Items() {
 
   return (
     <DashboardLayout
-      title="Kelola Barang"
-      subtitle="Kelola data barang, import/export, dan lihat stok"
+      title="Kelola Bahan MBG"
+      subtitle="Inventarisasi bahan makanan untuk program Makan Bergizi Gratis"
     >
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Cari barang..."
+            placeholder="Cari bahan makanan..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -137,10 +172,10 @@ export default function Items() {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem>Semua Kategori</DropdownMenuItem>
-              <DropdownMenuItem>Elektronik</DropdownMenuItem>
-              <DropdownMenuItem>Pakaian</DropdownMenuItem>
-              <DropdownMenuItem>Makanan</DropdownMenuItem>
-              <DropdownMenuItem>Peralatan</DropdownMenuItem>
+              <DropdownMenuItem>Karbohidrat</DropdownMenuItem>
+              <DropdownMenuItem>Protein</DropdownMenuItem>
+              <DropdownMenuItem>Sayuran</DropdownMenuItem>
+              <DropdownMenuItem>Pendukung</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -176,20 +211,20 @@ export default function Items() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
-                Tambah Barang
+                Tambah Bahan
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Tambah Barang Baru</DialogTitle>
+                <DialogTitle>Tambah Bahan Makanan</DialogTitle>
                 <DialogDescription>
-                  Masukkan informasi barang yang akan ditambahkan
+                  Masukkan informasi bahan untuk inventaris MBG
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nama Barang</Label>
-                  <Input id="name" placeholder="Masukkan nama barang" />
+                  <Label htmlFor="name">Nama Bahan</Label>
+                  <Input id="name" placeholder="Masukkan nama bahan" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -199,21 +234,38 @@ export default function Items() {
                         <SelectValue placeholder="Pilih kategori" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="elektronik">Elektronik</SelectItem>
-                        <SelectItem value="pakaian">Pakaian</SelectItem>
-                        <SelectItem value="makanan">Makanan</SelectItem>
-                        <SelectItem value="peralatan">Peralatan</SelectItem>
+                        <SelectItem value="karbohidrat">Karbohidrat</SelectItem>
+                        <SelectItem value="protein">Protein</SelectItem>
+                        <SelectItem value="sayuran">Sayuran</SelectItem>
+                        <SelectItem value="pendukung">Pendukung</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="stock">Stok</Label>
-                    <Input id="stock" type="number" placeholder="0" />
+                    <Label htmlFor="unit">Satuan</Label>
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih satuan" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="kg">Kilogram (kg)</SelectItem>
+                        <SelectItem value="liter">Liter</SelectItem>
+                        <SelectItem value="ikat">Ikat</SelectItem>
+                        <SelectItem value="buah">Buah</SelectItem>
+                        <SelectItem value="bungkus">Bungkus</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="price">Harga</Label>
-                  <Input id="price" type="number" placeholder="0" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="stock">Stok Awal</Label>
+                    <Input id="stock" type="number" placeholder="0" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Harga per Satuan</Label>
+                    <Input id="price" type="number" placeholder="0" />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -244,10 +296,10 @@ export default function Items() {
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="w-[100px]">Kode</TableHead>
-                  <TableHead>Nama Barang</TableHead>
+                  <TableHead>Nama Bahan</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead className="text-center">Stok</TableHead>
-                  <TableHead className="text-right">Harga</TableHead>
+                  <TableHead className="text-right">Harga/Satuan</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
@@ -273,16 +325,16 @@ export default function Items() {
                         className={`font-medium ${
                           item.stock === 0
                             ? "text-destructive"
-                            : item.stock < 10
+                            : item.stock < 20
                             ? "text-warning"
                             : "text-foreground"
                         }`}
                       >
-                        {item.stock}
+                        {item.stock} {item.unit}
                       </span>
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {formatCurrency(item.price)}
+                      {formatCurrency(item.pricePerUnit)}/{item.unit}
                     </TableCell>
                     <TableCell className="text-center">
                       {item.status === "locked" ? (
@@ -340,7 +392,7 @@ export default function Items() {
 
       {/* Pagination Info */}
       <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-        <span>Menampilkan 1-5 dari 5 barang</span>
+        <span>Menampilkan 1-{mockItems.length} dari {mockItems.length} bahan</span>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" disabled>
             Sebelumnya
