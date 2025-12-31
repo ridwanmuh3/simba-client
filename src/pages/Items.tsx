@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +32,7 @@ import {
   Eye,
   FileSpreadsheet,
   FileText,
+  FileDown,
 } from "lucide-react";
 import {
   Dialog,
@@ -50,8 +51,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import { exportToCSV, parseCSV, downloadCSVTemplate, ItemData } from "@/lib/csv-utils";
 
-const mockItems = [
+const initialItems: ItemData[] = [
   {
     id: 1,
     code: "BHN-001",
@@ -137,6 +140,61 @@ const mockItems = [
 export default function Items() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [items, setItems] = useState<ItemData[]>(initialItems);
+  const [importPreview, setImportPreview] = useState<Partial<ItemData>[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExportCSV = () => {
+    exportToCSV(items);
+    toast.success("Data berhasil diekspor ke CSV");
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      toast.error("Hanya file CSV yang diperbolehkan");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const parsed = parseCSV(text);
+        setImportPreview(parsed);
+        setIsImportDialogOpen(true);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Gagal membaca file CSV");
+      }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleImportConfirm = () => {
+    const newItems: ItemData[] = importPreview.map((item, index) => ({
+      id: items.length + index + 1,
+      code: item.code || `BHN-${String(items.length + index + 1).padStart(3, '0')}`,
+      name: item.name || '',
+      category: item.category || 'Pendukung',
+      stock: item.stock || 0,
+      unit: item.unit || 'kg',
+      pricePerUnit: item.pricePerUnit || 0,
+      status: item.status || 'active',
+    }));
+
+    setItems([...items, ...newItems]);
+    setImportPreview([]);
+    setIsImportDialogOpen(false);
+    toast.success(`${newItems.length} bahan berhasil diimpor`);
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -187,25 +245,28 @@ export default function Items() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                Export Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportCSV}>
                 <FileText className="w-4 h-4 mr-2" />
                 Export CSV
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="w-4 h-4 mr-2" />
-                Format Nota
+              <DropdownMenuItem onClick={downloadCSVTemplate}>
+                <FileDown className="w-4 h-4 mr-2" />
+                Download Template
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
             <Upload className="w-4 h-4 mr-2" />
-            Import
+            Import CSV
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -281,6 +342,55 @@ export default function Items() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Import Dialog */}
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Preview Import CSV</DialogTitle>
+                <DialogDescription>
+                  {importPreview.length} bahan akan diimpor. Periksa data sebelum konfirmasi.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[300px] overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kode</TableHead>
+                      <TableHead>Nama</TableHead>
+                      <TableHead>Kategori</TableHead>
+                      <TableHead>Stok</TableHead>
+                      <TableHead>Satuan</TableHead>
+                      <TableHead>Harga</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {importPreview.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-mono text-sm">{item.code}</TableCell>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.stock}</TableCell>
+                        <TableCell>{item.unit}</TableCell>
+                        <TableCell>{formatCurrency(item.pricePerUnit || 0)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => {
+                  setIsImportDialogOpen(false);
+                  setImportPreview([]);
+                }}>
+                  Batal
+                </Button>
+                <Button onClick={handleImportConfirm}>
+                  Import {importPreview.length} Bahan
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -305,7 +415,7 @@ export default function Items() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockItems.map((item, index) => (
+                {items.map((item, index) => (
                   <motion.tr
                     key={item.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -392,7 +502,7 @@ export default function Items() {
 
       {/* Pagination Info */}
       <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-        <span>Menampilkan 1-{mockItems.length} dari {mockItems.length} bahan</span>
+        <span>Menampilkan 1-{items.length} dari {items.length} bahan</span>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" disabled>
             Sebelumnya
