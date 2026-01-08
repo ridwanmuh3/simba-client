@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReportViewer } from "@/components/finance/ReportViewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,7 +42,6 @@ import {
   Lock,
   FileSpreadsheet,
   FileText,
-  Clock,
   BarChart3,
   Plus,
   Receipt,
@@ -176,12 +176,6 @@ const initialTransactions: Transaction[] = [
     note: "Nota #PO-005 - Supplier: Agen Gas Jaya",
     category: "Operasional",
   },
-];
-
-const scheduledReports = [
-  { name: "Laporan Harian", frequency: "Setiap hari", nextRun: "Besok 06:00" },
-  { name: "Laporan Mingguan", frequency: "Setiap Senin", nextRun: "20 Jan 06:00" },
-  { name: "Laporan Bulanan", frequency: "Setiap tanggal 1", nextRun: "1 Feb 06:00" },
 ];
 
 const transactionCategories = [
@@ -430,7 +424,7 @@ export default function Finance() {
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <TabsList>
               <TabsTrigger value="transactions">Transaksi Pengeluaran</TabsTrigger>
-              <TabsTrigger value="reports">Laporan Terjadwal</TabsTrigger>
+              <TabsTrigger value="reports">Laporan Harian/Mingguan</TabsTrigger>
             </TabsList>
 
             <div className="flex gap-2">
@@ -643,44 +637,7 @@ export default function Finance() {
           </TabsContent>
 
           <TabsContent value="reports">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {scheduledReports.map((report) => (
-                    <div
-                      key={report.name}
-                      className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                          <BarChart3 className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{report.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {report.frequency}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-sm text-muted-foreground">
-                            Jadwal Berikutnya
-                          </p>
-                          <p className="text-sm font-medium flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {report.nextRun}
-                          </p>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <ReportViewer transactions={transactions} />
           </TabsContent>
         </Tabs>
       </motion.div>
