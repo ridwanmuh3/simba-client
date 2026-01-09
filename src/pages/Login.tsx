@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import logoBgn from "@/assets/logo-bgn.webp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,7 +59,7 @@ export default function Login() {
           duration: 0.5
         }}>
             <div className="w-16 h-16 rounded-2xl bg-primary-foreground/20 backdrop-blur flex items-center justify-center mb-8">
-              <Shield className="w-8 h-8" />
+              <img src={logoBgn} alt="Logo BGN" className="w-12 h-12 object-contain" />
             </div>
             <h1 className="text-4xl font-bold mb-4">Sistem MBG</h1>
             <p className="text-xl text-primary-foreground/80 max-w-md">
@@ -110,9 +111,7 @@ export default function Login() {
         duration: 0.5
       }} className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <Shield className="w-6 h-6 text-primary-foreground" />
-            </div>
+            <img src={logoBgn} alt="Logo BGN" className="w-12 h-12 rounded-xl object-contain" />
             <span className="text-2xl font-bold">SIMBA</span>
           </div>
 
