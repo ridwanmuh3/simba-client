@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Package, Users, Wallet, LogOut, ChevronLeft, ChevronRight, Settings, Shield } from "lucide-react";
+import { LayoutDashboard, Package, Users, Wallet, LogOut, ChevronLeft, ChevronRight, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import logoBgn from "@/assets/logo-bgn.webp";
 interface SidebarProps {
   userRole: "super_admin" | "admin";
 }
@@ -46,9 +47,7 @@ export function Sidebar({
         opacity: collapsed ? 0 : 1,
         width: collapsed ? 0 : "auto"
       }} className="flex items-center gap-3 overflow-hidden">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-            <Shield className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <img src={logoBgn} alt="Logo BGN" className="w-10 h-10 rounded-xl object-contain" />
           <span className="font-bold text-lg text-foreground whitespace-nowrap">SIMBA</span>
         </motion.div>
         <Button variant="ghost" size="icon" onClick={() => setCollapsed(!collapsed)} className="shrink-0 hover:bg-sidebar-accent">
