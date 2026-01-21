@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,10 +45,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { toast } from "sonner";
-import { exportToCSV, parseCSV, downloadCSVTemplate, ItemData } from "@/lib/csv-utils";
+import {
+  exportToCSV,
+  parseCSV,
+  downloadCSVTemplate,
+  ItemData,
+} from "@/lib/csv-utils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import {
@@ -72,33 +81,152 @@ interface StockTransaction {
 }
 
 const initialItems: ItemData[] = [
-  { id: 1, code: "BHN-001", name: "Beras Premium", category: "Karbohidrat", stock: 500, unit: "kg", pricePerUnit: 14000, status: "active" },
-  { id: 2, code: "BHN-002", name: "Ayam Potong", category: "Protein", stock: 150, unit: "kg", pricePerUnit: 38000, status: "active" },
-  { id: 3, code: "BHN-003", name: "Telur Ayam", category: "Protein", stock: 200, unit: "kg", pricePerUnit: 28000, status: "active" },
-  { id: 4, code: "BHN-004", name: "Tempe", category: "Protein", stock: 150, unit: "bungkus", pricePerUnit: 5000, status: "active" },
-  { id: 5, code: "BHN-005", name: "Kangkung", category: "Sayuran", stock: 80, unit: "ikat", pricePerUnit: 5000, status: "active" },
-  { id: 6, code: "BHN-006", name: "Wortel", category: "Sayuran", stock: 45, unit: "kg", pricePerUnit: 12000, status: "active" },
-  { id: 7, code: "BHN-007", name: "Minyak Goreng", category: "Pendukung", stock: 100, unit: "liter", pricePerUnit: 18000, status: "active" },
-  { id: 8, code: "BHN-008", name: "Gula Pasir Curah", category: "Pendukung", stock: 30, unit: "kg", pricePerUnit: 17000, status: "active" },
+  {
+    id: 1,
+    code: "BHN-001",
+    name: "Beras Premium",
+    category: "Karbohidrat",
+    stock: 500,
+    unit: "kg",
+    pricePerUnit: 14000,
+    status: "active",
+  },
+  {
+    id: 2,
+    code: "BHN-002",
+    name: "Ayam Potong",
+    category: "Protein",
+    stock: 150,
+    unit: "kg",
+    pricePerUnit: 38000,
+    status: "active",
+  },
+  {
+    id: 3,
+    code: "BHN-003",
+    name: "Telur Ayam",
+    category: "Protein",
+    stock: 200,
+    unit: "kg",
+    pricePerUnit: 28000,
+    status: "active",
+  },
+  {
+    id: 4,
+    code: "BHN-004",
+    name: "Tempe",
+    category: "Protein",
+    stock: 150,
+    unit: "bungkus",
+    pricePerUnit: 5000,
+    status: "active",
+  },
+  {
+    id: 5,
+    code: "BHN-005",
+    name: "Kangkung",
+    category: "Sayuran",
+    stock: 80,
+    unit: "ikat",
+    pricePerUnit: 5000,
+    status: "active",
+  },
+  {
+    id: 6,
+    code: "BHN-006",
+    name: "Wortel",
+    category: "Sayuran",
+    stock: 45,
+    unit: "kg",
+    pricePerUnit: 12000,
+    status: "active",
+  },
+  {
+    id: 7,
+    code: "BHN-007",
+    name: "Minyak Goreng",
+    category: "Pendukung",
+    stock: 100,
+    unit: "liter",
+    pricePerUnit: 18000,
+    status: "active",
+  },
+  {
+    id: 8,
+    code: "BHN-008",
+    name: "Gula Pasir Curah",
+    category: "Pendukung",
+    stock: 30,
+    unit: "kg",
+    pricePerUnit: 17000,
+    status: "active",
+  },
 ];
 
 const initialIncomingStock: StockTransaction[] = [
-  { id: 1, date: new Date("2025-10-28"), itemCode: "BHN-004", itemName: "Tempe", unit: "bungkus", qty: 150, pricePerUnit: 5000, supplier: "CV Tempe Jaya" },
-  { id: 2, date: new Date("2025-10-27"), itemCode: "BHN-008", itemName: "Gula Pasir Curah", unit: "kg", qty: 2, pricePerUnit: 17000, supplier: "Toko Grosir" },
-  { id: 3, date: new Date("2025-10-27"), itemCode: "BHN-001", itemName: "Beras Premium", unit: "kg", qty: 1, pricePerUnit: 15140, supplier: "Toko Beras Makmur" },
+  {
+    id: 1,
+    date: new Date("2025-10-28"),
+    itemCode: "BHN-004",
+    itemName: "Tempe",
+    unit: "bungkus",
+    qty: 150,
+    pricePerUnit: 5000,
+    supplier: "CV Tempe Jaya",
+  },
+  {
+    id: 2,
+    date: new Date("2025-10-27"),
+    itemCode: "BHN-008",
+    itemName: "Gula Pasir Curah",
+    unit: "kg",
+    qty: 2,
+    pricePerUnit: 17000,
+    supplier: "Toko Grosir",
+  },
+  {
+    id: 3,
+    date: new Date("2025-10-27"),
+    itemCode: "BHN-001",
+    itemName: "Beras Premium",
+    unit: "kg",
+    qty: 1,
+    pricePerUnit: 15140,
+    supplier: "Toko Beras Makmur",
+  },
 ];
 
 const initialOutgoingStock: StockTransaction[] = [
-  { id: 1, date: new Date("2025-10-28"), itemCode: "BHN-001", itemName: "Beras Premium", unit: "kg", qty: 50, pricePerUnit: 14000, notes: "Menu hari Senin" },
-  { id: 2, date: new Date("2025-10-28"), itemCode: "BHN-002", itemName: "Ayam Potong", unit: "kg", qty: 20, pricePerUnit: 38000, notes: "Menu hari Senin" },
+  {
+    id: 1,
+    date: new Date("2025-10-28"),
+    itemCode: "BHN-001",
+    itemName: "Beras Premium",
+    unit: "kg",
+    qty: 50,
+    pricePerUnit: 14000,
+    notes: "Menu hari Senin",
+  },
+  {
+    id: 2,
+    date: new Date("2025-10-28"),
+    itemCode: "BHN-002",
+    itemName: "Ayam Potong",
+    unit: "kg",
+    qty: 20,
+    pricePerUnit: 38000,
+    notes: "Menu hari Senin",
+  },
 ];
 
 export default function Items() {
   const [activeTab, setActiveTab] = useState("stok-awal");
   const [items, setItems] = useState<ItemData[]>(initialItems);
-  const [incomingStock, setIncomingStock] = useState<StockTransaction[]>(initialIncomingStock);
-  const [outgoingStock, setOutgoingStock] = useState<StockTransaction[]>(initialOutgoingStock);
-  
+  const [incomingStock, setIncomingStock] =
+    useState<StockTransaction[]>(initialIncomingStock);
+  const [outgoingStock, setOutgoingStock] =
+    useState<StockTransaction[]>(initialOutgoingStock);
+
   // Form states
   const [formDate, setFormDate] = useState<Date>(new Date());
   const [formItemCode, setFormItemCode] = useState("");
@@ -109,15 +237,15 @@ export default function Items() {
   const [formSupplier, setFormSupplier] = useState("");
   const [formCategory, setFormCategory] = useState("");
   const [formCurrentStock, setFormCurrentStock] = useState("");
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  
+
   // Selected row
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  
+
   // Import dialog
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importPreview, setImportPreview] = useState<Partial<ItemData>[]>([]);
@@ -176,16 +304,25 @@ export default function Items() {
     }
 
     if (selectedId) {
-      setItems(items.map(item => 
-        item.id === selectedId 
-          ? { ...item, name: formItemName, unit: formUnit, pricePerUnit: Number(formPrice) || 0, category: formCategory, stock: Number(formCurrentStock) || 0 }
-          : item
-      ));
+      setItems(
+        items.map((item) =>
+          item.id === selectedId
+            ? {
+                ...item,
+                name: formItemName,
+                unit: formUnit,
+                pricePerUnit: Number(formPrice) || 0,
+                category: formCategory,
+                stock: Number(formCurrentStock) || 0,
+              }
+            : item,
+        ),
+      );
       toast.success("Data bahan berhasil diperbarui");
     } else {
       const newItem: ItemData = {
         id: items.length + 1,
-        code: `BHN-${String(items.length + 1).padStart(3, '0')}`,
+        code: `BHN-${String(items.length + 1).padStart(3, "0")}`,
         name: formItemName,
         category: formCategory,
         stock: Number(formCurrentStock) || 0,
@@ -216,14 +353,16 @@ export default function Items() {
       supplier: formSupplier,
     };
     setIncomingStock([newTransaction, ...incomingStock]);
-    
+
     // Update stock
-    setItems(items.map(item => 
-      item.code === formItemCode 
-        ? { ...item, stock: item.stock + Number(formQty) }
-        : item
-    ));
-    
+    setItems(
+      items.map((item) =>
+        item.code === formItemCode
+          ? { ...item, stock: item.stock + Number(formQty) }
+          : item,
+      ),
+    );
+
     toast.success("Barang masuk berhasil dicatat");
     clearForm();
   };
@@ -234,7 +373,7 @@ export default function Items() {
       return;
     }
 
-    const item = items.find(i => i.code === formItemCode);
+    const item = items.find((i) => i.code === formItemCode);
     if (item && item.stock < Number(formQty)) {
       toast.error("Stok tidak mencukupi");
       return;
@@ -251,29 +390,31 @@ export default function Items() {
       notes: formSupplier,
     };
     setOutgoingStock([newTransaction, ...outgoingStock]);
-    
+
     // Update stock
-    setItems(items.map(item => 
-      item.code === formItemCode 
-        ? { ...item, stock: item.stock - Number(formQty) }
-        : item
-    ));
-    
+    setItems(
+      items.map((item) =>
+        item.code === formItemCode
+          ? { ...item, stock: item.stock - Number(formQty) }
+          : item,
+      ),
+    );
+
     toast.success("Barang keluar berhasil dicatat");
     clearForm();
   };
 
   const handleDelete = () => {
     if (!selectedId) return;
-    
+
     if (activeTab === "stok-awal") {
-      setItems(items.filter(i => i.id !== selectedId));
+      setItems(items.filter((i) => i.id !== selectedId));
       toast.success("Bahan berhasil dihapus");
     } else if (activeTab === "barang-masuk") {
-      setIncomingStock(incomingStock.filter(i => i.id !== selectedId));
+      setIncomingStock(incomingStock.filter((i) => i.id !== selectedId));
       toast.success("Data barang masuk berhasil dihapus");
     } else if (activeTab === "barang-keluar") {
-      setOutgoingStock(outgoingStock.filter(i => i.id !== selectedId));
+      setOutgoingStock(outgoingStock.filter((i) => i.id !== selectedId));
       toast.success("Data barang keluar berhasil dihapus");
     }
     clearForm();
@@ -288,7 +429,7 @@ export default function Items() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.csv')) {
+    if (!file.name.endsWith(".csv")) {
       toast.error("Hanya file CSV yang diperbolehkan");
       return;
     }
@@ -301,26 +442,29 @@ export default function Items() {
         setImportPreview(parsed);
         setIsImportDialogOpen(true);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Gagal membaca file CSV");
+        toast.error(
+          error instanceof Error ? error.message : "Gagal membaca file CSV",
+        );
       }
     };
     reader.readAsText(file);
-    
+
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
   const handleImportConfirm = () => {
     const newItems: ItemData[] = importPreview.map((item, index) => ({
       id: items.length + index + 1,
-      code: item.code || `BHN-${String(items.length + index + 1).padStart(3, '0')}`,
-      name: item.name || '',
-      category: item.category || 'Pendukung',
+      code:
+        item.code || `BHN-${String(items.length + index + 1).padStart(3, "0")}`,
+      name: item.name || "",
+      category: item.category || "Pendukung",
       stock: item.stock || 0,
-      unit: item.unit || 'kg',
+      unit: item.unit || "kg",
       pricePerUnit: item.pricePerUnit || 0,
-      status: item.status || 'active',
+      status: item.status || "active",
     }));
 
     setItems([...items, ...newItems]);
@@ -329,14 +473,16 @@ export default function Items() {
     toast.success(`${newItems.length} bahan berhasil diimpor`);
   };
 
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.code.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredItems = items.filter(
+    (item) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.code.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const filterTransactions = (transactions: StockTransaction[]) => {
-    return transactions.filter(t => {
-      const matchSearch = t.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    return transactions.filter((t) => {
+      const matchSearch =
+        t.itemName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.itemCode.toLowerCase().includes(searchQuery.toLowerCase());
       const matchDateFrom = !dateFrom || t.date >= dateFrom;
       const matchDateTo = !dateTo || t.date <= dateTo;
@@ -356,7 +502,11 @@ export default function Items() {
       title="Kelola Bahan MBG"
       subtitle="Inventarisasi bahan makanan untuk program Makan Bergizi Gratis"
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
           {tabItems.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
@@ -377,14 +527,18 @@ export default function Items() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Kode Bahan</Label>
-                  <Input value={formItemCode} disabled placeholder="Auto-generate" />
+                  <Input
+                    value={formItemCode}
+                    disabled
+                    placeholder="Auto-generate"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Nama Bahan</Label>
-                  <Input 
-                    value={formItemName} 
-                    onChange={(e) => setFormItemName(e.target.value)} 
-                    placeholder="Masukkan nama bahan" 
+                  <Input
+                    value={formItemName}
+                    onChange={(e) => setFormItemName(e.target.value)}
+                    placeholder="Masukkan nama bahan"
                   />
                 </div>
                 <div className="space-y-2">
@@ -418,24 +572,29 @@ export default function Items() {
                 </div>
                 <div className="space-y-2">
                   <Label>Harga Satuan (Rp)</Label>
-                  <Input 
-                    type="number" 
-                    value={formPrice} 
-                    onChange={(e) => setFormPrice(e.target.value)} 
-                    placeholder="0" 
+                  <Input
+                    type="number"
+                    value={formPrice}
+                    onChange={(e) => setFormPrice(e.target.value)}
+                    placeholder="0"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Stok Awal</Label>
-                  <Input 
-                    type="number" 
-                    value={formCurrentStock} 
-                    onChange={(e) => setFormCurrentStock(e.target.value)} 
-                    placeholder="0" 
+                  <Input
+                    type="number"
+                    value={formCurrentStock}
+                    onChange={(e) => setFormCurrentStock(e.target.value)}
+                    placeholder="0"
                   />
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <Button variant="destructive" size="sm" onClick={handleDelete} disabled={!selectedId}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={!selectedId}
+                  >
                     <Trash2 className="w-4 h-4 mr-1" />
                     Hapus
                   </Button>
@@ -475,7 +634,11 @@ export default function Items() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
                       <Upload className="w-4 h-4 mr-1" />
                       Import
                     </Button>
@@ -513,23 +676,35 @@ export default function Items() {
                     </TableHeader>
                     <TableBody>
                       {filteredItems.map((item, index) => (
-                        <TableRow 
-                          key={item.id} 
-                          className={`cursor-pointer ${selectedId === item.id ? 'bg-primary/10' : ''}`}
+                        <TableRow
+                          key={item.id}
+                          className={`cursor-pointer ${selectedId === item.id ? "bg-primary/10" : ""}`}
                           onClick={() => handleSelectItem(item)}
                         >
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell className="font-mono text-sm">{item.code}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {item.code}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
                           <TableCell>
                             <Badge variant="secondary">{item.category}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className={item.stock < 20 ? "text-destructive font-medium" : ""}>
+                            <span
+                              className={
+                                item.stock < 20
+                                  ? "text-destructive font-medium"
+                                  : ""
+                              }
+                            >
                               {item.stock} {item.unit}
                             </span>
                           </TableCell>
-                          <TableCell className="text-right">{formatCurrency(item.pricePerUnit)}</TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(item.pricePerUnit)}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -552,7 +727,10 @@ export default function Items() {
                   <Label>Tanggal</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
                         <Calendar className="mr-2 h-4 w-4" />
                         {formatDate(formDate)}
                       </Button>
@@ -569,10 +747,10 @@ export default function Items() {
                 </div>
                 <div className="space-y-2">
                   <Label>Pilih Bahan</Label>
-                  <Select 
-                    value={formItemCode} 
+                  <Select
+                    value={formItemCode}
                     onValueChange={(code) => {
-                      const item = items.find(i => i.code === code);
+                      const item = items.find((i) => i.code === code);
                       if (item) {
                         setFormItemCode(code);
                         setFormItemName(item.name);
@@ -600,40 +778,47 @@ export default function Items() {
                   </div>
                   <div className="space-y-2">
                     <Label>Qty</Label>
-                    <Input 
-                      type="number" 
-                      value={formQty} 
-                      onChange={(e) => setFormQty(e.target.value)} 
-                      placeholder="0" 
+                    <Input
+                      type="number"
+                      value={formQty}
+                      onChange={(e) => setFormQty(e.target.value)}
+                      placeholder="0"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Harga Satuan (Rp)</Label>
-                  <Input 
-                    type="number" 
-                    value={formPrice} 
-                    onChange={(e) => setFormPrice(e.target.value)} 
-                    placeholder="0" 
+                  <Input
+                    type="number"
+                    value={formPrice}
+                    onChange={(e) => setFormPrice(e.target.value)}
+                    placeholder="0"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Total Harga</Label>
-                  <Input 
-                    value={formatCurrency((Number(formQty) || 0) * (Number(formPrice) || 0))} 
-                    disabled 
+                  <Input
+                    value={formatCurrency(
+                      (Number(formQty) || 0) * (Number(formPrice) || 0),
+                    )}
+                    disabled
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Penyuplai</Label>
-                  <Input 
-                    value={formSupplier} 
-                    onChange={(e) => setFormSupplier(e.target.value)} 
-                    placeholder="Nama penyuplai" 
+                  <Input
+                    value={formSupplier}
+                    onChange={(e) => setFormSupplier(e.target.value)}
+                    placeholder="Nama penyuplai"
                   />
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <Button variant="destructive" size="sm" onClick={handleDelete} disabled={!selectedId}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={!selectedId}
+                  >
                     <Trash2 className="w-4 h-4 mr-1" />
                     Hapus
                   </Button>
@@ -670,7 +855,11 @@ export default function Items() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <CalendarComponent mode="single" selected={dateFrom} onSelect={setDateFrom} />
+                      <CalendarComponent
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={setDateFrom}
+                      />
                     </PopoverContent>
                   </Popover>
                   <Popover>
@@ -681,7 +870,11 @@ export default function Items() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <CalendarComponent mode="single" selected={dateTo} onSelect={setDateTo} />
+                      <CalendarComponent
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={setDateTo}
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -702,18 +895,22 @@ export default function Items() {
                     </TableHeader>
                     <TableBody>
                       {filterTransactions(incomingStock).map((t, index) => (
-                        <TableRow 
-                          key={t.id} 
-                          className={`cursor-pointer ${selectedId === t.id ? 'bg-primary/10' : ''}`}
+                        <TableRow
+                          key={t.id}
+                          className={`cursor-pointer ${selectedId === t.id ? "bg-primary/10" : ""}`}
                           onClick={() => handleSelectTransaction(t)}
                         >
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{formatDate(t.date)}</TableCell>
-                          <TableCell className="font-mono text-sm">{t.itemCode}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {t.itemCode}
+                          </TableCell>
                           <TableCell>{t.itemName}</TableCell>
                           <TableCell>{t.unit}</TableCell>
                           <TableCell className="text-center">{t.qty}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(t.pricePerUnit)}</TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(t.pricePerUnit)}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -736,7 +933,10 @@ export default function Items() {
                   <Label>Tanggal</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start text-left font-normal">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
                         <Calendar className="mr-2 h-4 w-4" />
                         {formatDate(formDate)}
                       </Button>
@@ -753,10 +953,10 @@ export default function Items() {
                 </div>
                 <div className="space-y-2">
                   <Label>Pilih Bahan</Label>
-                  <Select 
-                    value={formItemCode} 
+                  <Select
+                    value={formItemCode}
                     onValueChange={(code) => {
-                      const item = items.find(i => i.code === code);
+                      const item = items.find((i) => i.code === code);
                       if (item) {
                         setFormItemCode(code);
                         setFormItemName(item.name);
@@ -785,11 +985,11 @@ export default function Items() {
                   </div>
                   <div className="space-y-2">
                     <Label>Qty Keluar</Label>
-                    <Input 
-                      type="number" 
-                      value={formQty} 
-                      onChange={(e) => setFormQty(e.target.value)} 
-                      placeholder="0" 
+                    <Input
+                      type="number"
+                      value={formQty}
+                      onChange={(e) => setFormQty(e.target.value)}
+                      placeholder="0"
                     />
                   </div>
                 </div>
@@ -799,14 +999,19 @@ export default function Items() {
                 </div>
                 <div className="space-y-2">
                   <Label>Keterangan</Label>
-                  <Input 
-                    value={formSupplier} 
-                    onChange={(e) => setFormSupplier(e.target.value)} 
-                    placeholder="Misal: Menu hari Senin" 
+                  <Input
+                    value={formSupplier}
+                    onChange={(e) => setFormSupplier(e.target.value)}
+                    placeholder="Misal: Menu hari Senin"
                   />
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <Button variant="destructive" size="sm" onClick={handleDelete} disabled={!selectedId}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={!selectedId}
+                  >
                     <Trash2 className="w-4 h-4 mr-1" />
                     Hapus
                   </Button>
@@ -843,7 +1048,11 @@ export default function Items() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <CalendarComponent mode="single" selected={dateFrom} onSelect={setDateFrom} />
+                      <CalendarComponent
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={setDateFrom}
+                      />
                     </PopoverContent>
                   </Popover>
                   <Popover>
@@ -854,7 +1063,11 @@ export default function Items() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <CalendarComponent mode="single" selected={dateTo} onSelect={setDateTo} />
+                      <CalendarComponent
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={setDateTo}
+                      />
                     </PopoverContent>
                   </Popover>
                 </div>
@@ -875,14 +1088,16 @@ export default function Items() {
                     </TableHeader>
                     <TableBody>
                       {filterTransactions(outgoingStock).map((t, index) => (
-                        <TableRow 
-                          key={t.id} 
-                          className={`cursor-pointer ${selectedId === t.id ? 'bg-primary/10' : ''}`}
+                        <TableRow
+                          key={t.id}
+                          className={`cursor-pointer ${selectedId === t.id ? "bg-primary/10" : ""}`}
                           onClick={() => handleSelectTransaction(t)}
                         >
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{formatDate(t.date)}</TableCell>
-                          <TableCell className="font-mono text-sm">{t.itemCode}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {t.itemCode}
+                          </TableCell>
                           <TableCell>{t.itemName}</TableCell>
                           <TableCell>{t.unit}</TableCell>
                           <TableCell className="text-center">{t.qty}</TableCell>
@@ -901,7 +1116,9 @@ export default function Items() {
         <TabsContent value="stok-opname" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Stok Opname - Rekap Inventaris</CardTitle>
+              <CardTitle className="text-lg">
+                Stok Opname - Rekap Inventaris
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="relative mb-4">
@@ -921,31 +1138,53 @@ export default function Items() {
                       <TableHead>Kode</TableHead>
                       <TableHead>Nama Bahan</TableHead>
                       <TableHead>Kategori</TableHead>
-                      <TableHead className="text-center">Stok Saat Ini</TableHead>
+                      <TableHead className="text-center">
+                        Stok Saat Ini
+                      </TableHead>
                       <TableHead className="text-center">Total Masuk</TableHead>
-                      <TableHead className="text-center">Total Keluar</TableHead>
+                      <TableHead className="text-center">
+                        Total Keluar
+                      </TableHead>
                       <TableHead className="text-right">Nilai Stok</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredItems.map((item, index) => {
-                      const totalIn = incomingStock.filter(t => t.itemCode === item.code).reduce((sum, t) => sum + t.qty, 0);
-                      const totalOut = outgoingStock.filter(t => t.itemCode === item.code).reduce((sum, t) => sum + t.qty, 0);
+                      const totalIn = incomingStock
+                        .filter((t) => t.itemCode === item.code)
+                        .reduce((sum, t) => sum + t.qty, 0);
+                      const totalOut = outgoingStock
+                        .filter((t) => t.itemCode === item.code)
+                        .reduce((sum, t) => sum + t.qty, 0);
                       return (
                         <TableRow key={item.id}>
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell className="font-mono text-sm">{item.code}</TableCell>
-                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {item.code}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
                           <TableCell>
                             <Badge variant="secondary">{item.category}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className={item.stock < 20 ? "text-destructive font-bold" : "font-medium"}>
+                            <span
+                              className={
+                                item.stock < 20
+                                  ? "text-destructive font-bold"
+                                  : "font-medium"
+                              }
+                            >
                               {item.stock} {item.unit}
                             </span>
                           </TableCell>
-                          <TableCell className="text-center text-green-600">+{totalIn}</TableCell>
-                          <TableCell className="text-center text-red-600">-{totalOut}</TableCell>
+                          <TableCell className="text-center text-green-600">
+                            +{totalIn}
+                          </TableCell>
+                          <TableCell className="text-center text-red-600">
+                            -{totalOut}
+                          </TableCell>
                           <TableCell className="text-right font-medium">
                             {formatCurrency(item.stock * item.pricePerUnit)}
                           </TableCell>
@@ -957,9 +1196,16 @@ export default function Items() {
               </div>
               <div className="flex justify-end mt-4 pt-4 border-t">
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total Nilai Inventaris</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total Nilai Inventaris
+                  </p>
                   <p className="text-2xl font-bold text-primary">
-                    {formatCurrency(items.reduce((sum, item) => sum + (item.stock * item.pricePerUnit), 0))}
+                    {formatCurrency(
+                      items.reduce(
+                        (sum, item) => sum + item.stock * item.pricePerUnit,
+                        0,
+                      ),
+                    )}
                   </p>
                 </div>
               </div>
@@ -974,7 +1220,8 @@ export default function Items() {
           <DialogHeader>
             <DialogTitle>Preview Import CSV</DialogTitle>
             <DialogDescription>
-              {importPreview.length} bahan akan diimpor. Periksa data sebelum konfirmasi.
+              {importPreview.length} bahan akan diimpor. Periksa data sebelum
+              konfirmasi.
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[300px] overflow-auto">
@@ -992,22 +1239,29 @@ export default function Items() {
               <TableBody>
                 {importPreview.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-mono text-sm">{item.code}</TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {item.code}
+                    </TableCell>
                     <TableCell>{item.name}</TableCell>
                     <TableCell>{item.category}</TableCell>
                     <TableCell>{item.stock}</TableCell>
                     <TableCell>{item.unit}</TableCell>
-                    <TableCell>{formatCurrency(item.pricePerUnit || 0)}</TableCell>
+                    <TableCell>
+                      {formatCurrency(item.pricePerUnit || 0)}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setIsImportDialogOpen(false);
-              setImportPreview([]);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsImportDialogOpen(false);
+                setImportPreview([]);
+              }}
+            >
               Batal
             </Button>
             <Button onClick={handleImportConfirm}>

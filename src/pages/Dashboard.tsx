@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Package,
@@ -150,10 +150,10 @@ export default function Dashboard() {
                       stat.color === "primary"
                         ? "bg-primary/10 text-primary"
                         : stat.color === "success"
-                        ? "bg-success/10 text-success"
-                        : stat.color === "warning"
-                        ? "bg-warning/10 text-warning"
-                        : "bg-destructive/10 text-destructive"
+                          ? "bg-success/10 text-success"
+                          : stat.color === "warning"
+                            ? "bg-warning/10 text-warning"
+                            : "bg-destructive/10 text-destructive"
                     }`}
                   >
                     <stat.icon className="w-6 h-6" />
@@ -217,12 +217,18 @@ export default function Dashboard() {
                       dataKey="name"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 12,
+                      }}
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 12,
+                      }}
                       tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
@@ -276,14 +282,20 @@ export default function Dashboard() {
                       type="number"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 12,
+                      }}
                     />
                     <YAxis
                       dataKey="name"
                       type="category"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 12,
+                      }}
                       width={80}
                     />
                     <Tooltip
@@ -331,14 +343,16 @@ export default function Dashboard() {
                       activity.type === "add"
                         ? "bg-success/10 text-success"
                         : activity.type === "update"
-                        ? "bg-primary/10 text-primary"
-                        : activity.type === "user"
-                        ? "bg-warning/10 text-warning"
-                        : "bg-muted text-muted-foreground"
+                          ? "bg-primary/10 text-primary"
+                          : activity.type === "user"
+                            ? "bg-warning/10 text-warning"
+                            : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {activity.type === "add" && <Package className="w-5 h-5" />}
-                    {activity.type === "update" && <Wallet className="w-5 h-5" />}
+                    {activity.type === "update" && (
+                      <Wallet className="w-5 h-5" />
+                    )}
                     {activity.type === "user" && <Users className="w-5 h-5" />}
                     {activity.type === "export" && (
                       <BarChart3 className="w-5 h-5" />

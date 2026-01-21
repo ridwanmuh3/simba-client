@@ -1,178 +1,195 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import logoBgn from "@/assets/logo-bgn.webp";
+import { Eye, EyeOff, Loader2, Lock, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import logoBgn from "@/assets/sppg.webp";
+import { useAuth } from "@/hooks/use-auth";
+import { LoginFormInputs, loginSchema } from "@/schemas/auth/login-auth";
 
-    // Simulate login
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: "Login berhasil!",
-      description: "Selamat datang kembali."
+const Login = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const { login, isLoading } = useAuth();
+
+  const form = useForm<LoginFormInputs>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      rememberMe: false,
+    },
+  });
+
+  const handleSubmit = async (data: LoginFormInputs) => {
+    setErrorMsg("");
+
+    await login(data, (message) => {
+      setErrorMsg(message);
     });
-    navigate("/dashboard");
-    setIsLoading(false);
   };
-  return <div className="min-h-screen bg-background flex">
-      {/* Left Panel - Branding */}
-      <motion.div initial={{
-      opacity: 0,
-      x: -50
-    }} animate={{
-      opacity: 1,
-      x: 0
-    }} transition={{
-      duration: 0.6
-    }} className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
+
+  return (
+    <div className="min-h-screen bg-background flex">
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+        className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden"
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/80" />
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-72 h-72 rounded-full bg-primary-foreground/20 blur-3xl" />
           <div className="absolute bottom-20 right-20 w-96 h-96 rounded-full bg-primary-foreground/10 blur-3xl" />
         </div>
-        
-        <div className="relative z-10 flex flex-col justify-center px-12 text-primary-foreground">
-          <motion.div initial={{
-          opacity: 0,
-          y: 20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          delay: 0.3,
-          duration: 0.5
-        }}>
-            <div className="w-16 h-16 rounded-2xl bg-primary-foreground/20 backdrop-blur flex items-center justify-center mb-8">
-              <img src={logoBgn} alt="Logo BGN" className="w-12 h-12 object-contain" />
-            </div>
-            <h1 className="text-4xl font-bold mb-4">Sistem MBG</h1>
-            <p className="text-xl text-primary-foreground/80 max-w-md">
-              Kelola inventaris dan keuangan bisnis Anda dengan mudah dan aman.
-            </p>
-          </motion.div>
 
-          <motion.div initial={{
-          opacity: 0,
-          y: 20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          delay: 0.5,
-          duration: 0.5
-        }} className="mt-12 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
-                <Package className="w-5 h-5" />
-              </div>
-              <span>Manajemen Barang Lengkap</span>
+        <div className="relative z-10 flex flex-col justify-center px-12 text-primary-foreground">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
+            <div className="w-16 h-16 rounded-2xl bg-primary-foreground/20 backdrop-blur flex items-center justify-center mb-8">
+              <img
+                src={logoBgn}
+                alt="Logo BGN"
+                className="w-12 h-12 object-contain"
+              />
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
-                <Users className="w-5 h-5" />
-              </div>
-              <span>Kontrol Akses Pengguna</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
-                <Wallet className="w-5 h-5" />
-              </div>
-              <span>Laporan Keuangan Real-time</span>
-            </div>
+            <h1 className="text-4xl font-bold mb-4">SIMBA</h1>
+            <p className="text-xl text-primary-foreground/80 max-w-md">
+              Sistem Informasi Manajemen Barang dan Anggaran
+            </p>
           </motion.div>
         </div>
       </motion.div>
-
-      {/* Right Panel - Login Form */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div initial={{
-        opacity: 0,
-        y: 20
-      }} animate={{
-        opacity: 1,
-        y: 0
-      }} transition={{
-        duration: 0.5
-      }} className="w-full max-w-md">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <img src={logoBgn} alt="Logo BGN" className="w-12 h-12 rounded-xl object-contain" />
+            <img
+              src={logoBgn}
+              alt="Logo BGN"
+              className="w-12 h-12 rounded-xl object-contain"
+            />
             <span className="text-2xl font-bold">SIMBA</span>
           </div>
 
           <Card className="border-0 shadow-lifted">
-            <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-2xl font-bold">Masuk</CardTitle>
+            <CardHeader className="space-y-1 pb-4 text-center">
+              <CardTitle className="text-2xl font-bold">Login</CardTitle>
               <CardDescription>
-                Masukkan email dan password untuk mengakses sistem
+                Selamat datang di aplikasi SIMBA
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input id="email" type="email" placeholder="admin@mbg.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-9" required />
+                    <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      {...form.register("username")}
+                      id="username"
+                      placeholder="admin123"
+                      className="pl-9"
+                      disabled={isLoading}
+                    />
                   </div>
+                  {form.formState.errors.username && (
+                    <p className="text-xs text-red-500">
+                      {form.formState.errors.username.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-9 pr-10" required />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <Input
+                      {...form.register("password")}
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-9 pr-10"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
+                  {form.formState.errors.password && (
+                    <p className="text-xs text-red-500">
+                      {form.formState.errors.password.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="rounded border-input" />
+                    <input
+                      {...form.register("rememberMe")}
+                      type="checkbox"
+                      className="rounded border-input"
+                    />
                     <span className="text-muted-foreground">Ingat saya</span>
                   </label>
-                  <a href="#" className="text-primary hover:text-primary/80 transition-colors">
-                    Lupa password?
-                  </a>
                 </div>
-
-                <Button type="submit" className="w-full h-11 font-semibold" disabled={isLoading}>
-                  {isLoading ? <motion.div animate={{
-                  rotate: 360
-                }} transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  ease: "linear"
-                }} className="w-5 h-5 border-2 border-primary-foreground border-t-transparent rounded-full" /> : "Masuk"}
+                <Button
+                  type="submit"
+                  className="w-full h-11 font-semibold"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="animate-spin h-8 w-8" />
+                  ) : (
+                    "Login"
+                  )}
                 </Button>
+
+                {/* Error Global (Dari Backend/Context) */}
+                {errorMsg && (
+                  <p className="text-red-500 text-sm text-center mt-2 font-medium">
+                    {errorMsg}
+                  </p>
+                )}
               </form>
             </CardContent>
           </Card>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            © 2024 Sistem MBG. All rights reserved.
+            © {new Date().getFullYear()} SIMBA. All rights reserved.
           </p>
         </motion.div>
       </div>
-    </div>;
-}
+    </div>
+  );
+};
 
-// Import icons for feature list
-import { Package, Users, Wallet } from "lucide-react";
+export default Login;

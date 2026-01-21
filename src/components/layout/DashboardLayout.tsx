@@ -1,6 +1,5 @@
-import { ReactNode, useState } from "react";
-import { motion } from "framer-motion";
-import { Sidebar } from "./Sidebar";
+import { ReactNode, useEffect } from "react";
+import Sidebar from "./Sidebar";
 import { Bell, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useSidebarStore } from "@/stores/use-sidebar-store";
+import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -20,22 +22,27 @@ interface DashboardLayoutProps {
   subtitle?: string;
 }
 
-export function DashboardLayout({
+const DashboardLayout = ({
   children,
   title,
   subtitle,
-}: DashboardLayoutProps) {
-  // Mock user role - in real app this would come from auth context
-  const userRole = "super_admin" as const;
-  const userName = "Admin User";
+}: DashboardLayoutProps) => {
+  const { collapsed, setCollapsed } = useSidebarStore();
+  const isMobile = useIsMobile();
+  const auth = useAuth();
+
+  useEffect(() => {
+    if (isMobile) {
+      setCollapsed(true);
+    } else {
+      setCollapsed(false);
+    }
+  }, [isMobile, setCollapsed]);
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar userRole={userRole} />
-
-      {/* Main Content */}
-      <div className="pl-[280px] transition-all duration-300">
-        {/* Top Header */}
+      <Sidebar authContext={auth} />
+      <div className={collapsed ? "pl-[70px]" : "pl-[280px]"}>
         <header className="sticky top-0 z-40 h-16 bg-background/80 backdrop-blur-sm border-b border-border">
           <div className="h-full px-6 flex items-center justify-between">
             <div className="flex items-center gap-4 flex-1">
@@ -62,14 +69,14 @@ export function DashboardLayout({
                   >
                     <Avatar className="w-8 h-8">
                       <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                        {userName
+                        {auth.user.fullname
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </AvatarFallback>
                     </Avatar>
                     <span className="font-medium hidden sm:inline">
-                      {userName}
+                      {auth.user.fullname}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -80,22 +87,19 @@ export function DashboardLayout({
                     <User className="w-4 h-4 mr-2" />
                     Profil
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
+                  {/* <DropdownMenuItem
+                    onClick={async () => await auth.logout()}
+                    className="text-destructive"
+                  >
                     Keluar
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </header>
-
-        {/* Page Content */}
         <main className="p-6">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-foreground">{title}</h1>
               {subtitle && (
@@ -103,9 +107,11 @@ export function DashboardLayout({
               )}
             </div>
             {children}
-          </motion.div>
+          </div>
         </main>
       </div>
     </div>
   );
-}
+};
+
+export default DashboardLayout;

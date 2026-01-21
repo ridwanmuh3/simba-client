@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportViewer } from "@/components/finance/ReportViewer";
 import { Button } from "@/components/ui/button";
@@ -189,7 +189,8 @@ const transactionCategories = [
 
 export default function Finance() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [transactions, setTransactions] =
+    useState<Transaction[]>(initialTransactions);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
     description: "",
@@ -207,7 +208,11 @@ export default function Finance() {
   };
 
   const handleAddTransaction = () => {
-    if (!newTransaction.description || !newTransaction.amount || !newTransaction.category) {
+    if (
+      !newTransaction.description ||
+      !newTransaction.amount ||
+      !newTransaction.category
+    ) {
       return;
     }
 
@@ -234,8 +239,8 @@ export default function Finance() {
   const handleLockTransaction = (id: number) => {
     setTransactions(
       transactions.map((tx) =>
-        tx.id === id ? { ...tx, status: "locked" as const } : tx
-      )
+        tx.id === id ? { ...tx, status: "locked" as const } : tx,
+      ),
     );
   };
 
@@ -243,7 +248,7 @@ export default function Finance() {
     (tx) =>
       tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tx.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.category.toLowerCase().includes(searchQuery.toLowerCase())
+      tx.category.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -320,12 +325,18 @@ export default function Finance() {
                       dataKey="month"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 12,
+                      }}
                     />
                     <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                      tick={{
+                        fill: "hsl(var(--muted-foreground))",
+                        fontSize: 12,
+                      }}
                       tickFormatter={(value) => `${value / 1000000}M`}
                     />
                     <Tooltip
@@ -397,7 +408,10 @@ export default function Finance() {
               </div>
               <div className="mt-4 space-y-2">
                 {expenseCategories.map((cat) => (
-                  <div key={cat.name} className="flex items-center justify-between text-sm">
+                  <div
+                    key={cat.name}
+                    className="flex items-center justify-between text-sm"
+                  >
                     <div className="flex items-center gap-2">
                       <div
                         className="w-3 h-3 rounded-full"
@@ -423,7 +437,9 @@ export default function Finance() {
         <Tabs defaultValue="transactions" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <TabsList>
-              <TabsTrigger value="transactions">Transaksi Pengeluaran</TabsTrigger>
+              <TabsTrigger value="transactions">
+                Transaksi Pengeluaran
+              </TabsTrigger>
               <TabsTrigger value="reports">Laporan Harian/Mingguan</TabsTrigger>
             </TabsList>
 
@@ -439,7 +455,8 @@ export default function Finance() {
                   <DialogHeader>
                     <DialogTitle>Input Pengeluaran dari Nota</DialogTitle>
                     <DialogDescription>
-                      Catat pengeluaran pembelian bahan atau kebutuhan MBG berdasarkan nota
+                      Catat pengeluaran pembelian bahan atau kebutuhan MBG
+                      berdasarkan nota
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -448,7 +465,10 @@ export default function Finance() {
                       <Select
                         value={newTransaction.category}
                         onValueChange={(value) =>
-                          setNewTransaction({ ...newTransaction, category: value })
+                          setNewTransaction({
+                            ...newTransaction,
+                            category: value,
+                          })
                         }
                       >
                         <SelectTrigger>
@@ -493,7 +513,9 @@ export default function Finance() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="note">Catatan Nota / Bukti Pembelian</Label>
+                      <Label htmlFor="note">
+                        Catatan Nota / Bukti Pembelian
+                      </Label>
                       <Textarea
                         id="note"
                         placeholder="Contoh: Nota #PO-001 - Supplier: UD Tani Makmur"
@@ -509,7 +531,10 @@ export default function Finance() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsAddDialogOpen(false)}
+                    >
                       Batal
                     </Button>
                     <Button onClick={handleAddTransaction}>
@@ -586,8 +611,12 @@ export default function Finance() {
                               <ArrowDownRight className="w-4 h-4" />
                             </div>
                             <div>
-                              <span className="font-medium block">{tx.description}</span>
-                              <span className="text-xs text-muted-foreground">{tx.note}</span>
+                              <span className="font-medium block">
+                                {tx.description}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {tx.note}
+                              </span>
                             </div>
                           </div>
                         </TableCell>
