@@ -5,7 +5,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.locale("id");
 dayjs.extend(relativeTime);
 
-export const formatDateTable = (dateString: string) => {
+export const formatDateTable = (dateString: string | Date) => {
   if (!dateString) return "-";
   return dayjs(dateString).format("DD MMM YYYY");
 };

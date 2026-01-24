@@ -1,18 +1,6 @@
-export interface ItemData {
-  id: number;
-  code: string;
-  name: string;
-  category: string;
-  stock: number;
-  unit: string;
-  pricePerUnit: number;
-  status: string;
-}
+import { Item } from "@/types/item";
 
-export const exportToCSV = (
-  items: ItemData[],
-  filename: string = "bahan-mbg"
-) => {
+export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
   const headers = [
     "Kode",
     "Nama Bahan",
@@ -20,21 +8,19 @@ export const exportToCSV = (
     "Stok",
     "Satuan",
     "Harga per Satuan",
-    "Status",
   ];
 
   const csvContent = [
     headers.join(","),
     ...items.map((item) =>
       [
-        item.code,
+        item.id,
         `"${item.name}"`,
         item.category,
         item.stock,
-        item.unit,
+        item.measureUnit,
         item.pricePerUnit,
-        item.status,
-      ].join(",")
+      ].join(","),
     ),
   ].join("\n");
 
@@ -47,7 +33,7 @@ export const exportToCSV = (
   link.setAttribute("href", url);
   link.setAttribute(
     "download",
-    `${filename}-${new Date().toISOString().split("T")[0]}.csv`
+    `${filename}-${new Date().toISOString().split("T")[0]}.csv`,
   );
   link.style.visibility = "hidden";
   document.body.appendChild(link);
@@ -55,12 +41,12 @@ export const exportToCSV = (
   document.body.removeChild(link);
 };
 
-export const parseCSV = (csvText: string): Partial<ItemData>[] => {
+export const parseCSV = (csvText: string): Item[] => {
   const lines = csvText.split("\n").filter((line) => line.trim());
 
   if (lines.length < 2) {
     throw new Error(
-      "File CSV harus memiliki header dan minimal satu baris data"
+      "File CSV harus memiliki header dan minimal satu baris data",
     );
   }
 
@@ -85,7 +71,7 @@ export const parseCSV = (csvText: string): Partial<ItemData>[] => {
     }
     values.push(current.trim());
 
-    if (values.length < 6) {
+    if (values.length < 5) {
       throw new Error(`Baris ${index + 2} tidak memiliki kolom yang cukup`);
     }
 
@@ -96,7 +82,6 @@ export const parseCSV = (csvText: string): Partial<ItemData>[] => {
       stock: parseInt(values[3]) || 0,
       unit: values[4],
       pricePerUnit: parseInt(values[5]) || 0,
-      status: values[6] || "active",
     };
   });
 };
@@ -109,7 +94,6 @@ export const downloadCSVTemplate = () => {
     "Stok",
     "Satuan",
     "Harga per Satuan",
-    "Status",
   ];
   const exampleRow = [
     "BHN-001",
@@ -118,7 +102,6 @@ export const downloadCSVTemplate = () => {
     "100",
     "kg",
     "14000",
-    "active",
   ];
 
   const csvContent = [headers.join(","), exampleRow.join(",")].join("\n");

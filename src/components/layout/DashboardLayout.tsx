@@ -54,47 +54,24 @@ const DashboardLayout = ({
                 />
               </div>
             </div>
-
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
               </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center gap-2 px-2"
-                  >
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                        {auth.user.fullname
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium hidden sm:inline">
-                      {auth.user.fullname}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="w-4 h-4 mr-2" />
-                    Profil
-                  </DropdownMenuItem>
-                  {/* <DropdownMenuItem
-                    onClick={async () => await auth.logout()}
-                    className="text-destructive"
-                  >
-                    Keluar
-                  </DropdownMenuItem> */}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button variant="ghost" className="flex items-center gap-2 px-2">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                    {auth.user.fullname
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium hidden sm:inline">
+                  {auth.user.fullname}
+                </span>
+              </Button>
             </div>
           </div>
         </header>

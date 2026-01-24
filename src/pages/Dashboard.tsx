@@ -12,8 +12,6 @@ import {
   BarChart3,
 } from "lucide-react";
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -21,6 +19,9 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Pie,
+  Cell,
+  PieChart,
 } from "recharts";
 
 const statsCards = [
@@ -41,14 +42,6 @@ const statsCards = [
     color: "success",
   },
   {
-    title: "Porsi Terlayani",
-    value: "45,200",
-    change: "+8.1%",
-    trend: "up",
-    icon: TrendingUp,
-    color: "warning",
-  },
-  {
     title: "Pengeluaran Bulan Ini",
     value: "Rp 12.8M",
     change: "+5.2%",
@@ -58,13 +51,20 @@ const statsCards = [
   },
 ];
 
-const porsiData = [
-  { name: "Jan", value: 38000 },
-  { name: "Feb", value: 42000 },
-  { name: "Mar", value: 45000 },
-  { name: "Apr", value: 48000 },
-  { name: "May", value: 44000 },
-  { name: "Jun", value: 45200 },
+const expenseCategories = [
+  { name: "Bahan Makanan", value: 55, color: "hsl(var(--chart-1))" },
+  { name: "Bahan Pendukung", value: 20, color: "hsl(var(--chart-2))" },
+  { name: "Operasional", value: 15, color: "hsl(var(--chart-3))" },
+  { name: "Logistik", value: 10, color: "hsl(var(--chart-4))" },
+];
+
+const monthlyExpenseData = [
+  { month: "Jul", bahan: 28000000, operasional: 8000000 },
+  { month: "Aug", bahan: 32000000, operasional: 9000000 },
+  { month: "Sep", bahan: 30000000, operasional: 7500000 },
+  { month: "Oct", bahan: 35000000, operasional: 10000000 },
+  { month: "Nov", bahan: 38000000, operasional: 9500000 },
+  { month: "Dec", bahan: 42000000, operasional: 11000000 },
 ];
 
 const itemsData = [
@@ -108,8 +108,7 @@ export default function Dashboard() {
       title="Dashboard"
       subtitle="Selamat datang kembali! Berikut ringkasan data terbaru."
     >
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {statsCards.map((stat, index) => (
           <motion.div
             key={stat.title}
@@ -164,10 +163,7 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </div>
-
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Revenue Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -177,44 +173,30 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">
-                Porsi Terlayani Bulanan
+                Pengeluaran Bulanan
               </CardTitle>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="w-4 h-4 text-success" />
-                <span>+8.1% dari bulan lalu</span>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-primary" />
+                  <span className="text-muted-foreground">Bahan</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-chart-2" />
+                  <span className="text-muted-foreground">Operasional</span>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={porsiData}>
-                    <defs>
-                      <linearGradient
-                        id="colorRevenue"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="5%"
-                          stopColor="hsl(var(--primary))"
-                          stopOpacity={0.3}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="hsl(var(--primary))"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
+                  <BarChart data={monthlyExpenseData}>
                     <CartesianGrid
                       strokeDasharray="3 3"
                       stroke="hsl(var(--border))"
                       vertical={false}
                     />
                     <XAxis
-                      dataKey="name"
+                      dataKey="month"
                       axisLine={false}
                       tickLine={false}
                       tick={{
@@ -229,7 +211,7 @@ export default function Dashboard() {
                         fill: "hsl(var(--muted-foreground))",
                         fontSize: 12,
                       }}
-                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                      tickFormatter={(value) => `${value / 1000000}M`}
                     />
                     <Tooltip
                       contentStyle={{
@@ -238,25 +220,84 @@ export default function Dashboard() {
                         borderRadius: "8px",
                       }}
                       formatter={(value: number) => [
-                        `${value.toLocaleString()} porsi`,
-                        "Terlayani",
+                        `Rp ${(value / 1000000).toFixed(1)}M`,
                       ]}
                     />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      fill="url(#colorRevenue)"
+                    <Bar
+                      dataKey="bahan"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
                     />
-                  </AreaChart>
+                    <Bar
+                      dataKey="operasional"
+                      fill="hsl(var(--chart-2))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         </motion.div>
-
-        {/* Items by Category */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">
+                Komposisi Pengeluaran
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={expenseCategories}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {expenseCategories.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: number) => [`${value}%`, "Persentase"]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 space-y-2">
+                {expenseCategories.map((cat) => (
+                  <div
+                    key={cat.name}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: cat.color }}
+                      />
+                      <span className="text-muted-foreground">{cat.name}</span>
+                    </div>
+                    <span className="font-medium">{cat.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

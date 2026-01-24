@@ -8,7 +8,7 @@ import {
   User,
   UsersStats,
 } from "@/types/user";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 
 export const useCreateUser = () => {
   return useMutation({
@@ -38,6 +38,10 @@ export const useEditUser = () => {
       );
       return response.data.status;
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["users_stats"] });
+    },
   });
 };
 
@@ -56,11 +60,13 @@ export const useDeleteUser = () => {
   });
 };
 
-export const useGetAllUsers = () => {
+export const useGetAllUsers = (page: number, limit: number) => {
   return useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", page, limit],
     queryFn: async () => {
-      const response = await axiosInstance.get<ApiResponse<User[]>>("/users");
+      const response = await axiosInstance.get<ApiResponse<User[]>>(
+        `/users?page=${page}&size=${limit}`,
+      );
       return {
         users: response.data.data,
         paging: response.data.paging,
@@ -69,9 +75,9 @@ export const useGetAllUsers = () => {
         paging: PagingMetadata;
       };
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    placeholderData: keepPreviousData,
   });
 };
 
@@ -83,7 +89,22 @@ export const useGetUsersStats = () => {
         await axiosInstance.get<ApiResponse<UsersStats>>("/users/stats");
       return response.data.data;
     },
-    staleTime: 1000 * 60 * 4,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
+};
+
+export const useDownloadUserLetter = async (filename: string) => {
+  const response = await axiosInstance.get(`/storage/${filename}`, {
+    responseType: "blob",
+    headers: {
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+    params: {
+      _t: new Date().getTime(),
+    },
+  });
+  return response.data;
 };

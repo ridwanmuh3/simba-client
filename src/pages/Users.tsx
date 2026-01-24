@@ -1,17 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
   MoreHorizontal,
-  Edit,
-  Trash2,
-  Eye,
   Shield,
   ShieldCheck,
-  Mail,
-  Calendar,
   Users2,
   UserCircle,
+  Download,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,12 +24,15 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useGetAllUsers, useGetUsersStats } from "@/api/users";
+import {
+  useDownloadUserLetter,
+  useGetAllUsers,
+  useGetUsersStats,
+} from "@/api/users";
 import { formatDateDetail, formatDateRelative } from "@/lib/date-utils";
 import { User } from "@/types/user";
 import Spinner from "@/components/Spinner";
@@ -41,16 +40,63 @@ import StatsCard from "@/components/StatsCard";
 import { getInitialsIdentity } from "@/lib/utils";
 import AddUserForm from "@/components/users/CreateUserDialog";
 import DeleteUserDialog from "@/components/users/DeleteUserDialog";
+import DataTablePagination from "@/components/DataTablePagination";
+import { useSearchParams } from "react-router";
+import EditUserDialog from "@/components/users/EditUserDialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 const Users = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 5;
 
-  const { data: usersData, isLoading: isUsersLoading } = useGetAllUsers();
+  const handlePageChange = (newPage: number) => {
+    setSearchParams((prev) => {
+      prev.set("page", String(newPage));
+      return prev;
+    });
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setSearchParams((prev) => {
+      prev.set("limit", String(newLimit));
+      prev.set("page", "1");
+      return prev;
+    });
+  };
+
+  const { data: usersData, isLoading: isUsersLoading } = useGetAllUsers(
+    page,
+    limit,
+  );
   const { data: usersStats, isLoading: isStatsLoading } = useGetUsersStats();
 
   const renderStat = (value: number | undefined) => {
-    if (isStatsLoading) return <Spinner />;
+    if (isStatsLoading) return <Skeleton className="h-8 w-24 rounded-md" />;
     return value || 0;
+  };
+
+  const downloadUserLetterHandler = async () => {
+    try {
+      const url = "/surat-pendaftaran-hak-akses.pdf";
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "surat-pendaftaran-hak-akses.pdf");
+
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Gagal mengunduh dokumen",
+        description: "Terjadi kesalahan ketika mengunduh dokumen.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredUsers =
@@ -60,55 +106,88 @@ const Users = () => {
         user.username.toLowerCase().includes(searchQuery.toLowerCase()),
     ) || [];
 
+  const usersStatsData = [
+    {
+      title: "Total Pengguna",
+      value: usersStats?.usersTotal,
+      icon: <Users2 className="w-5 h-5 text-primary" />,
+      bgIcon: "bg-primary/10",
+    },
+    {
+      title: "Super Admin",
+      value: usersStats?.usersSuperAdminTotal,
+      icon: <ShieldCheck className="w-5 h-5 text-warning" />,
+      bgIcon: "bg-warning/10",
+    },
+    {
+      title: "Admin",
+      value: usersStats?.usersAdminTotal,
+      icon: <Shield className="w-5 h-5 text-primary" />,
+      bgIcon: "bg-primary/10",
+    },
+    {
+      title: "Pengguna Aktif",
+      value: usersStats?.usersActiveTotal,
+      icon: <Shield className="w-5 h-5 text-success" />,
+      bgIcon: "bg-success/10",
+    },
+  ];
+
   return (
     <DashboardLayout
       title="Kelola Pengguna"
       subtitle="Kelola data pengguna dan hak akses sistem"
     >
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="flex flex-col sm:flex-row gap-6 mb-6"
+      >
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Cari pengguna..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-9 bg-card"
           />
+        </div>
+        <div className="flex gap-2 w-full sm:w-fit">
+          <Button
+            className="w-full bg-card"
+            variant="outline"
+            onClick={downloadUserLetterHandler}
+          >
+            <Download />
+            Unduh Pengajuan Akses
+          </Button>
         </div>
         <div className="flex gap-2 w-full sm:w-fit">
           <AddUserForm />
         </div>
-      </div>
-      <div className="grid grid-cols-1 min-[548px]:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard
-          title="Total Pengguna"
-          value={renderStat(usersStats?.usersTotal)}
-          icon={<Users2 className="w-5 h-5 text-primary" />}
-          bgIcon="bg-primary/10"
-        />
-        <StatsCard
-          title="Super Admin"
-          value={renderStat(usersStats?.usersSuperAdminTotal)}
-          icon={<ShieldCheck className="w-5 h-5 text-warning" />}
-          bgIcon="bg-warning/10"
-        />
-        <StatsCard
-          title="Admin"
-          value={renderStat(usersStats?.usersAdminTotal)}
-          icon={<Shield className="w-5 h-5 text-primary" />}
-          bgIcon="bg-primary/10"
-        />
-        <StatsCard
-          title="Pengguna Aktif"
-          value={renderStat(usersStats?.usersActiveTotal)}
-          icon={<Shield className="w-5 h-5 text-success" />}
-          bgIcon="bg-success/10"
-        />
+      </motion.div>
+      <div className="grid grid-cols-1 min-[548px]:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {usersStatsData.map((stat, index) => (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: (index + 1) * 0.1 }}
+          >
+            <StatsCard
+              key={index}
+              title={stat.title}
+              value={renderStat(stat.value)}
+              icon={stat.icon}
+              bgIcon={stat.bgIcon}
+            />
+          </motion.div>
+        ))}
       </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.6 }}
       >
         <Card>
           <CardContent className="p-0">
@@ -125,14 +204,15 @@ const Users = () => {
               </TableHeader>
               <TableBody>
                 {isUsersLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      <div className="flex w-full h-full items-center justify-center gap-2 text-muted-foreground">
-                        <Spinner />
-                        Memuat data pengguna...
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      {Array.from({ length: 6 }).map((_, cellIndex) => (
+                        <TableCell key={cellIndex}>
+                          <Skeleton className="h-4 w-full rounded-md" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center">
@@ -217,19 +297,11 @@ const Users = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={(e) => e.preventDefault()}
-                              >
-                                <DeleteUserDialog
-                                  userId={user.id}
-                                  username={user.username}
-                                />
-                              </DropdownMenuItem>
+                              <EditUserDialog user={user} />
+                              <DeleteUserDialog
+                                userId={user.id}
+                                username={user.username}
+                              />
                             </DropdownMenuContent>
                           </DropdownMenu>
                         ) : null}
@@ -241,6 +313,14 @@ const Users = () => {
             </Table>
           </CardContent>
         </Card>
+        <DataTablePagination
+          currentPage={page}
+          pageSize={limit}
+          totalPages={usersData?.paging.totalPage || 1}
+          totalItems={usersData?.paging.totalItem || 0}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handleLimitChange}
+        />
       </motion.div>
     </DashboardLayout>
   );

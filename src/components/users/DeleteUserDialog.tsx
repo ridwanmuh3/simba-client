@@ -15,6 +15,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { toast } from "@/hooks/use-toast";
 import { AxiosError } from "axios";
+import { DropdownMenuItem } from "../ui/dropdown-menu";
 
 interface DeleteUserDialogProps {
   userId: number;
@@ -57,24 +58,24 @@ const DeleteUserDialog = ({ userId, username }: DeleteUserDialogProps) => {
   return (
     <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
       <DialogTrigger asChild>
-        <button className="flex items-center w-full bg-slate-300">
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onSelect={(e) => e.preventDefault()}
+        >
           <Trash2 className="w-4 h-4 mr-2" />
           Hapus
-        </button>
+        </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Hapus Pengguna</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
+          <DialogDescription className="text-sm text-foreground">
             Apakah yakin anda ingin menghapus akun ini? Akun pengguna yang
             dihapus tidak dapat dipulihkan.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label
-            className="text-sm text-muted-foreground"
-            htmlFor="deleted-username"
-          >
+          <Label className="text-sm text-foreground" htmlFor="deleted-username">
             Untuk konfirmasi, silahkan ketik "{username}" di dalam kotak
           </Label>
           <Input

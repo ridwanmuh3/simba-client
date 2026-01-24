@@ -16,31 +16,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
-import { Eye, EyeOff, Plus } from "lucide-react";
+import { Edit, Eye, EyeOff } from "lucide-react";
 import { Input } from "../ui/input";
-import { Dispatch, SetStateAction, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { EditUserFormInputs, editUserSchema } from "@/schemas/user/edit-user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEditUser } from "@/api/users";
 import { toast } from "@/hooks/use-toast";
+import { User } from "@/types/user";
+import { DropdownMenuItem } from "../ui/dropdown-menu";
+import { AxiosError } from "axios";
 
 interface EditUserDialogProps {
-  isAddDialogOpen: boolean;
-  setIsAddDialogOpen: Dispatch<SetStateAction<boolean>>;
+  user: User;
 }
 
-const EditUserDialog = ({
-  isAddDialogOpen,
-  setIsAddDialogOpen,
-}: EditUserDialogProps) => {
+const EditUserDialog = ({ user }: EditUserDialogProps) => {
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const createUser = useEditUser();
+  const editUser = useEditUser();
   const form = useForm<EditUserFormInputs>({
     resolver: zodResolver(editUserSchema),
     defaultValues: {
-      fullname: "",
+      fullname: user.fullname,
       password: "",
     },
   });
@@ -48,40 +48,46 @@ const EditUserDialog = ({
   const submitHandler = async (data: EditUserFormInputs) => {
     setErrorMsg("");
     try {
-      const status = await createUser.mutateAsync(data);
-      if (status === 201) {
-        setIsAddDialogOpen(false);
+      const status = await editUser.mutateAsync({ id: user.id, ...data });
+      if (status === 200) {
+        setIsEditDialogOpen(false);
         toast({
-          title: "Berhasil menyimpan pengguna",
-          description: `Anda telah menyimpan pengguna dengan nama "${data.fullname}"`,
+          title: "Berhasil mengubah pengguna",
+          description: `Anda telah mengubah pengguna dengan username "${user.username}"`,
         });
         form.reset();
       } else {
         console.log(status);
       }
     } catch (err: unknown) {
-      const e = err as Error;
-      setErrorMsg(e.message);
+      const e = err as AxiosError;
+      let errMsg = "";
+      switch (e.status) {
+        default:
+          errMsg = "Terjadi kesalahan server";
+          break;
+      }
+      setErrorMsg(errMsg);
     }
   };
 
   return (
-    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Tambah Pengguna
-        </Button>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+          <Edit className="w-4 h-4 mr-2" />
+          Edit
+        </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tambah Pengguna Baru</DialogTitle>
+          <DialogTitle>Mengubah Pengguna</DialogTitle>
           <DialogDescription>
-            Masukkan informasi pengguna yang akan ditambahkan
+            Ubah informasi pengguna yang telah dibuat
           </DialogDescription>
         </DialogHeader>
         <form
-          id="create-user-form"
+          id="edit-user-form"
           onSubmit={form.handleSubmit(submitHandler)}
           className="grid gap-4 py-4"
         >
@@ -91,7 +97,7 @@ const EditUserDialog = ({
               {...form.register("fullname")}
               id="fullname"
               placeholder="Masukkan nama lengkap"
-              disabled={createUser.isPending}
+              disabled={editUser.isPending}
               autoComplete="false"
             />
             {form.formState.errors.fullname && (
@@ -103,39 +109,23 @@ const EditUserDialog = ({
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <Input
-              {...form.register("username")}
               id="username"
               placeholder="admin123"
-              disabled={createUser.isPending}
+              disabled
               autoComplete="false"
+              value={user.username}
             />
-            {form.formState.errors.username && (
-              <p className="text-xs text-red-500">
-                {form.formState.errors.username.message}
-              </p>
-            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Controller
-              name="role"
-              control={form.control}
-              rules={{ required: "Role wajib dipilih" }}
-              render={({ field }) => (
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Pilih role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {/* <SelectItem value="Super Admin">Super Admin</SelectItem> */}
-                    <SelectItem value="Admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
+            <Select defaultValue={user.role} disabled>
+              <SelectTrigger id="role">
+                <SelectValue placeholder="Pilih role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2 relative">
             <Label htmlFor="password">Password</Label>
@@ -145,7 +135,7 @@ const EditUserDialog = ({
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                disabled={createUser.isPending}
+                disabled={editUser.isPending}
               />
               <button
                 type="button"
@@ -169,15 +159,17 @@ const EditUserDialog = ({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => setIsAddDialogOpen(false)}
-            disabled={createUser.isPending}
+            onClick={() => setIsEditDialogOpen(false)}
+            disabled={editUser.isPending}
           >
             Batal
           </Button>
           <Button
             type="submit"
-            form="create-user-form"
-            disabled={createUser.isPending}
+            form="edit-user-form"
+            disabled={
+              editUser.isPending || form.watch("fullname") === user.fullname
+            }
           >
             Simpan
           </Button>
