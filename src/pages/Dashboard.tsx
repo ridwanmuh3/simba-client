@@ -7,9 +7,9 @@ import {
   Wallet,
   TrendingUp,
   TrendingDown,
-  ArrowUpRight,
-  ArrowDownRight,
   BarChart3,
+  PackagePlus,
+  PackageMinus,
 } from "lucide-react";
 import {
   XAxis,
@@ -17,36 +17,60 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
   Bar,
   Pie,
   Cell,
   PieChart,
+  LineChart,
+  Line,
+  Legend,
 } from "recharts";
 
-const statsCards = [
+const stockStatsCards = [
   {
     title: "Total Bahan",
-    value: "1,284",
-    change: "+12%",
-    trend: "up",
+    value: "1324",
+    change: "Beras Merah - 50 Kg",
     icon: Package,
     color: "primary",
   },
   {
-    title: "Operator Aktif",
-    value: "24",
-    change: "+3",
-    trend: "up",
-    icon: Users,
+    title: "Bahan Masuk",
+    value: "1,284",
+    icon: PackagePlus,
     color: "success",
   },
   {
-    title: "Pengeluaran Bulan Ini",
-    value: "Rp 12.8M",
-    change: "+5.2%",
-    trend: "up",
+    title: "Bahan Keluar",
+    value: "24",
+    icon: PackageMinus,
+    color: "destructive",
+  },
+];
+
+const financeStatsCards = [
+  {
+    title: "Total Anggaran",
+    value: "Rp 5 Milyar",
     icon: Wallet,
+    change: "+2% naik dari bulan lalu",
+    trend: "up",
+    color: "primary",
+  },
+  {
+    title: "Anggaran Masuk",
+    value: "Rp 7 Milyar",
+    icon: Wallet,
+    change: "+3% naik dari bulan lalu",
+    trend: "up",
+    color: "success",
+  },
+  {
+    title: "Anggaran Keluar",
+    value: "Rp 2 Milyar",
+    icon: Wallet,
+    change: "-1% turun dari bulan lalu",
+    trend: "down",
     color: "destructive",
   },
 ];
@@ -58,21 +82,37 @@ const expenseCategories = [
   { name: "Logistik", value: 10, color: "hsl(var(--chart-4))" },
 ];
 
-const monthlyExpenseData = [
-  { month: "Jul", bahan: 28000000, operasional: 8000000 },
-  { month: "Aug", bahan: 32000000, operasional: 9000000 },
-  { month: "Sep", bahan: 30000000, operasional: 7500000 },
-  { month: "Oct", bahan: 35000000, operasional: 10000000 },
-  { month: "Nov", bahan: 38000000, operasional: 9500000 },
-  { month: "Dec", bahan: 42000000, operasional: 11000000 },
-];
-
-const itemsData = [
-  { name: "Beras", value: 450 },
-  { name: "Sayuran", value: 380 },
-  { name: "Protein", value: 320 },
-  { name: "Bumbu", value: 180 },
-  { name: "Lainnya", value: 154 },
+export const monthlyExpenseData = [
+  {
+    month: "Jan",
+    pemasukan: 25000000, // Awal tahun anggaran turun besar
+    pengeluaran: 18500000, // Belanja stok awal banyak
+  },
+  {
+    month: "Feb",
+    pemasukan: 20000000,
+    pengeluaran: 16200000, // Operasional stabil
+  },
+  {
+    month: "Mar",
+    pemasukan: 22500000,
+    pengeluaran: 19800000, // Harga bahan pasar naik sedikit
+  },
+  {
+    month: "Apr",
+    pemasukan: 18000000, // Pemasukan sedikit turun
+    pengeluaran: 15500000, // Penghematan bahan
+  },
+  {
+    month: "Mei",
+    pemasukan: 24000000, // Ada dana tambahan cair
+    pengeluaran: 21000000, // Pengeluaran meningkat (mungkin ada event)
+  },
+  {
+    month: "Jun",
+    pemasukan: 28000000, // Penutupan semester
+    pengeluaran: 23500000, // Restock besar untuk bulan depan
+  },
 ];
 
 const recentActivities = [
@@ -109,14 +149,16 @@ export default function Dashboard() {
       subtitle="Selamat datang kembali! Berikut ringkasan data terbaru."
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        {statsCards.map((stat, index) => (
+        {stockStatsCards.map((stat, index) => (
           <motion.div
             key={stat.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
+            className="h-full" /* 1. Tambahkan h-full di sini */
           >
-            <Card className="hover-lift cursor-pointer">
+            {/* 2. Hapus h-fit, ganti dengan h-full */}
+            <Card className="hover-lift cursor-pointer h-full flex flex-col justify-between">
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between">
                   <div>
@@ -125,22 +167,61 @@ export default function Dashboard() {
                     </p>
                     <p className="text-2xl font-bold">{stat.value}</p>
                     <div className="flex items-center mt-2">
-                      {stat.trend === "up" ? (
-                        <ArrowUpRight className="w-4 h-4 text-success" />
-                      ) : (
-                        <ArrowDownRight className="w-4 h-4 text-destructive" />
-                      )}
+                      <span className="text-sm font-medium">{stat.change}</span>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      stat.color === "primary"
+                        ? "bg-primary/10 text-primary"
+                        : stat.color === "success"
+                          ? "bg-success/10 text-success"
+                          : stat.color === "warning"
+                            ? "bg-warning/10 text-warning"
+                            : "bg-destructive/10 text-destructive"
+                    }`}
+                  >
+                    <stat.icon className="w-6 h-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+
+        {financeStatsCards.map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="h-full" /* 3. Tambahkan h-full di sini juga */
+          >
+            {/* 4. Tambahkan h-full di sini */}
+            <Card className="hover-lift cursor-pointer h-full flex flex-col justify-between">
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {stat.title}
+                    </p>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <div className="flex items-center mt-2 gap-1.5">
+                      <span>
+                        {stat.trend === "up" ? (
+                          <TrendingUp className="text-green-500 size-4" />
+                        ) : (
+                          <TrendingDown className="text-red-500 size-4" />
+                        )}
+                      </span>
                       <span
                         className={`text-sm font-medium ${
                           stat.trend === "up"
-                            ? "text-success"
-                            : "text-destructive"
+                            ? "text-green-500"
+                            : "text-red-500"
                         }`}
                       >
                         {stat.change}
-                      </span>
-                      <span className="text-sm text-muted-foreground ml-1">
-                        vs bulan lalu
                       </span>
                     </div>
                   </div>
@@ -173,67 +254,97 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg font-semibold">
-                Pengeluaran Bulanan
+                Anggaran Bulanan
               </CardTitle>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-primary" />
-                  <span className="text-muted-foreground">Bahan</span>
+                  <div className="size-3 rounded-full bg-chart-2" />
+                  <span className="text-muted-foreground">Masuk</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-chart-2" />
-                  <span className="text-muted-foreground">Operasional</span>
+                  <div className="size-3 rounded-full bg-chart-5" />
+                  <span className="text-muted-foreground">Keluar</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
+              <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyExpenseData}>
+                  <LineChart data={monthlyExpenseData}>
                     <CartesianGrid
                       strokeDasharray="3 3"
                       stroke="hsl(var(--border))"
                       vertical={false}
                     />
+
                     <XAxis
                       dataKey="month"
                       axisLine={false}
                       tickLine={false}
+                      dy={10} // Memberi jarak sedikit ke bawah
                       tick={{
                         fill: "hsl(var(--muted-foreground))",
                         fontSize: 12,
                       }}
                     />
+
                     <YAxis
                       axisLine={false}
                       tickLine={false}
+                      dx={-10} // Memberi jarak sedikit ke kiri
                       tick={{
                         fill: "hsl(var(--muted-foreground))",
                         fontSize: 12,
                       }}
                       tickFormatter={(value) => `${value / 1000000}M`}
                     />
+
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
+                        color: "hsl(var(--card-foreground))",
                       }}
                       formatter={(value: number) => [
                         `Rp ${(value / 1000000).toFixed(1)}M`,
                       ]}
                     />
-                    <Bar
-                      dataKey="bahan"
-                      fill="hsl(var(--primary))"
-                      radius={[4, 4, 0, 0]}
+
+                    {/* Menampilkan Legenda (Petunjuk Warna) */}
+                    {/* <Legend
+                      verticalAlign="top"
+                      height={36}
+                      iconType="circle"
+                      formatter={(value) => (
+                        <span className="text-sm text-muted-foreground capitalize">
+                          {value}
+                        </span>
+                      )}
+                    /> */}
+
+                    {/* Garis 1: Pemasukan (Anggaran Masuk) */}
+                    <Line
+                      type="monotone" // Membuat garis melengkung halus
+                      dataKey="pemasukan" // Pastikan field ini ada di JSON data Anda
+                      name="Pemasukan"
+                      stroke="hsl(var(--chart-2))" // Warna garis
+                      strokeWidth={3}
+                      dot={false} // Hilangkan titik data jika terlalu ramai
+                      activeDot={{ r: 6, strokeWidth: 0 }} // Titik saat di-hover
                     />
-                    <Bar
-                      dataKey="operasional"
-                      fill="hsl(var(--chart-2))"
-                      radius={[4, 4, 0, 0]}
+
+                    {/* Garis 2: Pengeluaran (Anggaran Keluar) */}
+                    <Line
+                      type="monotone"
+                      dataKey="pengeluaran" // Pastikan field ini ada di JSON data Anda
+                      name="Pengeluaran"
+                      stroke="hsl(var(--chart-5))" // Warna garis (merah/chart-2)
+                      strokeWidth={3}
+                      dot={false}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
                     />
-                  </BarChart>
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
@@ -294,66 +405,6 @@ export default function Dashboard() {
                     <span className="font-medium">{cat.value}%</span>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-semibold">
-                Bahan per Kategori
-              </CardTitle>
-              <BarChart3 className="w-5 h-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={itemsData} layout="vertical">
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="hsl(var(--border))"
-                      horizontal={false}
-                    />
-                    <XAxis
-                      type="number"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "hsl(var(--muted-foreground))",
-                        fontSize: 12,
-                      }}
-                    />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "hsl(var(--muted-foreground))",
-                        fontSize: 12,
-                      }}
-                      width={80}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => [`${value} kg`, "Stok"]}
-                    />
-                    <Bar
-                      dataKey="value"
-                      fill="hsl(var(--primary))"
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

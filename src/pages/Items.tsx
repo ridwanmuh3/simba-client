@@ -1,274 +1,22 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  Search,
-  Trash2,
-  FileText,
-  FileDown,
   Package,
   PackagePlus,
   PackageMinus,
   ClipboardCheck,
-  Calendar,
-  Save,
-  X,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { exportToCSV, parseCSV, downloadCSVTemplate } from "@/lib/csv-utils";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { Item } from "@/types/item";
-import MasterItemTab from "@/components/items/MasterItemTab";
-import { formatDateTable } from "@/lib/date-utils";
-import { formatCurrency } from "@/lib/utils";
-
-// Types for transactions
-interface StockTransaction {
-  id: "number";
-  date: Date;
-  itemCode: string;
-  itemName: string;
-  unit: string;
-  qty: number;
-  pricePerUnit: number;
-  supplier?: string;
-  notes?: string;
-}
-
-const initialItems: Item[] = [
-  {
-    id: "1",
-    name: "Beras Premium",
-    category: "Karbohidrat",
-    stock: 500,
-    measureUnit: "kg",
-    pricePerUnit: 14000,
-  },
-  {
-    id: "2",
-    name: "Ayam Potong",
-    category: "Protein",
-    stock: 150,
-    measureUnit: "kg",
-    pricePerUnit: 38000,
-  },
-  {
-    id: "3",
-    name: "Telur Ayam",
-    category: "Protein",
-    stock: 200,
-    measureUnit: "kg",
-    pricePerUnit: 28000,
-  },
-  {
-    id: "4",
-    name: "Tempe",
-    category: "Protein",
-    stock: 150,
-    measureUnit: "bungkus",
-    pricePerUnit: 5000,
-  },
-  {
-    id: "5",
-    name: "Kangkung",
-    category: "Sayuran",
-    stock: 80,
-    measureUnit: "ikat",
-    pricePerUnit: 5000,
-  },
-  {
-    id: "6",
-    name: "Wortel",
-    category: "Sayuran",
-    stock: 45,
-    measureUnit: "kg",
-    pricePerUnit: 12000,
-  },
-  {
-    id: "7",
-    name: "Minyak Goreng",
-    category: "Pendukung",
-    stock: 100,
-    measureUnit: "liter",
-    pricePerUnit: 18000,
-  },
-  {
-    id: "8",
-    name: "Gula Pasir Curah",
-    category: "Pendukung",
-    stock: 30,
-    measureUnit: "kg",
-    pricePerUnit: 17000,
-  },
-];
-
-// const initialIncomingStock: StockTransaction[] = [
-//   {
-//     id: "1",
-//     date: new Date("2025-10-28"),
-//     itemCode: "BHN-004",
-//     itemName: "Tempe",
-//     measureUnit: "bungkus",
-//     qty: 150,
-//     supplier: "CV Tempe Jaya",
-//   },
-//   {
-//     id: "2",
-//     date: new Date("2025-10-27"),
-//     itemCode: "BHN-008",
-//     itemName: "Gula Pasir Curah",
-//     measureUnit: "kg",
-//     qty: 2,
-//     supplier: "Toko Grosir",
-//   },
-//   {
-//     id: "3",
-//     date: new Date("2025-10-27"),
-//     itemCode: "BHN-001",
-//     itemName: "Beras Premium",
-//     measureUnit: "kg",
-//     qty: 1,
-//     supplier: "Toko Beras Makmur",
-//   },
-// ];
-
-// const initialOutgoingStock: StockTransaction[] = [
-//   {
-//     id: "1",
-//     date: new Date("2025-10-28"),
-//     itemCode: "BHN-001",
-//     itemName: "Beras Premium",
-//     measureUnit: "kg",
-//     qty: 50,
-//     notes: "Menu hari Senin",
-//   },
-//   {
-//     id: "2",
-//     date: new Date("2025-10-28"),
-//     itemCode: "BHN-002",
-//     itemName: "Ayam Potong",
-//     measureUnit: "kg",
-//     qty: 20,
-//     notes: "Menu hari Senin",
-//   },
-// ];
+import MasterItemTab from "@/components/items/tabs/MasterItemTab";
+import AddItemStockTab from "@/components/items/tabs/AddItemStockTab";
+import ReduceItemStockTab from "@/components/items/tabs/ReduceItemStockTab";
 
 const Items = () => {
   const [activeTab, setActiveTab] = useState("data-bahan");
-  const [items, setItems] = useState<Item[]>(initialItems);
-  // const [incomingStock, setIncomingStock] =
-  //   useState<StockTransaction[]>(initialIncomingStock);
-  // const [outgoingStock, setOutgoingStock] =
-  //   useState<StockTransaction[]>(initialOutgoingStock);
-
-  // Form states
-  const [formDate, setFormDate] = useState<Date>(new Date());
   const [formItemCode, setFormItemCode] = useState("");
-  const [formItemName, setFormItemName] = useState("");
-  const [formUnit, setFormUnit] = useState("");
   const [formQty, setFormQty] = useState("");
-  const [formPrice, setFormPrice] = useState("");
-  const [formSupplier, setFormSupplier] = useState("");
-  const [formCategory, setFormCategory] = useState("");
-  const [formCurrentStock, setFormCurrentStock] = useState("");
-
-  // Filter states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-
-  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [importPreview, setImportPreview] = useState<Partial<Item>[]>([]);
-  // const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // const clearForm = () => {
-  //   setFormItemCode("");
-  //   setFormItemName("");
-  //   setFormUnit("");
-  //   setFormQty("");
-  //   setFormPrice("");
-  //   setFormSupplier("");
-  //   setFormCategory("");
-  //   setFormCurrentStock("");
-  //   setFormDate(new Date());
-  //   setSelectedId(null);
-  // };
-
-  // const handleSelectItem = (item: Item) => {
-  //   setFormItemCode(item.code);
-  //   setFormItemName(item.name);
-  //   setFormUnit(item.unit);
-  //   setFormPrice(item.pricePerUnit.toString());
-  //   setFormCategory(item.category);
-  //   setFormCurrentStock(item.stock.toString());
-  //   setSelectedId(item.id);
-  // };
-
-  // const handleSelectTransaction = (transaction: StockTransaction) => {
-  //   setFormItemCode(transaction.itemCode);
-  //   setFormItemName(transaction.itemName);
-  //   setFormUnit(transaction.unit);
-  //   setFormQty(transaction.qty.toString());
-  //   setFormPrice(transaction.pricePerUnit.toString());
-  //   setFormSupplier(transaction.supplier || "");
-  //   setFormDate(transaction.date);
-  //   setSelectedId(transaction.id);
-  // };
-
-  const handleSaveBarangMasuk = () => {
-    if (!formItemCode || !formQty) {
-      toast.error("Pilih bahan dan masukkan jumlah");
-      return;
-    }
-
-    // const newTransaction: StockTransaction = {
-    //   id: "incomingStock".length + 1,
-    //   date: formDate,
-    //   itemCode: formItemCode,
-    //   itemName: formItemName,
-    //   unit: formUnit,
-    //   qty: Number(formQty),
-    //   pricePerUnit: Number(formPrice) || 0,
-    //   supplier: formSupplier,
-  };
-  // setIncomingStock([newTransaction, ...incomingStock]);
 
   const tabItems = [
     { value: "data-bahan", label: "Data bahan", icon: Package },
@@ -285,7 +33,7 @@ const Items = () => {
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="space-y-4"
+        className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
           {tabItems.map((tab) => (
@@ -295,9 +43,9 @@ const Items = () => {
             </TabsTrigger>
           ))}
         </TabsList>
-        {/* Stok Awal Tab */}
         <MasterItemTab />
-        {/* Barang Masuk Tab */}
+        <AddItemStockTab />
+        <ReduceItemStockTab />
         {/* <TabsContent value="barang-masuk" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="lg:col-span-1">
@@ -793,63 +541,6 @@ const Items = () => {
           </Card>
         </TabsContent> */}
       </Tabs>
-
-      {/* Import Dialog */}
-      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Preview Import CSV</DialogTitle>
-            <DialogDescription>
-              {importPreview.length} bahan akan diimpor. Periksa data sebelum
-              konfirmasi.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="max-h-[300px] overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Kode</TableHead>
-                  <TableHead>Nama</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Stok</TableHead>
-                  <TableHead>Satuan</TableHead>
-                  <TableHead>Harga</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {importPreview.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-mono text-sm">
-                      {item.id}
-                    </TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{item.stock}</TableCell>
-                    <TableCell>{item.measureUnit}</TableCell>
-                    <TableCell>
-                      {formatCurrency(item.pricePerUnit || 0)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsImportDialogOpen(false);
-                setImportPreview([]);
-              }}
-            >
-              Batal
-            </Button>
-            {/* <Button onClick={handleImportConfirm}>
-              Import {importPreview.length} Bahan
-            </Button> */}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </DashboardLayout>
   );
 };

@@ -14,7 +14,7 @@ import { axiosInstance } from "@/lib/axios";
 import { AuthContext } from "@/hooks/use-auth";
 import { toast } from "@/hooks/use-toast";
 import Spinner from "./Spinner";
-import { PUBLIC_ROUTES } from "./constants";
+import { PUBLIC_ROUTES } from "../constants";
 import { queryClient } from "@/lib/react-query";
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {

@@ -1,25 +1,24 @@
 import { Item } from "@/types/item";
+import dayjs from "dayjs";
+
+const headers = [
+  "Nama",
+  "Kategori",
+  "Stok",
+  "Satuan Perhitungan",
+  "Satuan Harga",
+];
 
 export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
-  const headers = [
-    "Kode",
-    "Nama Bahan",
-    "Kategori",
-    "Stok",
-    "Satuan",
-    "Harga per Satuan",
-  ];
-
   const csvContent = [
     headers.join(","),
     ...items.map((item) =>
       [
-        item.id,
         `"${item.name}"`,
         item.category,
         item.stock,
         item.measureUnit,
-        item.pricePerUnit,
+        item.unitPrice,
       ].join(","),
     ),
   ].join("\n");
@@ -33,7 +32,7 @@ export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
   link.setAttribute("href", url);
   link.setAttribute(
     "download",
-    `${filename}-${new Date().toISOString().split("T")[0]}.csv`,
+    `${filename}-${dayjs().format("DD-MM-YYYY-HH-mm-ss")}.csv`,
   );
   link.style.visibility = "hidden";
   document.body.appendChild(link);
@@ -50,11 +49,9 @@ export const parseCSV = (csvText: string): Item[] => {
     );
   }
 
-  // Skip header row
   const dataLines = lines.slice(1);
 
   return dataLines.map((line, index) => {
-    // Handle quoted values
     const values: string[] = [];
     let current = "";
     let inQuotes = false;
@@ -76,33 +73,18 @@ export const parseCSV = (csvText: string): Item[] => {
     }
 
     return {
-      code: values[0] || `BHN-${String(Date.now()).slice(-3)}`,
+      id: values[0],
       name: values[1],
       category: values[2],
       stock: parseInt(values[3]) || 0,
-      unit: values[4],
-      pricePerUnit: parseInt(values[5]) || 0,
+      measureUnit: values[4],
+      unitPrice: parseInt(values[5]) || 0,
     };
   });
 };
 
 export const downloadCSVTemplate = () => {
-  const headers = [
-    "Kode",
-    "Nama Bahan",
-    "Kategori",
-    "Stok",
-    "Satuan",
-    "Harga per Satuan",
-  ];
-  const exampleRow = [
-    "BHN-001",
-    "Beras Premium",
-    "Karbohidrat",
-    "100",
-    "kg",
-    "14000",
-  ];
+  const exampleRow = ["Beras", "Karbohidrat", "100", "kg", "14000"];
 
   const csvContent = [headers.join(","), exampleRow.join(",")].join("\n");
 

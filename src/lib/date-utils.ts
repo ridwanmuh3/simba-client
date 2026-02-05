@@ -10,12 +10,12 @@ export const formatDateTable = (dateString: string | Date) => {
   return dayjs(dateString).format("DD MMM YYYY");
 };
 
-export const formatDateDetail = (dateString: string) => {
+export const formatDateDetail = (dateString: string | Date) => {
   if (!dateString) return "-";
   return dayjs(dateString).format("DD MMM YYYY HH:mm");
 };
 
-export const formatDateRelative = (dateString: string) => {
+export const formatDateRelative = (dateString: string | Date) => {
   if (!dateString) return "-";
   return dayjs(dateString).fromNow();
 };

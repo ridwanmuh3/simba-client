@@ -1,0 +1,82 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "../ui/button";
+import { Trash2 } from "lucide-react";
+import { MouseEvent, useState } from "react";
+import { DialogDescription } from "@radix-ui/react-dialog";
+import { toast } from "@/hooks/use-toast";
+import { AxiosError } from "axios";
+import { DropdownMenuItem } from "../ui/dropdown-menu";
+import { useDeleteItem } from "@/api/items";
+
+interface DeleteDialogProps {
+  isPending: boolean;
+  disabledTrigger?: boolean;
+  handleDelete: () => Promise<void>;
+}
+
+const DeleteDialog = ({
+  isPending,
+  handleDelete,
+  disabledTrigger = false,
+}: DeleteDialogProps) => {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const deleteItemButtonHandler = async (e: MouseEvent) => {
+    try {
+      handleDelete();
+      setIsDeleteDialogOpen(false);
+    } catch (err) {
+      console.info(err);
+    }
+  };
+
+  return (
+    <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          className="w-full"
+          disabled={disabledTrigger}
+          variant="destructive"
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Hapus
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Hapus Bahan</DialogTitle>
+          <DialogDescription className="text-sm text-foreground">
+            Apakah yakin anda ingin menghapus bahan ini? Data bahan yang dihapus
+            tidak dapat dipulihkan.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setIsDeleteDialogOpen(false)}
+            disabled={isPending}
+          >
+            Batal
+          </Button>
+          <Button
+            disabled={isPending}
+            variant="destructive"
+            onClick={deleteItemButtonHandler}
+          >
+            Hapus
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default DeleteDialog;

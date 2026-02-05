@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logoBgn from "@/assets/sppg.webp";
 import { AuthContextType } from "@/types/auth";
-import LogoutDialog from "../LogoutDialog";
+import LogoutDialog from "../shared/LogoutDialog";
 import { useSidebarStore } from "@/stores/use-sidebar-store";
 
 interface SidebarProps {
@@ -28,7 +28,7 @@ const menuItems = [
     roles: ["Super Admin", "Admin"],
   },
   {
-    title: "Kelola Barang",
+    title: "Kelola Bahan",
     icon: Package,
     path: "/items",
     roles: ["Super Admin", "Admin"],

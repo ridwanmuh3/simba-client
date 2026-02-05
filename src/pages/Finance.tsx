@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ImageViewer from '../components/shared/ImageViewer';
 import {
   Dialog,
   DialogContent,
@@ -256,178 +257,6 @@ export default function Finance() {
       title="Kelola Keuangan"
       subtitle="Catat pengeluaran dari nota pembelian bahan MBG"
     >
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {financeStats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card className="hover-lift cursor-pointer">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {stat.description}
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <stat.icon className="w-5 h-5" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Monthly Expense Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="lg:col-span-2"
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-semibold">
-                Pengeluaran Bulanan
-              </CardTitle>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-primary" />
-                  <span className="text-muted-foreground">Bahan</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-chart-2" />
-                  <span className="text-muted-foreground">Operasional</span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyExpenseData}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="hsl(var(--border))"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="month"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "hsl(var(--muted-foreground))",
-                        fontSize: 12,
-                      }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{
-                        fill: "hsl(var(--muted-foreground))",
-                        fontSize: 12,
-                      }}
-                      tickFormatter={(value) => `${value / 1000000}M`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => [
-                        `Rp ${(value / 1000000).toFixed(1)}M`,
-                      ]}
-                    />
-                    <Bar
-                      dataKey="bahan"
-                      fill="hsl(var(--primary))"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="operasional"
-                      fill="hsl(var(--chart-2))"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Expense Breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">
-                Komposisi Pengeluaran
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={expenseCategories}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {expenseCategories.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => [`${value}%`, "Persentase"]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 space-y-2">
-                {expenseCategories.map((cat) => (
-                  <div
-                    key={cat.name}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: cat.color }}
-                      />
-                      <span className="text-muted-foreground">{cat.name}</span>
-                    </div>
-                    <span className="font-medium">{cat.value}%</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
       {/* Tabs for Transactions & Reports */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -588,12 +417,12 @@ export default function Finance() {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
+                      <TableHead>No</TableHead>
                       <TableHead>Deskripsi</TableHead>
                       <TableHead>Kategori</TableHead>
                       <TableHead>Tanggal</TableHead>
-                      <TableHead className="text-right">Jumlah</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-center">Aksi</TableHead>
+                      <TableHead>Jumlah</TableHead>
+                      <TableHead>Bukti</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -605,6 +434,7 @@ export default function Finance() {
                         transition={{ delay: index * 0.05 }}
                         className="group"
                       >
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-destructive/10 text-destructive">
@@ -626,36 +456,11 @@ export default function Finance() {
                         <TableCell className="text-muted-foreground">
                           {tx.date}
                         </TableCell>
-                        <TableCell className="text-right font-medium text-destructive">
+                        <TableCell className="font-medium text-destructive">
                           -{formatCurrency(tx.amount)}
                         </TableCell>
-                        <TableCell className="text-center">
-                          {tx.status === "locked" ? (
-                            <Badge
-                              variant="outline"
-                              className="border-muted-foreground/30"
-                            >
-                              <Lock className="w-3 h-3 mr-1" />
-                              Terkunci
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-success/10 text-success hover:bg-success/20 border-0">
-                              Selesai
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {tx.status !== "locked" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleLockTransaction(tx.id)}
-                              className="text-muted-foreground hover:text-foreground"
-                              title="Kunci transaksi"
-                            >
-                              <Lock className="w-4 h-4" />
-                            </Button>
-                          )}
+                        <TableCell>
+                          <ImageViewer />
                         </TableCell>
                       </motion.tr>
                     ))}

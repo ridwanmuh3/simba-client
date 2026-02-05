@@ -32,7 +32,7 @@ const DataTablePagination = ({
   onPageSizeChange,
 }: DataTablePaginationProps) => {
   return (
-    <div className="flex items-center justify-between px-2 py-4">
+    <div className="flex items-center justify-between px-2 py-4 gap-4 w-full">
       <div className="flex-1 text-sm text-muted-foreground hidden md:block">
         {totalItems > 0 ? (
           <span>

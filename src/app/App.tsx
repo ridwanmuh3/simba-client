@@ -4,10 +4,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { queryClient } from "@/lib/react-query";
-import Protected from "@/components/Protected";
-import { AuthProvider } from "@/components/AuthProvider";
+import Protected from "@/components/shared/Protected";
+import { AuthProvider } from "@/components/shared/AuthProvider";
 import { lazy, Suspense } from "react";
-import Spinner from "@/components/Spinner";
+import Spinner from "@/components/shared/Spinner";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));

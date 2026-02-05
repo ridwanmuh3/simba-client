@@ -27,6 +27,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateUser } from "@/api/users";
 import { toast } from "@/hooks/use-toast";
+import { AxiosError } from "axios";
 
 const CreateUserDialog = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -55,12 +56,17 @@ const CreateUserDialog = () => {
           description: `Anda telah menyimpan pengguna dengan nama "${data.fullname}"`,
         });
         form.reset();
-      } else {
-        console.log(status);
       }
     } catch (err: unknown) {
-      const e = err as Error;
-      setErrorMsg(e.message);
+      const e = err as AxiosError;
+      switch (e.status) {
+        case 400:
+          setErrorMsg("Terjadi kesalahan input data");
+          break;
+        default:
+          setErrorMsg("Terjadi kesalahan server");
+          break;
+      }
     }
   };
 
@@ -181,7 +187,9 @@ const CreateUserDialog = () => {
             Simpan
           </Button>
         </DialogFooter>
-        {errorMsg && <p className="text-xs text-red-500">{errorMsg}</p>}
+        {errorMsg && (
+          <p className="text-xs text-red-500 text-center">{errorMsg}</p>
+        )}
       </DialogContent>
     </Dialog>
   );

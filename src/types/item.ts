@@ -3,11 +3,26 @@ export interface AddItemRequest {
   category?: string;
   stock?: number;
   measureUnit?: string;
-  pricePerUnit?: number;
+  unitPrice?: number;
+}
+
+export interface UpdateItemStockRequest {
+  itemId?: string;
+  type?: string;
+  amount?: number;
+  supplier?: string;
+}
+
+export interface EditItemRequest extends AddItemRequest {
+  id?: string;
 }
 
 export interface DeleteItemRequest {
   id?: string;
+}
+
+export interface DeleteItemStockRequest extends DeleteItemRequest {
+  stockId?: number;
 }
 
 export interface Item {
@@ -16,5 +31,17 @@ export interface Item {
   category?: string;
   stock?: number;
   measureUnit?: string;
-  pricePerUnit?: number;
+  unitPrice?: number;
+  totalPrice?: number;
+}
+
+export interface StockTracking {
+  id?: number;
+  type?: "IN" | "OUT";
+  supplier?: string;
+  previousStock?: number;
+  newStock?: number;
+  amount?: number;
+  createdAt?: string;
+  item?: Item;
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -28,23 +28,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  useDownloadUserLetter,
-  useGetAllUsers,
-  useGetUsersStats,
-} from "@/api/users";
+import { useGetAllUsers, useGetUsersStats } from "@/api/users";
 import { formatDateDetail, formatDateRelative } from "@/lib/date-utils";
 import { User } from "@/types/user";
-import Spinner from "@/components/Spinner";
-import StatsCard from "@/components/StatsCard";
-import { getInitialsIdentity } from "@/lib/utils";
+import StatsCard from "@/components/shared/StatsCard";
+import { downloadHandler, getInitialsIdentity } from "@/lib/utils";
 import AddUserForm from "@/components/users/CreateUserDialog";
 import DeleteUserDialog from "@/components/users/DeleteUserDialog";
-import DataTablePagination from "@/components/DataTablePagination";
+import DataTablePagination from "@/components/shared/DataTablePagination";
 import { useSearchParams } from "react-router";
 import EditUserDialog from "@/components/users/EditUserDialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/hooks/use-toast";
 
 const Users = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,24 +73,7 @@ const Users = () => {
   };
 
   const downloadUserLetterHandler = async () => {
-    try {
-      const url = "/surat-pendaftaran-hak-akses.pdf";
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "surat-pendaftaran-hak-akses.pdf");
-
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Gagal mengunduh dokumen",
-        description: "Terjadi kesalahan ketika mengunduh dokumen.",
-        variant: "destructive",
-      });
-    }
+    downloadHandler("surat-pendaftaran-hak-akses.pdf");
   };
 
   const filteredUsers =
@@ -138,38 +115,10 @@ const Users = () => {
       title="Kelola Pengguna"
       subtitle="Kelola data pengguna dan hak akses sistem"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="flex flex-col sm:flex-row gap-6 mb-6"
-      >
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari pengguna..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-card"
-          />
-        </div>
-        <div className="flex gap-2 w-full sm:w-fit">
-          <Button
-            className="w-full bg-card"
-            variant="outline"
-            onClick={downloadUserLetterHandler}
-          >
-            <Download />
-            Unduh Pengajuan Akses
-          </Button>
-        </div>
-        <div className="flex gap-2 w-full sm:w-fit">
-          <AddUserForm />
-        </div>
-      </motion.div>
       <div className="grid grid-cols-1 min-[548px]:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {usersStatsData.map((stat, index) => (
           <motion.div
+            key={stat.title}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: (index + 1) * 0.1 }}
@@ -187,7 +136,38 @@ const Users = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 0.5 }}
+        className="flex flex-col md:flex-row gap-6 mb-6 flex-wrap"
+      >
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Cari pengguna..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 bg-card min-w-[200px]"
+          />
+        </div>
+        <div className="flex-1 flex flex-col md:flex-row gap-6 w-full">
+          <div className="flex flex-1 gap-2 w-full md:w-fit">
+            <Button
+              className="w-full bg-card"
+              variant="outline"
+              onClick={downloadUserLetterHandler}
+            >
+              <Download />
+              Unduh Pengajuan Akses
+            </Button>
+          </div>
+          <div className="flex flex-1 gap-2 w-full md:w-fit">
+            <AddUserForm />
+          </div>
+        </div>
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
       >
         <Card>
           <CardContent className="p-0">

@@ -1,5 +1,4 @@
-import { UserLoginRequest } from "@/api/auth";
-import { AuthContextType } from "@/types/auth";
+import { AuthContextType, UserLoginRequest } from "@/types/auth";
 import { createContext, useContext } from "react";
 
 export const AuthContext = createContext<AuthContextType>({
