@@ -87,19 +87,7 @@ const AddItemStockTab = () => {
     "IN",
   );
   const { data: itemsData } = useGetFullItems();
-  const filteredStocksTracking =
-    stocksData?.data?.filter(
-      (stockTracking: StockTracking) =>
-        stockTracking.item?.name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        stockTracking.item?.category
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        stockTracking.item?.id
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()),
-    ) || [];
+  const filteredStocksTracking = stocksData?.data || [];
 
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
@@ -136,23 +124,25 @@ const AddItemStockTab = () => {
 
   const handleSelectStockTracking = (stockTracking: StockTracking) => {
     setSelectedStock(stockTracking);
+    setSelectedItemId(stockTracking.item?.id);
     form.setValue("itemId", stockTracking.item?.id);
     form.setValue("itemName", stockTracking.item?.name);
     form.setValue("amount", stockTracking.item?.stock);
     form.setValue("itemMeasureUnit", stockTracking.item?.measureUnit);
     form.setValue("itemUnitPrice", stockTracking.item?.unitPrice);
+    form.setValue("supplier", stockTracking.supplier);
   };
 
   const handleDeleteItemStock = async () => {
     setErrMsg("");
     try {
-      alert(selectedItemId)
       const response = await deleteStockItem.mutateAsync({
         id: selectedItemId,
         stockId: selectedStock?.id,
       });
       if (response.status === 200) {
         setSelectedStock(null);
+        setSelectedItemId("");
         toast({
           title: "Berhasil menghapus data bahan",
           description: `Anda berhasil menghapus data bahan`,

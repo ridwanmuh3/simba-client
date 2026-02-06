@@ -30,8 +30,8 @@ import {
 } from "@/api/items";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "../../ui/skeleton";
-import { AxiosError, formToJSON } from "axios";
-import { Item, StockTracking } from "@/types/item";
+import { AxiosError } from "axios";
+import { StockTracking } from "@/types/item";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
 import { useSearchParams } from "react-router";
@@ -94,7 +94,6 @@ const ReduceItemStockTab = () => {
         type: "OUT",
         itemId: values.itemId,
         amount: values.amount,
-        supplier: values.supplier,
       });
       if (response.status === 200) {
         toast({
@@ -122,6 +121,7 @@ const ReduceItemStockTab = () => {
 
   const handleSelectStockTracking = (stockTracking: StockTracking) => {
     setSelectedStock(stockTracking);
+    setSelectedItemId(stockTracking.item?.id);
     form.setValue("itemId", stockTracking.item?.id);
     form.setValue("itemName", stockTracking.item?.name);
     form.setValue("amount", stockTracking.item?.stock);
@@ -132,6 +132,7 @@ const ReduceItemStockTab = () => {
   const handleDeleteItemStock = async () => {
     setErrMsg("");
     try {
+      console.log(selectedItemId, selectedStock?.id);
       const response = await deleteStockItem.mutateAsync({
         id: selectedItemId,
         stockId: selectedStock?.id,
@@ -294,7 +295,7 @@ const ReduceItemStockTab = () => {
                   disabled
                 />
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label>Penyuplai</Label>
                 <Input
                   {...form.register("supplier")}
@@ -305,7 +306,7 @@ const ReduceItemStockTab = () => {
                     {form.formState.errors.supplier.message}
                   </p>
                 )}
-              </div>
+              </div> */}
               <div className="flex gap-4 pt-2 flex-wrap-reverse">
                 <DeleteDialog
                   handleDelete={handleDeleteItemStock}
@@ -421,7 +422,7 @@ const ReduceItemStockTab = () => {
                     <TableHead>Stok Sebelumnya</TableHead>
                     <TableHead>Stok Kurang</TableHead>
                     <TableHead>Stok Baru</TableHead>
-                    <TableHead>Penyuplai</TableHead>
+                    {/* <TableHead>Penyuplai</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -474,15 +475,14 @@ const ReduceItemStockTab = () => {
                           {t.previousStock} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell className="text-red-500">
-                          {/* -{t.newStock - t.previousStock} {t.item?.measureUnit} */}
-                          -30 buah
+                          {t.previousStock - t.newStock} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell
                           className={`${index === 0 ? "font-bold" : ""}`}
                         >
-                          30 {t.item?.measureUnit}
+                          {t.newStock} {t.item?.measureUnit}
                         </TableCell>
-                        <TableCell>{t.supplier}</TableCell>
+                        {/* <TableCell>{t.supplier}</TableCell> */}
                       </TableRow>
                     ))
                   )}

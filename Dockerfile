@@ -1,7 +1,21 @@
-FROM oven/bun:latest
+# =========================
+# Builder
+# =========================
+FROM oven/bun:1.1.30 AS builder
 
-COPY package.json ./
-COPY bun.lockb ./
+WORKDIR /app
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
 COPY . .
+RUN bun run build
 
-RUN bun install
+# =========================
+# Runtime
+# =========================
+FROM caddy:2.8-alpine
+
+WORKDIR /srv
+COPY --from=builder /app/dist /srv
+COPY Caddyfile /etc/caddy/Caddyfile
+
+EXPOSE 80

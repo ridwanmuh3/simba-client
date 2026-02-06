@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ImageViewer from '../components/shared/ImageViewer';
+import ImageViewer from "../components/shared/ImageViewer";
 import {
   Dialog,
   DialogContent,

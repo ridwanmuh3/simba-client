@@ -260,7 +260,7 @@ const MasterItemTab = () => {
 
   return (
     <TabsContent value="data-bahan" className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* FORM */}
         <Card className="lg:col-span-1 h-fit">
           <CardHeader className="pb-4">

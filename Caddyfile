@@ -1,0 +1,18 @@
+:80 {
+	root * /srv
+	encode gzip zstd
+
+	@assets {
+		path /assets/*
+	}
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	@api {
+		path /api/*
+	}
+
+	reverse_proxy @api backend:9000
+
+	try_files {path} /index.html
+	file_server
+}

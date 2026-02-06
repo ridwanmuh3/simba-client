@@ -56,7 +56,12 @@ export const useUpdateStockItem = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items-stock", "items"] });
+      queryClient.invalidateQueries({
+        queryKey: ["items-stock"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["items"],
+      });
     },
   });
 };
@@ -96,7 +101,12 @@ export const useDeleteStockItem = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items-stock", "items"] });
+      queryClient.invalidateQueries({
+        queryKey: ["items-stock"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["items"],
+      });
     },
   });
 };
@@ -207,6 +217,5 @@ export const useGetAllItemsStocks = (
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
-    retry: 2,
   });
 };

@@ -10,10 +10,6 @@ import { Button } from "../ui/button";
 import { Trash2 } from "lucide-react";
 import { MouseEvent, useState } from "react";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { toast } from "@/hooks/use-toast";
-import { AxiosError } from "axios";
-import { DropdownMenuItem } from "../ui/dropdown-menu";
-import { useDeleteItem } from "@/api/items";
 
 interface DeleteDialogProps {
   isPending: boolean;
@@ -30,7 +26,7 @@ const DeleteDialog = ({
 
   const deleteItemButtonHandler = async (e: MouseEvent) => {
     try {
-      handleDelete();
+      await handleDelete();
       setIsDeleteDialogOpen(false);
     } catch (err) {
       console.info(err);

@@ -1,7 +1,7 @@
 import { Loader2 } from "lucide-react";
 
 interface SpinnerProps {
-  color: string;
+  color?: string;
 }
 
 const Spinner = ({ color }: SpinnerProps) => {
