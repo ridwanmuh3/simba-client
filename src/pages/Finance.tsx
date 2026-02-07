@@ -56,61 +56,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-
-const financeStats = [
-  {
-    title: "Total Anggaran",
-    value: "Rp 500.0M",
-    description: "Anggaran Tahun Ini",
-    icon: Wallet,
-  },
-  {
-    title: "Total Pengeluaran",
-    value: "Rp 245.8M",
-    description: "49.2% dari anggaran",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Sisa Anggaran",
-    value: "Rp 254.2M",
-    description: "50.8% tersisa",
-    icon: Package,
-  },
-  {
-    title: "Total Porsi Terlayani",
-    value: "125,400",
-    description: "Porsi makanan",
-    icon: Utensils,
-  },
-];
-
-const monthlyExpenseData = [
-  { month: "Jul", bahan: 28000000, operasional: 8000000 },
-  { month: "Aug", bahan: 32000000, operasional: 9000000 },
-  { month: "Sep", bahan: 30000000, operasional: 7500000 },
-  { month: "Oct", bahan: 35000000, operasional: 10000000 },
-  { month: "Nov", bahan: 38000000, operasional: 9500000 },
-  { month: "Dec", bahan: 42000000, operasional: 11000000 },
-];
-
-const expenseCategories = [
-  { name: "Bahan Makanan", value: 55, color: "hsl(var(--chart-1))" },
-  { name: "Bahan Pendukung", value: 20, color: "hsl(var(--chart-2))" },
-  { name: "Operasional", value: 15, color: "hsl(var(--chart-3))" },
-  { name: "Logistik", value: 10, color: "hsl(var(--chart-4))" },
-];
 
 interface Transaction {
   id: number;

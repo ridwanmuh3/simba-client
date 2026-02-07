@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
 import MasterItemTab from "@/components/items/tabs/MasterItemTab";
 import AddItemStockTab from "@/components/items/tabs/AddItemStockTab";
 import ReduceItemStockTab from "@/components/items/tabs/ReduceItemStockTab";
@@ -16,8 +15,6 @@ import StockOpnameTab from "@/components/items/tabs/StockOpnameTab";
 
 const Items = () => {
   const [activeTab, setActiveTab] = useState("data-bahan");
-  const [formItemCode, setFormItemCode] = useState("");
-  const [formQty, setFormQty] = useState("");
 
   const tabItems = [
     { value: "data-bahan", label: "Data bahan", icon: Package },

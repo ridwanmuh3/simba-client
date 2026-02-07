@@ -73,7 +73,12 @@ export const useImportItems = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({
+        queryKey: ["items-stock"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["items"],
+      });
     },
   });
 };
@@ -146,7 +151,6 @@ export const useGetAllItems = (
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
-    retry: 2,
   });
 };
 

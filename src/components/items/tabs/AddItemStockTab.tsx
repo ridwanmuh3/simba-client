@@ -1,16 +1,16 @@
-import { Calendar, Package, Save, Search, Upload } from "lucide-react";
-import { Button } from "../../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
+import { Calendar, Package, Save, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select";
-import { TabsContent } from "../../ui/tabs";
+} from "@/components/ui/select";
+import { TabsContent } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../ui/table";
+} from "@/components/ui/table";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -29,9 +29,9 @@ import {
   useUpdateStockItem,
 } from "@/api/items";
 import { formatCurrency } from "@/lib/utils";
-import { Skeleton } from "../../ui/skeleton";
-import { AxiosError, formToJSON } from "axios";
-import { Item, StockTracking } from "@/types/item";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AxiosError } from "axios";
+import { StockTracking } from "@/types/item";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
 import { useSearchParams } from "react-router";
@@ -91,6 +91,17 @@ const AddItemStockTab = () => {
 
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
+
+    if (!values.itemId) {
+      setErrMsg("Pilih bahan terlebih dahulu");
+      return;
+    }
+
+    if (values.amount <= 0) {
+      setErrMsg("Jumlah stok masuk harus lebih dari 0");
+      return;
+    }
+
     try {
       const response = await updateStockItem.mutateAsync({
         type: "IN",
@@ -98,39 +109,30 @@ const AddItemStockTab = () => {
         amount: values.amount,
         supplier: values.supplier,
       });
-      if (response.status === 200) {
-        toast({
-          title: "Berhasil menambah stok data bahan",
-          description: `Anda berhasil menambah stok data bahan "${response.data.item?.name}"`,
-        });
-      }
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      switch (err.status) {
-        case 400:
-          setErrMsg("Terjadi kesalahan input stok data bahan");
-          break;
-        default:
-          setErrMsg("Terjadi kesalahan server");
-          break;
-      }
-    } finally {
+
+      toast({
+        title: "Berhasil",
+        description: `Stok "${selectedItemId}" berhasil ditambahkan`,
+      });
+
       form.reset();
-      setTimeout(() => {
-        setErrMsg("");
-      }, 6000);
+      setSelectedStock(null);
+      setSelectedItemId("");
+    } catch {
+      setErrMsg("Terjadi kesalahan server");
     }
   };
 
   const handleSelectStockTracking = (stockTracking: StockTracking) => {
     setSelectedStock(stockTracking);
-    setSelectedItemId(stockTracking.item?.id);
-    form.setValue("itemId", stockTracking.item?.id);
-    form.setValue("itemName", stockTracking.item?.name);
-    form.setValue("amount", stockTracking.item?.stock);
-    form.setValue("itemMeasureUnit", stockTracking.item?.measureUnit);
-    form.setValue("itemUnitPrice", stockTracking.item?.unitPrice);
-    form.setValue("supplier", stockTracking.supplier);
+    setSelectedItemId(stockTracking.item.id);
+
+    form.setValue("itemId", stockTracking.item.id);
+    form.setValue("itemName", stockTracking.item.name);
+    form.setValue("amount", 0);
+    form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
+    form.setValue("itemUnitPrice", stockTracking.item.unitPrice);
+    form.setValue("supplier", "");
   };
 
   const handleDeleteItemStock = async () => {
@@ -414,9 +416,9 @@ const AddItemStockTab = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="max-h-[500px]  text-nowrap">
-              <Table className="min-h-full overflow-scroll">
-                <TableHeader>
+            <div className="relative max-h-[500px] overflow-auto border-t text-nowrap">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10 border-b">
                   <TableRow>
                     <TableHead>Tanggal Dibuat</TableHead>
                     <TableHead>Kode</TableHead>
@@ -462,11 +464,12 @@ const AddItemStockTab = () => {
                     filteredStocksTracking.map((t, index) => (
                       <TableRow
                         key={t.id}
-                        className={`cursor-pointer ${selectedStock?.id === t.id ? "bg-muted" : ""}`}
-                        onClick={() => {
-                          handleSelectStockTracking(t);
-                          setSelectedItemId(t.item?.id);
-                        }}
+                        className={`cursor-pointer transition ${
+                          selectedStock?.id === t.id
+                            ? "bg-muted"
+                            : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => handleSelectStockTracking(t)}
                       >
                         <TableCell>{formatDateDetail(t.createdAt)}</TableCell>
                         <TableCell className="font-mono text-sm">
@@ -477,7 +480,7 @@ const AddItemStockTab = () => {
                           {t.previousStock} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell className="text-green-500">
-                          +{t.newStock - t.previousStock} {t.item?.measureUnit}
+                          +{t.newStock - t.previousStock}
                         </TableCell>
                         <TableCell
                           className={`${index === 0 ? "font-bold" : ""} `}

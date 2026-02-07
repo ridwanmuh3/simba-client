@@ -11,6 +11,18 @@
 		path /api/*
 	}
 
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+
+	rate_limit @api {
+		zone api
+		events 100
+		window 1m
+	}
+
 	reverse_proxy @api backend:9000
 
 	try_files {path} /index.html

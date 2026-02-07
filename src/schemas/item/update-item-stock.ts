@@ -6,7 +6,7 @@ export const updateItemStockSchema = z.object({
   itemMeasureUnit: z.string(),
   itemUnitPrice: z.coerce.number().min(1, "harga satuan minimal 1"),
   amount: z.coerce.number().min(1, "minimal stok harus 1"),
-  supplier: z.coerce.string().min(1, "nama supplier terlalu pendek"),
+  supplier: z.coerce.string().optional(),
 });
 
 export type UpdateItemStockFormInputs = z.infer<typeof updateItemStockSchema>;

@@ -89,44 +89,50 @@ const ReduceItemStockTab = () => {
   const { data: itemsData } = useGetFullItems();
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
+
+    if (!selectedStock) {
+      setErrMsg("Pilih bahan terlebih dahulu");
+      return;
+    }
+
+    if (values.amount <= 0) {
+      setErrMsg("Jumlah stok keluar harus lebih dari 0");
+      return;
+    }
+
+    if (values.amount > selectedStock.item.stock) {
+      setErrMsg("Stok tidak mencukupi");
+      return;
+    }
+
     try {
       const response = await updateStockItem.mutateAsync({
         type: "OUT",
         itemId: values.itemId,
         amount: values.amount,
       });
-      if (response.status === 200) {
-        toast({
-          title: "Berhasil menambah stok data bahan",
-          description: `Anda berhasil menambah stok data bahan "${response.data.item?.name}"`,
-        });
-      }
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      switch (err.status) {
-        case 400:
-          setErrMsg("Terjadi kesalahan input stok data bahan");
-          break;
-        default:
-          setErrMsg("Terjadi kesalahan server");
-          break;
-      }
-    } finally {
+
+      toast({
+        title: "Berhasil",
+        description: `Stok "${selectedItemId}" berhasil dikurangi`,
+      });
+
       form.reset();
-      setTimeout(() => {
-        setErrMsg("");
-      }, 6000);
+      setSelectedStock(null);
+      setSelectedItemId("");
+    } catch {
+      setErrMsg("Terjadi kesalahan server");
     }
   };
 
   const handleSelectStockTracking = (stockTracking: StockTracking) => {
     setSelectedStock(stockTracking);
-    setSelectedItemId(stockTracking.item?.id);
-    form.setValue("itemId", stockTracking.item?.id);
-    form.setValue("itemName", stockTracking.item?.name);
-    form.setValue("amount", stockTracking.item?.stock);
-    form.setValue("itemMeasureUnit", stockTracking.item?.measureUnit);
-    form.setValue("itemUnitPrice", stockTracking.item?.unitPrice);
+    setSelectedItemId(stockTracking.item.id);
+    form.setValue("itemId", stockTracking.item.id);
+    form.setValue("itemName", stockTracking.item.name);
+    form.setValue("amount", 0);
+    form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
+    form.setValue("itemUnitPrice", stockTracking.item.unitPrice);
   };
 
   const handleDeleteItemStock = async () => {
@@ -295,18 +301,6 @@ const ReduceItemStockTab = () => {
                   disabled
                 />
               </div>
-              {/* <div className="space-y-2">
-                <Label>Penyuplai</Label>
-                <Input
-                  {...form.register("supplier")}
-                  placeholder="Nama penyuplai"
-                />
-                {form.formState.errors.supplier && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.supplier.message}
-                  </p>
-                )}
-              </div> */}
               <div className="flex gap-4 pt-2 flex-wrap-reverse">
                 <DeleteDialog
                   handleDelete={handleDeleteItemStock}
@@ -315,6 +309,7 @@ const ReduceItemStockTab = () => {
                 />
                 <Button
                   type="submit"
+                  form="reduce-item-stock-form"
                   className="w-full"
                   disabled={updateStockItem.isPending}
                 >
@@ -412,9 +407,9 @@ const ReduceItemStockTab = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="max-h-[500px] text-nowrap">
-              <Table className="min-h-full overflow-scroll">
-                <TableHeader>
+            <div className="relative max-h-[500px] overflow-auto border-t text-nowrap">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10 border-b">
                   <TableRow>
                     <TableHead>Tanggal Dibuat</TableHead>
                     <TableHead>Kode</TableHead>
@@ -422,14 +417,13 @@ const ReduceItemStockTab = () => {
                     <TableHead>Stok Sebelumnya</TableHead>
                     <TableHead>Stok Kurang</TableHead>
                     <TableHead>Stok Baru</TableHead>
-                    {/* <TableHead>Penyuplai</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isStocksLoading ? (
                     Array.from({ length: 6 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 7 }).map((_, cellIndex) => (
+                        {Array.from({ length: 6 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>
@@ -460,11 +454,12 @@ const ReduceItemStockTab = () => {
                     stocksData.data?.map((t, index) => (
                       <TableRow
                         key={t.id}
-                        className={`cursor-pointer ${selectedStock?.id === t.id ? "bg-muted" : ""}`}
-                        onClick={() => {
-                          setSelectedItemId(t.item?.id);
-                          handleSelectStockTracking(t);
-                        }}
+                        className={`cursor-pointer transition ${
+                          selectedStock?.id === t.id
+                            ? "bg-muted"
+                            : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => handleSelectStockTracking(t)}
                       >
                         <TableCell>{formatDateDetail(t.createdAt)}</TableCell>
                         <TableCell className="font-mono text-sm">
@@ -475,7 +470,7 @@ const ReduceItemStockTab = () => {
                           {t.previousStock} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell className="text-red-500">
-                          {t.previousStock - t.newStock} {t.item?.measureUnit}
+                          -{t.previousStock - t.newStock}
                         </TableCell>
                         <TableCell
                           className={`${index === 0 ? "font-bold" : ""}`}

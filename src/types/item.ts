@@ -30,6 +30,7 @@ export interface Item {
   name?: string;
   category?: string;
   stock?: number;
+  initialStock?: number;
   measureUnit?: string;
   unitPrice?: number;
   totalPrice?: number;

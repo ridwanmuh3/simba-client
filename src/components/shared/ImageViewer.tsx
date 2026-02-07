@@ -1,37 +1,43 @@
 import { useState } from "react";
-import {
-  DialogDescription,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
-import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 
-const ImageViewer = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+interface ImageViewerProps {
+  imageUrl?: string;
+}
+
+export default function ImageViewer({ imageUrl }: ImageViewerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (!imageUrl) {
+    return (
+      <Button variant="ghost" size="sm" disabled>
+        <Eye className="w-4 h-4" />
+      </Button>
+    );
+  }
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline">
-          <Eye className="w-4 h-4 mr-2" />
-          Lihat Foto
+        <Button variant="ghost" size="sm">
+          <Eye className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Hapus Bahan</DialogTitle>
-          <DialogDescription className="text-sm text-foreground">
-            Apakah yakin anda ingin menghapus bahan ini? Data bahan yang dihapus
-            tidak dapat dipulihkan.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl">
+        <div className="relative w-full h-[600px] flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+          <img
+            src={imageUrl}
+            alt="Bukti Transaksi"
+            className="max-w-full max-h-full object-contain"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "/placeholder-image.png";
+            }}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default ImageViewer;
+}

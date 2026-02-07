@@ -5,21 +5,20 @@ import {
   Package,
   Save,
   Search,
-  Trash2,
   Upload,
 } from "lucide-react";
-import { Button } from "../../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select";
-import { TabsContent } from "../../ui/tabs";
+} from "@/components/ui/select";
+import { TabsContent } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -27,7 +26,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../ui/table";
+} from "@/components/ui/table";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { downloadCSVTemplate, exportToCSV, parseCSV } from "@/lib/csv-utils";
@@ -40,8 +39,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../../ui/dropdown-menu";
-import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from "react";
+} from "@/components/ui/dropdown-menu";
+import { ChangeEvent, MouseEvent, useRef, useState } from "react";
 import {
   useAddItem,
   useDeleteItem,
@@ -50,10 +49,10 @@ import {
   useImportItems,
 } from "@/api/items";
 import { formatCurrency, safeIncludes } from "@/lib/utils";
-import { Badge } from "../../ui/badge";
-import { Skeleton } from "../../ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AxiosError } from "axios";
-import Spinner from "../../shared/Spinner";
+import Spinner from "@/components/shared/Spinner";
 import { Item } from "@/types/item";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
