@@ -28,7 +28,7 @@ import {
   useGetFullItems,
   useUpdateStockItem,
 } from "@/api/items";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, parseCurrency } from "@/lib/utils";
 import { Skeleton } from "../../ui/skeleton";
 import { AxiosError } from "axios";
 import { StockTracking } from "@/types/item";
@@ -73,9 +73,8 @@ const ReduceItemStockTab = () => {
   const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
   const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
   const [errMsg, setErrMsg] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 10;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const updateStockItem = useUpdateStockItem();
   const deleteStockItem = useDeleteStockItem();
   const { data: stocksData, isLoading: isStocksLoading } = useGetAllItemsStocks(
@@ -86,6 +85,7 @@ const ReduceItemStockTab = () => {
     dateTo,
     "OUT",
   );
+  console.log(stocksData);
   const { data: itemsData } = useGetFullItems();
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
@@ -106,10 +106,11 @@ const ReduceItemStockTab = () => {
     }
 
     try {
-      const response = await updateStockItem.mutateAsync({
+      await updateStockItem.mutateAsync({
         type: "OUT",
         itemId: values.itemId,
         amount: values.amount,
+        unitPrice: values.itemUnitPrice,
       });
 
       toast({
@@ -138,7 +139,6 @@ const ReduceItemStockTab = () => {
   const handleDeleteItemStock = async () => {
     setErrMsg("");
     try {
-      console.log(selectedItemId, selectedStock?.id);
       const response = await deleteStockItem.mutateAsync({
         id: selectedItemId,
         stockId: selectedStock?.id,
@@ -153,7 +153,6 @@ const ReduceItemStockTab = () => {
       }
     } catch (e: unknown) {
       const err = e as AxiosError;
-      console.error(err);
       switch (err.status) {
         case 400:
           setErrMsg("Terjadi kesalahan input data bahan");
@@ -194,18 +193,12 @@ const ReduceItemStockTab = () => {
   };
 
   const handlePageChange = (newPage: number) => {
-    setSearchParams((prev) => {
-      prev.set("page", String(newPage));
-      return prev;
-    });
+    setPage(newPage);
   };
 
   const handleLimitChange = (newLimit: number) => {
-    setSearchParams((prev) => {
-      prev.set("limit", String(newLimit));
-      prev.set("page", "1");
-      return prev;
-    });
+    setLimit(newLimit);
+    setPage(1);
   };
 
   return (
@@ -213,7 +206,10 @@ const ReduceItemStockTab = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Input Barang Keluar</CardTitle>
+            <CardTitle className="text-lg">Bahan Keluar</CardTitle>
+            <p className="text-sm font-bold text-muted-foreground">
+              Input dengan tanda (*) wajib diisi.
+            </p>
           </CardHeader>
           <CardContent>
             <form
@@ -222,7 +218,9 @@ const ReduceItemStockTab = () => {
               onSubmit={form.handleSubmit(handleUpdateItemStock)}
             >
               <div className="space-y-2">
-                <Label>Pilih Bahan</Label>
+                <Label>
+                  Pilih Bahan<span className="text-destructive">*</span>
+                </Label>
                 <Controller
                   name="itemId"
                   control={form.control}
@@ -257,7 +255,9 @@ const ReduceItemStockTab = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Stok</Label>
+                  <Label>
+                    Stok<span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     type="number"
                     {...form.register("amount")}
@@ -278,12 +278,22 @@ const ReduceItemStockTab = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Harga Satuan (Rp)</Label>
-                <Input
-                  {...form.register("itemUnitPrice")}
-                  type="number"
-                  placeholder="0"
-                  disabled
+                <Label>
+                  Harga Satuan (Rp)<span className="text-destructive">*</span>
+                </Label>
+                <Controller
+                  name="itemUnitPrice"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      inputMode="numeric"
+                      value={formatCurrency(field.value)}
+                      onChange={(e) => {
+                        const raw = parseCurrency(e.target.value);
+                        field.onChange(raw);
+                      }}
+                    />
+                  )}
                 />
                 {form.formState.errors.itemUnitPrice && (
                   <p className="text-sm text-destructive">
@@ -331,7 +341,7 @@ const ReduceItemStockTab = () => {
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Riwayat Barang Keluar</CardTitle>
+            <CardTitle className="text-lg">Riwayat Bahan Keluar</CardTitle>
             <div className="flex flex-wrap gap-2 mt-2 items-center">
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -417,6 +427,7 @@ const ReduceItemStockTab = () => {
                     <TableHead>Stok Sebelumnya</TableHead>
                     <TableHead>Stok Kurang</TableHead>
                     <TableHead>Stok Baru</TableHead>
+                    <TableHead>Harga Satuan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -477,7 +488,7 @@ const ReduceItemStockTab = () => {
                         >
                           {t.newStock} {t.item?.measureUnit}
                         </TableCell>
-                        {/* <TableCell>{t.supplier}</TableCell> */}
+                        <TableCell>{formatCurrency(t.unitPrice)}</TableCell>
                       </TableRow>
                     ))
                   )}

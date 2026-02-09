@@ -48,7 +48,7 @@ import {
   useGetAllItems,
   useImportItems,
 } from "@/api/items";
-import { formatCurrency, safeIncludes } from "@/lib/utils";
+import { formatCurrency, parseCurrency, safeIncludes } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AxiosError } from "axios";
@@ -58,7 +58,6 @@ import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
 import { useSearchParams } from "react-router";
 import DataTablePagination from "@/components/shared/DataTablePagination";
-import { queryClient } from "@/lib/react-query";
 import { axiosInstance } from "@/lib/axios";
 import { ApiResponse } from "@/types/response";
 
@@ -79,8 +78,8 @@ const MasterItemTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [errMsg, setErrMsg] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
-  const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 10;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const addItem = useAddItem();
   const editItem = useEditItem();
   const importItem = useImportItems();
@@ -238,18 +237,12 @@ const MasterItemTab = () => {
   };
 
   const handlePageChange = (newPage: number) => {
-    setSearchParams((prev) => {
-      prev.set("page", String(newPage));
-      return prev;
-    });
+    setPage(newPage);
   };
 
   const handleLimitChange = (newLimit: number) => {
-    setSearchParams((prev) => {
-      prev.set("limit", String(newLimit));
-      prev.set("page", "1");
-      return prev;
-    });
+    setLimit(newLimit);
+    setPage(1);
   };
 
   const handleFormType = (isEditMode: boolean) => {
@@ -266,11 +259,16 @@ const MasterItemTab = () => {
             <CardTitle className="text-lg">
               {selectedItem ? "Edit Bahan" : "Tambah Bahan"}
             </CardTitle>
+            <p className="text-sm font-bold text-muted-foreground">
+              Input dengan tanda (*) wajib diisi.
+            </p>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleFormType(isEditForm)}>
               <div className="space-y-2">
-                <Label htmlFor="name">Nama Bahan</Label>
+                <Label htmlFor="name">
+                  Nama Bahan <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   {...form.register("name")}
                   placeholder="Masukkan nama bahan"
@@ -282,7 +280,9 @@ const MasterItemTab = () => {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Kategori</Label>
+                <Label htmlFor="category">
+                  Kategori<span className="text-destructive">*</span>
+                </Label>
                 <Controller
                   name="category"
                   control={form.control}
@@ -294,8 +294,14 @@ const MasterItemTab = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Karbohidrat">Karbohidrat</SelectItem>
-                        <SelectItem value="Protein">Protein</SelectItem>
+                        <SelectItem value="Protein Hewani">
+                          Protein Hewani
+                        </SelectItem>
+                        <SelectItem value="Protein Nabati">
+                          Protein Nabati
+                        </SelectItem>
                         <SelectItem value="Sayuran">Sayuran</SelectItem>
+                        <SelectItem value="Buah Buahan">Buah-Buahan</SelectItem>
                         <SelectItem value="Pendukung">Pendukung</SelectItem>
                       </SelectContent>
                     </Select>
@@ -308,7 +314,9 @@ const MasterItemTab = () => {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="measureUnit">Satuan</Label>
+                <Label htmlFor="measureUnit">
+                  Satuan<span className="text-destructive">*</span>
+                </Label>
                 <Controller
                   name="measureUnit"
                   control={form.control}
@@ -320,9 +328,11 @@ const MasterItemTab = () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="kg">Kilogram (kg)</SelectItem>
-                        <SelectItem value="liter">Liter</SelectItem>
+                        <SelectItem value="liter">Liter (lt)</SelectItem>
                         <SelectItem value="ikat">Ikat</SelectItem>
                         <SelectItem value="buah">Buah</SelectItem>
+                        <SelectItem value="botol">Botol</SelectItem>
+                        <SelectItem value="dus">Dus</SelectItem>
                         <SelectItem value="bungkus">Bungkus</SelectItem>
                       </SelectContent>
                     </Select>
@@ -335,12 +345,22 @@ const MasterItemTab = () => {
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pricePerUnit">Harga Satuan (Rp)</Label>
-                <Input
-                  {...form.register("pricePerUnit")}
-                  type="number"
-                  placeholder="0"
-                  min="0"
+                <Label htmlFor="pricePerUnit">
+                  Harga Satuan<span className="text-destructive">*</span>
+                </Label>
+                <Controller
+                  name="pricePerUnit"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      inputMode="numeric"
+                      value={formatCurrency(field.value)}
+                      onChange={(e) => {
+                        const raw = parseCurrency(e.target.value);
+                        field.onChange(raw);
+                      }}
+                    />
+                  )}
                 />
                 {form.formState.errors.pricePerUnit && (
                   <p className="text-sm text-destructive">
@@ -476,14 +496,14 @@ const MasterItemTab = () => {
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Kategori</TableHead>
                     <TableHead>Stok</TableHead>
-                    <TableHead>Harga</TableHead>
+                    <TableHead>Harga Satuan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isItemsLoading ? (
                     Array.from({ length: 5 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 6 }).map((_, cellIndex) => (
+                        {Array.from({ length: 5 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>

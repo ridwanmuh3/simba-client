@@ -73,9 +73,8 @@ const AddItemStockTab = () => {
   const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
   const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
   const [errMsg, setErrMsg] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 10;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
   const updateStockItem = useUpdateStockItem();
   const deleteStockItem = useDeleteStockItem();
   const { data: stocksData, isLoading: isStocksLoading } = useGetAllItemsStocks(
@@ -103,11 +102,12 @@ const AddItemStockTab = () => {
     }
 
     try {
-      const response = await updateStockItem.mutateAsync({
+      await updateStockItem.mutateAsync({
         type: "IN",
         itemId: values.itemId,
         amount: values.amount,
         supplier: values.supplier,
+        unitPrice: values.itemUnitPrice,
       });
 
       toast({
@@ -118,8 +118,18 @@ const AddItemStockTab = () => {
       form.reset();
       setSelectedStock(null);
       setSelectedItemId("");
-    } catch {
-      setErrMsg("Terjadi kesalahan server");
+    } catch (e) {
+      const err = e as AxiosError;
+      switch (err.status) {
+        case 400:
+          setErrMsg("Terjadi kesalahan input data bahan");
+          break;
+        case 404:
+          setErrMsg("Data tidak ditemukan");
+        default:
+          setErrMsg("Terjadi kesalahan server");
+          break;
+      }
     }
   };
 
@@ -167,6 +177,15 @@ const AddItemStockTab = () => {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
   const handleOpenFromChange = (open: boolean) => {
     if (open) {
       setTempDateFrom(dateFrom);
@@ -191,27 +210,15 @@ const AddItemStockTab = () => {
     setIsToOpen(false);
   };
 
-  const handlePageChange = (newPage: number) => {
-    setSearchParams((prev) => {
-      prev.set("page", String(newPage));
-      return prev;
-    });
-  };
-
-  const handleLimitChange = (newLimit: number) => {
-    setSearchParams((prev) => {
-      prev.set("limit", String(newLimit));
-      prev.set("page", "1");
-      return prev;
-    });
-  };
-
   return (
     <TabsContent value="bahan-masuk" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-1">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Input Barang Masuk</CardTitle>
+            <CardTitle className="text-lg">Bahan Masuk</CardTitle>
+            <p className="text-sm font-bold text-muted-foreground">
+              Input dengan tanda (*) wajib diisi.
+            </p>
           </CardHeader>
           <CardContent>
             <form
@@ -220,7 +227,9 @@ const AddItemStockTab = () => {
               onSubmit={form.handleSubmit(handleUpdateItemStock)}
             >
               <div className="space-y-2">
-                <Label>Pilih Bahan</Label>
+                <Label>
+                  Pilih Bahan<span className="text-destructive">*</span>
+                </Label>
                 <Controller
                   name="itemId"
                   control={form.control}
@@ -255,11 +264,14 @@ const AddItemStockTab = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Stok</Label>
+                  <Label>
+                    Stok<span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     type="number"
                     {...form.register("amount")}
                     placeholder="1"
+                    min={0}
                   />
                 </div>
                 <div className="space-y-2">
@@ -278,9 +290,7 @@ const AddItemStockTab = () => {
               <div className="space-y-2">
                 <Label>Harga Satuan (Rp)</Label>
                 <Input
-                  {...form.register("itemUnitPrice")}
-                  type="number"
-                  placeholder="0"
+                  value={formatCurrency(selectedStock?.item?.unitPrice || 0)}
                   disabled
                 />
                 {form.formState.errors.itemUnitPrice && (
@@ -340,7 +350,7 @@ const AddItemStockTab = () => {
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Riwayat Barang Masuk</CardTitle>
+            <CardTitle className="text-lg">Riwayat Bahan Masuk</CardTitle>
             <div className="flex flex-wrap gap-2 mt-2 items-center">
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -363,6 +373,7 @@ const AddItemStockTab = () => {
                     mode="single"
                     selected={tempDateFrom}
                     onSelect={setTempDateFrom}
+                    disabled={(date) => date > new Date()}
                     initialFocus
                   />
                   <div className="flex gap-2 mt-2 mb-2">
@@ -394,6 +405,7 @@ const AddItemStockTab = () => {
                     mode="single"
                     selected={tempDateTo}
                     onSelect={setTempDateTo}
+                    disabled={(date) => date > new Date()}
                     initialFocus
                   />
                   <div className="flex gap-2 mt-2 mb-2">

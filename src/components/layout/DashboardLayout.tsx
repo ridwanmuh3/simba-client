@@ -44,8 +44,8 @@ const DashboardLayout = ({
       <Sidebar authContext={auth} />
       <div className={collapsed ? "pl-[70px]" : "pl-[280px]"}>
         <header className="sticky top-0 z-40 h-16 bg-background/80 backdrop-blur-sm border-b border-border">
-          <div className="h-full px-6 flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
+          <div className="h-full px-6 flex items-center justify-end">
+            {/* <div className="flex items-center gap-4 flex-1">
               <div className="relative max-w-md flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -53,12 +53,12 @@ const DashboardLayout = ({
                   className="pl-9 bg-muted/50 border-0 focus-visible:ring-1"
                 />
               </div>
-            </div>
+            </div> */}
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="relative">
+              {/* <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
-              </Button>
+              </Button> */}
               <Button variant="ghost" className="flex items-center gap-2 px-2">
                 <Avatar className="w-8 h-8">
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">

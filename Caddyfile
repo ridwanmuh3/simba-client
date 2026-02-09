@@ -1,4 +1,8 @@
-:80 {
+www.simba-mbg.my.id {
+	redir https://simba-mbg.my.id{uri}
+}
+
+simba-mbg.my.id {
 	root * /srv
 	encode gzip zstd
 

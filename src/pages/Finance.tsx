@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportViewer } from "@/components/finance/ReportViewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import {
   Table,
   TableBody,
@@ -18,36 +17,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ImageViewer from "../components/shared/ImageViewer";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import {
   Search,
   Download,
   Calendar,
-  Wallet,
   ArrowDownRight,
-  Lock,
   FileSpreadsheet,
   FileText,
-  BarChart3,
-  Plus,
-  Receipt,
-  ShoppingCart,
-  Utensils,
   Package,
 } from "lucide-react";
 import {
@@ -56,6 +33,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { formatCurrency } from "@/lib/utils";
+import AddFinanceDialog from "@/components/finance/AddFinanceDialog";
+import { useGetAllFinances } from "@/api/finance";
+import { useSearchParams } from "react-router";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { formatDateTable } from "@/lib/date-utils";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 interface Transaction {
   id: number;
@@ -67,135 +57,48 @@ interface Transaction {
   category: string;
 }
 
-const initialTransactions: Transaction[] = [
-  {
-    id: 1,
-    description: "Pembelian Beras 500kg",
-    amount: 7500000,
-    date: "2024-01-15",
-    status: "completed",
-    note: "Nota #PO-001 - Supplier: UD Tani Makmur",
-    category: "Bahan Makanan",
-  },
-  {
-    id: 2,
-    description: "Pembelian Sayuran Segar",
-    amount: 3500000,
-    date: "2024-01-14",
-    status: "completed",
-    note: "Nota #PO-002 - Supplier: Pasar Induk",
-    category: "Bahan Makanan",
-  },
-  {
-    id: 3,
-    description: "Pembelian Daging Ayam 200kg",
-    amount: 12000000,
-    date: "2024-01-13",
-    status: "completed",
-    note: "Nota #PO-003 - Supplier: PT Ayam Segar",
-    category: "Bahan Makanan",
-  },
-  {
-    id: 4,
-    description: "Pembelian Minyak Goreng",
-    amount: 2800000,
-    date: "2024-01-12",
-    status: "completed",
-    note: "Nota #PO-004 - Supplier: CV Mitra Oil",
-    category: "Bahan Pendukung",
-  },
-  {
-    id: 5,
-    description: "Biaya Transportasi Distribusi",
-    amount: 5000000,
-    date: "2024-01-10",
-    status: "locked",
-    note: "Kwitansi Transport - Periode Jan 2024",
-    category: "Logistik",
-  },
-  {
-    id: 6,
-    description: "Pembelian Gas LPG 50 Tabung",
-    amount: 7500000,
-    date: "2024-01-08",
-    status: "locked",
-    note: "Nota #PO-005 - Supplier: Agen Gas Jaya",
-    category: "Operasional",
-  },
-];
-
-const transactionCategories = [
-  "Bahan Makanan",
-  "Bahan Pendukung",
-  "Operasional",
-  "Logistik",
-  "Peralatan",
-  "Lainnya",
-];
-
 export default function Finance() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [transactions, setTransactions] =
-    useState<Transaction[]>(initialTransactions);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newTransaction, setNewTransaction] = useState({
-    description: "",
-    amount: "",
-    note: "",
-    category: "",
-  });
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(Math.abs(value));
-  };
-
-  const handleAddTransaction = () => {
-    if (
-      !newTransaction.description ||
-      !newTransaction.amount ||
-      !newTransaction.category
-    ) {
-      return;
-    }
-
-    const transaction: Transaction = {
-      id: transactions.length + 1,
-      description: newTransaction.description,
-      amount: parseFloat(newTransaction.amount),
-      date: new Date().toISOString().split("T")[0],
-      status: "completed",
-      note: newTransaction.note,
-      category: newTransaction.category,
-    };
-
-    setTransactions([transaction, ...transactions]);
-    setNewTransaction({
-      description: "",
-      amount: "",
-      note: "",
-      category: "",
-    });
-    setIsAddDialogOpen(false);
-  };
-
-  const handleLockTransaction = (id: number) => {
-    setTransactions(
-      transactions.map((tx) =>
-        tx.id === id ? { ...tx, status: "locked" as const } : tx,
-      ),
-    );
-  };
-
-  const filteredTransactions = transactions.filter(
-    (tx) =>
-      tx.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.note.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.category.toLowerCase().includes(searchQuery.toLowerCase()),
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [isFromOpen, setIsFromOpen] = useState(false);
+  const [isToOpen, setIsToOpen] = useState(false);
+  const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
+  const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 10;
+  const { data: financeData, isLoading } = useGetAllFinances(
+    searchQuery,
+    page,
+    limit,
+    dateFrom,
+    dateTo,
   );
+  console.log(financeData?.data);
+  const handleOpenFromChange = (open: boolean) => {
+    if (open) {
+      setTempDateFrom(dateFrom);
+    }
+    setIsFromOpen(open);
+  };
+
+  const handleOpenToChange = (open: boolean) => {
+    if (open) {
+      setTempDateTo(dateTo);
+    }
+    setIsToOpen(open);
+  };
+
+  const handleConfirmFrom = () => {
+    setDateFrom(tempDateFrom);
+    setIsFromOpen(false);
+  };
+
+  const handleConfirmTo = () => {
+    setDateTo(tempDateTo);
+    setIsToOpen(false);
+  };
 
   return (
     <DashboardLayout
@@ -206,118 +109,16 @@ export default function Finance() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 0.1 }}
       >
         <Tabs defaultValue="transactions" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <TabsList>
-              <TabsTrigger value="transactions">
-                Transaksi Pengeluaran
-              </TabsTrigger>
-              <TabsTrigger value="reports">Laporan Harian/Mingguan</TabsTrigger>
+              <TabsTrigger value="transactions">Data Keuangan</TabsTrigger>
+              {/* <TabsTrigger value="reports">Laporan Harian/Mingguan</TabsTrigger> */}
             </TabsList>
-
             <div className="flex gap-2">
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Input Pengeluaran
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px]">
-                  <DialogHeader>
-                    <DialogTitle>Input Pengeluaran dari Nota</DialogTitle>
-                    <DialogDescription>
-                      Catat pengeluaran pembelian bahan atau kebutuhan MBG
-                      berdasarkan nota
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="category">Kategori Pengeluaran</Label>
-                      <Select
-                        value={newTransaction.category}
-                        onValueChange={(value) =>
-                          setNewTransaction({
-                            ...newTransaction,
-                            category: value,
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih kategori" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {transactionCategories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">Deskripsi Pengeluaran</Label>
-                      <Input
-                        id="description"
-                        placeholder="Contoh: Pembelian Beras 500kg"
-                        value={newTransaction.description}
-                        onChange={(e) =>
-                          setNewTransaction({
-                            ...newTransaction,
-                            description: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="amount">Jumlah (Rp)</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        placeholder="Contoh: 7500000"
-                        value={newTransaction.amount}
-                        onChange={(e) =>
-                          setNewTransaction({
-                            ...newTransaction,
-                            amount: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="note">
-                        Catatan Nota / Bukti Pembelian
-                      </Label>
-                      <Textarea
-                        id="note"
-                        placeholder="Contoh: Nota #PO-001 - Supplier: UD Tani Makmur"
-                        value={newTransaction.note}
-                        onChange={(e) =>
-                          setNewTransaction({
-                            ...newTransaction,
-                            note: e.target.value,
-                          })
-                        }
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsAddDialogOpen(false)}
-                    >
-                      Batal
-                    </Button>
-                    <Button onClick={handleAddTransaction}>
-                      <Receipt className="w-4 h-4 mr-2" />
-                      Simpan Pengeluaran
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <AddFinanceDialog />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -325,7 +126,7 @@ export default function Finance() {
                     Export
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                {/* <DropdownMenuContent>
                   <DropdownMenuItem>
                     <FileSpreadsheet className="w-4 h-4 mr-2" />
                     Export Excel
@@ -334,15 +135,14 @@ export default function Finance() {
                     <FileText className="w-4 h-4 mr-2" />
                     Export CSV
                   </DropdownMenuItem>
-                </DropdownMenuContent>
+                </DropdownMenuContent> */}
               </DropdownMenu>
             </div>
           </div>
-
           <TabsContent value="transactions">
             <Card>
               <CardHeader className="pb-4">
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-row gap-4 items-center">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -352,17 +152,87 @@ export default function Finance() {
                       className="pl-9"
                     />
                   </div>
-                  <Button variant="outline">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Filter Tanggal
-                  </Button>
+                  <Popover
+                    open={isFromOpen}
+                    onOpenChange={handleOpenFromChange}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {dateFrom ? formatDateTable(dateFrom) : "Dari"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0 px-4 py-2"
+                      align="start"
+                    >
+                      <CalendarComponent
+                        mode="single"
+                        selected={tempDateFrom}
+                        onSelect={setTempDateFrom}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                      />
+                      <div className="flex gap-2 mt-2 mb-2">
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          onClick={() => {
+                            setDateFrom(undefined);
+                            setIsFromOpen(false);
+                          }}
+                        >
+                          Batal
+                        </Button>
+                        <Button className="w-full" onClick={handleConfirmFrom}>
+                          Pilih
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Popover open={isToOpen} onOpenChange={handleOpenToChange}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {dateTo ? formatDateTable(dateTo) : "Sampai"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0 px-4 py-2"
+                      align="start"
+                    >
+                      <CalendarComponent
+                        mode="single"
+                        selected={tempDateTo}
+                        onSelect={setTempDateTo}
+                        initialFocus
+                        disabled={(date) => date > new Date()}
+                      />
+                      <div className="flex gap-2 mt-2 mb-2">
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          onClick={() => {
+                            setDateTo(undefined);
+                            setIsToOpen(false);
+                          }}
+                        >
+                          Batal
+                        </Button>
+                        <Button className="w-full" onClick={handleConfirmTo}>
+                          Pilih
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent className="p-0 relative max-h-[500px] overflow-auto border-t text-nowrap">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead>No</TableHead>
+                  <TableHeader className="sticky top-0 bg-background z-10 border-b">
+                    <TableRow>
+                      {/* <TableHead>No</TableHead> */}
+                      {/* <TableHead>Jenis</TableHead> */}
                       <TableHead>Deskripsi</TableHead>
                       <TableHead>Kategori</TableHead>
                       <TableHead>Tanggal</TableHead>
@@ -371,53 +241,92 @@ export default function Finance() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredTransactions.map((tx, index) => (
-                      <motion.tr
-                        key={tx.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="group"
-                      >
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-destructive/10 text-destructive">
-                              <ArrowDownRight className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <span className="font-medium block">
-                                {tx.description}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {tx.note}
-                              </span>
+                    {isLoading ? (
+                      Array.from({ length: 5 }).map((_, index) => (
+                        <TableRow key={index}>
+                          {Array.from({ length: 7 }).map((_, cellIndex) => (
+                            <TableCell key={cellIndex}>
+                              <Skeleton className="h-4 w-full rounded-md" />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : financeData?.data.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="p-0">
+                          <div className="flex min-h-[400px] w-full items-center justify-center">
+                            <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
+                              <Package className="h-12 w-12 mb-3 opacity-50" />
+                              <p className="text-sm font-medium">
+                                {searchQuery
+                                  ? "Tidak ada hasil pencarian"
+                                  : "Data masih kosong"}
+                              </p>
+                              {searchQuery && (
+                                <p className="text-xs mt-1 text-muted-foreground/80 max-w-xs">
+                                  Coba kata kunci lain atau tambah bahan baru
+                                </p>
+                              )}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{tx.category}</Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {tx.date}
-                        </TableCell>
-                        <TableCell className="font-medium text-destructive">
-                          -{formatCurrency(tx.amount)}
-                        </TableCell>
-                        <TableCell>
-                          <ImageViewer />
-                        </TableCell>
-                      </motion.tr>
-                    ))}
+                      </TableRow>
+                    ) : (
+                      financeData?.data?.map(
+                        (f, index) =>
+                          f.proofImage && (
+                            <motion.tr
+                              key={f.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.05 }}
+                              className="group"
+                            >
+                              {/* <TableCell>{index + 1}</TableCell> */}
+                              {/* <TableCell>
+                                <div className="flex items-center gap-3">
+                                  {" "}
+                                   <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-destructive/10 text-destructive">
+                                    <ArrowDownRight className="w-4 h-4" />
+                                  </div>
+                                  <p>{f.description}</p>
+                                </div>
+                              </TableCell> */}
+                              <TableCell>
+                                <div>
+                                  <span className="font-medium block">
+                                    {f.description}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {f.extraNote}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">{f.category}</Badge>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground">
+                                {formatDateTable(f.createdAt)}
+                              </TableCell>
+                              <TableCell className="font-medium ">
+                                {formatCurrency(f.amount)}
+                              </TableCell>
+                              <TableCell>
+                                <ImageViewer src={f.proofImage} />
+                              </TableCell>
+                            </motion.tr>
+                          ),
+                      )
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="reports">
+          {/* <TabsContent value="reports">
             <ReportViewer transactions={transactions} />
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </motion.div>
     </DashboardLayout>

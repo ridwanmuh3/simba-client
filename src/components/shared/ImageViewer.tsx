@@ -1,22 +1,28 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 
 interface ImageViewerProps {
-  imageUrl?: string;
+  src?: string;
 }
 
-export default function ImageViewer({ imageUrl }: ImageViewerProps) {
+export default function ImageViewer({ src }: ImageViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!imageUrl) {
+  if (!src) {
     return (
       <Button variant="ghost" size="sm" disabled>
         <Eye className="w-4 h-4" />
       </Button>
     );
   }
+  console.log(src);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -26,15 +32,16 @@ export default function ImageViewer({ imageUrl }: ImageViewerProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
+        <DialogTitle>Bukti Foto</DialogTitle>
         <div className="relative w-full h-[600px] flex items-center justify-center bg-muted rounded-lg overflow-hidden">
           <img
-            src={imageUrl}
+            src={src}
             alt="Bukti Transaksi"
             className="max-w-full max-h-full object-contain"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/placeholder-image.png";
-            }}
+            // onError={(e) => {
+            //   const target = e.target as HTMLImageElement;
+            //   target.src = "/placeholder-image.png";
+            // }}
           />
         </div>
       </DialogContent>

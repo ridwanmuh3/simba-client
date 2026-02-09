@@ -33,6 +33,16 @@ export const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+export const parseCurrency = (value: string | number) => {
+  if (typeof value === "number") return value;
+
+  if (!value) return 0;
+
+  const numeric = value.replace(/[^\d]/g, "");
+
+  return numeric ? Number(numeric) : 0;
+};
+
 export const getUserFromCookie = () => {
   const token = document.cookie;
 

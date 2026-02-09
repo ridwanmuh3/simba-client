@@ -11,6 +11,7 @@ export interface UpdateItemStockRequest {
   type?: string;
   amount?: number;
   supplier?: string;
+  unitPrice?: number;
 }
 
 export interface EditItemRequest extends AddItemRequest {
@@ -43,6 +44,7 @@ export interface StockTracking {
   previousStock?: number;
   newStock?: number;
   amount?: number;
+  unitPrice?: number;
   createdAt?: string;
   item?: Item;
 }

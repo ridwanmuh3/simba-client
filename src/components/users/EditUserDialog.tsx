@@ -167,9 +167,7 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
           <Button
             type="submit"
             form="edit-user-form"
-            disabled={
-              editUser.isPending || form.watch("fullname") === user.fullname
-            }
+            disabled={editUser.isPending}
           >
             Simpan
           </Button>

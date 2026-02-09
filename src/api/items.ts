@@ -23,6 +23,9 @@ export const useAddItem = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
     },
   });
 };
@@ -38,6 +41,9 @@ export const useEditItem = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
     },
   });
 };
@@ -51,6 +57,7 @@ export const useUpdateStockItem = () => {
           type: request.type,
           amount: request.amount,
           supplier: request.supplier,
+          unitPrice: request.unitPrice,
         },
       );
       return response.data;
@@ -59,9 +66,12 @@ export const useUpdateStockItem = () => {
       queryClient.invalidateQueries({
         queryKey: ["items-stock"],
       });
+      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
+
       queryClient.invalidateQueries({
         queryKey: ["items"],
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
   });
 };
@@ -76,9 +86,11 @@ export const useImportItems = () => {
       queryClient.invalidateQueries({
         queryKey: ["items-stock"],
       });
+      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
       queryClient.invalidateQueries({
         queryKey: ["items"],
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
   });
 };
@@ -93,6 +105,9 @@ export const useDeleteItem = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
   });
 };
@@ -112,6 +127,7 @@ export const useDeleteStockItem = () => {
       queryClient.invalidateQueries({
         queryKey: ["items"],
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
   });
 };
@@ -165,7 +181,7 @@ export const useGetFullItems = () => {
         paging: response.data?.paging || null,
       };
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 };
