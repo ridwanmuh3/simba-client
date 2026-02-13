@@ -30,6 +30,7 @@ import {
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import Spinner from "@/components/shared/Spinner";
 import { formatDateRelative } from "@/lib/date-utils";
+import { formatCurrency } from "@/lib/utils";
 
 export default function Dashboard() {
   const { data: dashboard, isLoading } = useDashboardStats();
@@ -51,13 +52,13 @@ export default function Dashboard() {
       color: "primary",
     },
     {
-      title: "Bahan Masuk",
+      title: "Stok Bahan Masuk",
       value: (dashboard?.data?.stockIn ?? 0).toLocaleString("id-ID"),
       icon: PackagePlus,
       color: "success",
     },
     {
-      title: "Bahan Keluar",
+      title: "Stok Bahan Keluar",
       value: (dashboard?.data?.stockOut ?? 0).toLocaleString("id-ID"),
       icon: PackageMinus,
       color: "destructive",
@@ -67,7 +68,7 @@ export default function Dashboard() {
   const financeStatsCards = [
     {
       title: "Total Anggaran",
-      value: `Rp ${(dashboard?.data?.totalBudget ?? 0).toLocaleString("id-ID")}`,
+      value: formatCurrency(dashboard?.data?.totalBudget ?? 0),
       icon: Wallet,
       trend: "up",
       change: "Akumulasi anggaran",
@@ -75,7 +76,7 @@ export default function Dashboard() {
     },
     {
       title: "Anggaran Masuk",
-      value: `Rp ${(dashboard?.data?.budgetIn ?? 0).toLocaleString("id-ID")}`,
+      value: formatCurrency(dashboard?.data?.budgetIn ?? 0),
       icon: Wallet,
       trend: "up",
       change: "Dana diterima",
@@ -83,7 +84,7 @@ export default function Dashboard() {
     },
     {
       title: "Anggaran Keluar",
-      value: `Rp ${(dashboard?.data?.budgetOut ?? 0).toLocaleString("id-ID")}`,
+      value: formatCurrency(dashboard?.data?.budgetOut ?? 0),
       icon: Wallet,
       trend: "down",
       change: "Realisasi belanja",
@@ -93,10 +94,19 @@ export default function Dashboard() {
 
   const recentActivities = dashboard?.data?.systemActivities ?? [];
 
+  const totalExpense =
+    dashboard?.data?.expenseComposition?.reduce(
+      (sum, e) => sum + e.amount,
+      0,
+    ) ?? 0;
+
   const expenseCategories =
-    dashboard?.data?.expenseByType?.map((e, index) => ({
+    dashboard?.data?.expenseComposition?.map((e, index) => ({
       name: e.category,
-      value: e.amount,
+      value:
+        totalExpense > 0
+          ? Number(((e.amount / totalExpense) * 100).toFixed(1))
+          : 0,
       color: `hsl(var(--chart-${(index % 5) + 1}))`,
     })) ?? [];
 
@@ -106,7 +116,7 @@ export default function Dashboard() {
       pemasukan: m.in,
       pengeluaran: m.out,
     })) ?? [];
-
+  console.log(dashboard?.data?.monthlyBudget);
   return (
     <DashboardLayout
       title="Dashboard"
@@ -244,24 +254,15 @@ export default function Dashboard() {
 
                       <XAxis
                         dataKey="month"
-                        axisLine={false}
-                        tickLine={false}
-                        dy={10} // Memberi jarak sedikit ke bawah
-                        tick={{
-                          fill: "hsl(var(--muted-foreground))",
-                          fontSize: 12,
-                        }}
+                        interval="preserveStartEnd"
+                        minTickGap={20}
                       />
 
                       <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        dx={-10} // Memberi jarak sedikit ke kiri
-                        tick={{
-                          fill: "hsl(var(--muted-foreground))",
-                          fontSize: 12,
-                        }}
-                        tickFormatter={(value) => `${value / 1000000}M`}
+                        domain={["auto", "auto"]}
+                        tickFormatter={(v) =>
+                          `${(v / 1_000_000).toFixed(0)} Juta`
+                        }
                       />
 
                       <Tooltip
@@ -272,21 +273,10 @@ export default function Dashboard() {
                           color: "hsl(var(--card-foreground))",
                         }}
                         formatter={(value: number) => [
-                          `Rp ${(value / 1000000).toFixed(1)}M`,
+                          formatCurrency(value),
+                          "Jumlah",
                         ]}
                       />
-
-                      {/* Menampilkan Legenda (Petunjuk Warna) */}
-                      {/* <Legend
-                      verticalAlign="top"
-                      height={36}
-                      iconType="circle"
-                      formatter={(value) => (
-                        <span className="text-sm text-muted-foreground capitalize">
-                          {value}
-                        </span>
-                      )}
-                    /> */}
 
                       {/* Garis 1: Pemasukan (Anggaran Masuk) */}
                       <Line
@@ -345,8 +335,8 @@ export default function Dashboard() {
                           cx="50%"
                           cy="50%"
                           innerRadius={50}
-                          outerRadius={80}
-                          paddingAngle={2}
+                          outerRadius={75}
+                          paddingAngle={0}
                           dataKey="value"
                         >
                           {expenseCategories.map((entry, index) => (

@@ -1,6 +1,12 @@
 import { Calendar, Package, Save, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -34,7 +40,6 @@ import { AxiosError } from "axios";
 import { StockTracking } from "@/types/item";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
-import { useSearchParams } from "react-router";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import {
   UpdateItemStockFormInputs,
@@ -163,9 +168,6 @@ const AddItemStockTab = () => {
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
-        case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
-          break;
         case 404:
           setErrMsg("Data tidak ditemukan");
         default:
@@ -216,9 +218,9 @@ const AddItemStockTab = () => {
         <Card className="lg:col-span-1">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Bahan Masuk</CardTitle>
-            <p className="text-sm font-bold text-muted-foreground">
+            <CardDescription className="text-sm font-bold text-muted-foreground">
               Input dengan tanda (*) wajib diisi.
-            </p>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form

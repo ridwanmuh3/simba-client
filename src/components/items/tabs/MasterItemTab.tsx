@@ -8,7 +8,13 @@ import {
   Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -60,6 +66,7 @@ import { useSearchParams } from "react-router";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import { axiosInstance } from "@/lib/axios";
 import { ApiResponse } from "@/types/response";
+import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
 
 const MasterItemTab = () => {
   const form = useForm<MasterItemFormInputs>({
@@ -70,6 +77,8 @@ const MasterItemTab = () => {
       stock: 1,
       measureUnit: "",
       pricePerUnit: 0,
+      customCategory: "",
+      customMeasureUnit: "",
     },
   });
   const [isEditForm, setIsEditForm] = useState(false);
@@ -77,7 +86,6 @@ const MasterItemTab = () => {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [errMsg, setErrMsg] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const addItem = useAddItem();
@@ -92,6 +100,15 @@ const MasterItemTab = () => {
 
   const handleAddMasterItem = async (values: MasterItemFormInputs) => {
     setErrMsg("");
+
+    if (values.category === "Lainnya") {
+      values.category = values.customCategory;
+    }
+
+    if (values.measureUnit === "lainnya") {
+      values.measureUnit = values.customMeasureUnit;
+    }
+
     try {
       const response = await addItem.mutateAsync({
         name: values.name,
@@ -135,6 +152,15 @@ const MasterItemTab = () => {
 
   const handleEditMasterItem = async (values: MasterItemFormInputs) => {
     setErrMsg("");
+
+    if (values.category === "Lainnya") {
+      values.category = values.customCategory;
+    }
+
+    if (values.measureUnit === "lainnya") {
+      values.measureUnit = values.customMeasureUnit;
+    }
+
     try {
       const response = await editItem.mutateAsync({
         id: selectedItem.id,
@@ -178,9 +204,6 @@ const MasterItemTab = () => {
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
-        case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
-          break;
         case 404:
           setErrMsg("Data tidak ditemukan");
         default:
@@ -213,7 +236,7 @@ const MasterItemTab = () => {
     formData.append("import_file", file);
 
     try {
-      const result = await importItem.mutateAsync(formData);
+      await importItem.mutateAsync(formData);
       toast({
         title: "Berhasil dokumen data bahan",
         description:
@@ -259,15 +282,15 @@ const MasterItemTab = () => {
             <CardTitle className="text-lg">
               {selectedItem ? "Edit Bahan" : "Tambah Bahan"}
             </CardTitle>
-            <p className="text-sm font-bold text-muted-foreground">
+            <CardDescription className="text-sm font-bold text-muted-foreground">
               Input dengan tanda (*) wajib diisi.
-            </p>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="space-y-4" onSubmit={handleFormType(isEditForm)}>
               <div className="space-y-2">
                 <Label htmlFor="name">
-                  Nama Bahan <span className="text-destructive">*</span>
+                  Nama Bahan <RequiredInputIdentifier />
                 </Label>
                 <Input
                   {...form.register("name")}
@@ -281,7 +304,8 @@ const MasterItemTab = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">
-                  Kategori<span className="text-destructive">*</span>
+                  Kategori
+                  <RequiredInputIdentifier />
                 </Label>
                 <Controller
                   name="category"
@@ -303,6 +327,7 @@ const MasterItemTab = () => {
                         <SelectItem value="Sayuran">Sayuran</SelectItem>
                         <SelectItem value="Buah Buahan">Buah-Buahan</SelectItem>
                         <SelectItem value="Pendukung">Pendukung</SelectItem>
+                        <SelectItem value="Lainnya">Lainnya</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -312,10 +337,25 @@ const MasterItemTab = () => {
                     {form.formState.errors.category.message}
                   </p>
                 )}
+                {form.watch("category") === "Lainnya" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Kategori Lainnya</Label>
+                    <Input
+                      name="customCategory"
+                      {...form.register("customCategory")}
+                    />
+                    {form.formState.errors.customCategory && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.customCategory.message}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="measureUnit">
-                  Satuan<span className="text-destructive">*</span>
+                  Satuan
+                  <RequiredInputIdentifier />
                 </Label>
                 <Controller
                   name="measureUnit"
@@ -334,6 +374,7 @@ const MasterItemTab = () => {
                         <SelectItem value="botol">Botol</SelectItem>
                         <SelectItem value="dus">Dus</SelectItem>
                         <SelectItem value="bungkus">Bungkus</SelectItem>
+                        <SelectItem value="lainnya">Lainnya</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -343,10 +384,25 @@ const MasterItemTab = () => {
                     {form.formState.errors.measureUnit.message}
                   </p>
                 )}
+                {form.watch("measureUnit") === "lainnya" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="customMeasureUnit">Satuan Lainnya</Label>
+                    <Input
+                      name="customMeasureUnit"
+                      {...form.register("customMeasureUnit")}
+                    />
+                    {form.formState.errors.customMeasureUnit && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.customMeasureUnit.message}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="pricePerUnit">
-                  Harga Satuan<span className="text-destructive">*</span>
+                  Harga Satuan
+                  <RequiredInputIdentifier />
                 </Label>
                 <Controller
                   name="pricePerUnit"

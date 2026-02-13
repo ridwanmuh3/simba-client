@@ -1,13 +1,13 @@
 import { axiosInstance } from "@/lib/axios";
 import { queryClient } from "@/lib/react-query";
-import { FinanceData } from "@/types/finance";
+import { DeleteFinanceRequest, FinanceData } from "@/types/finance";
 import { ApiResponse } from "@/types/response";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useAddFinance = () => {
   return useMutation({
     mutationFn: async (formData: FormData) => {
-      const response = await axiosInstance.post<ApiResponse<any>>(
+      const response = await axiosInstance.post<ApiResponse<FinanceData>>(
         "/finances",
         formData,
         {
@@ -19,6 +19,43 @@ export const useAddFinance = () => {
       return response.data;
     },
     onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["finances"] });
+    },
+  });
+};
+
+export const useEditFinance = () => {
+  return useMutation({
+    mutationFn: async (request: { financeId: number; formData: FormData }) => {
+      const response = await axiosInstance.put<ApiResponse<FinanceData>>(
+        `/finances/${request.financeId}`,
+        request.formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+      return response.data;
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["finances"] });
+    },
+  });
+};
+
+export const useDeleteFinance = () => {
+  return useMutation({
+    mutationFn: async (request: DeleteFinanceRequest) => {
+      const response = await axiosInstance.delete<ApiResponse<boolean>>(
+        `/finances/${request.id}`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["finances"] });
     },
   });

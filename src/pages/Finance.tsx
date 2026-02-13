@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { MouseEvent, useState } from "react";
 import { motion } from "framer-motion";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReportViewer } from "@/components/finance/ReportViewer";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import ReportViewer from "@/components/finance/ReportViewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -26,6 +32,10 @@ import {
   FileSpreadsheet,
   FileText,
   Package,
+  ArrowUpRight,
+  UploadCloud,
+  Save,
+  Wallet,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -34,31 +44,74 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { formatCurrency } from "@/lib/utils";
-import AddFinanceDialog from "@/components/finance/AddFinanceDialog";
-import { useGetAllFinances } from "@/api/finance";
-import { useSearchParams } from "react-router";
+import {
+  capitalizeFirstLetterString,
+  compressImage,
+  formatCurrency,
+  parseCurrency,
+} from "@/lib/utils";
+import {
+  useAddFinance,
+  useDeleteFinance,
+  useEditFinance,
+  useGetAllFinances,
+} from "@/api/finance";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { formatDateTable } from "@/lib/date-utils";
+import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { FinanceData } from "@/types/finance";
+import { AxiosError } from "axios";
+import { toast } from "@/hooks/use-toast";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Label } from "@/components/ui/label";
+import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Dropzone from "react-dropzone";
+import { Textarea } from "@/components/ui/textarea";
+import DeleteDialog from "@/components/finance/DeleteDialog";
+import Spinner from "@/components/shared/Spinner";
+import DataTablePagination from "@/components/shared/DataTablePagination";
+import { axiosInstance } from "@/lib/axios";
+import { ApiResponse } from "@/types/response";
+import { exportFinanceToCSV, exportToCSV } from "@/lib/csv-utils";
 
-interface Transaction {
-  id: number;
-  description: string;
-  amount: number;
-  date: string;
-  status: "completed" | "locked";
-  note: string;
-  category: string;
-}
+const addFinanceSchema = z.object({
+  type: z.string(),
+  category: z.string(),
+  description: z.string().min(1, "Harus ada deskripsi"),
+  amount: z.coerce.number().min(1, "Besaran uang harus lebih dari Rp. 1"),
+  extraNote: z.string().optional(),
+  proofImage: z.instanceof(File, {
+    message: "Bukti foto wajib diupload",
+  }),
+});
+
+type AddFinanceFormInputs = z.infer<typeof addFinanceSchema>;
+
+const transactionCategories = [
+  "Bahan Makanan",
+  "Bahan Pendukung",
+  "Operasional",
+  "Logistik",
+  "Peralatan",
+  "Lainnya",
+];
 
 export default function Finance() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [errMsg, setErrMsg] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -66,8 +119,12 @@ export default function Finance() {
   const [isToOpen, setIsToOpen] = useState(false);
   const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
   const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
-  const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 10;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [isEditForm, setIsEditForm] = useState(false);
+  const [selectedFinance, setSelectedFinance] = useState<FinanceData | null>(
+    null,
+  );
   const { data: financeData, isLoading } = useGetAllFinances(
     searchQuery,
     page,
@@ -75,7 +132,175 @@ export default function Finance() {
     dateFrom,
     dateTo,
   );
-  console.log(financeData?.data);
+  const form = useForm<AddFinanceFormInputs>({
+    resolver: zodResolver(addFinanceSchema),
+    defaultValues: {
+      type: "PEMASUKAN",
+      category: "",
+      description: "",
+      amount: 0,
+      extraNote: "",
+      proofImage: null,
+    },
+  });
+  const addFinance = useAddFinance();
+  const editFinance = useEditFinance();
+  const deleteFinance = useDeleteFinance();
+
+  const handleAddFinance = async (data: AddFinanceFormInputs) => {
+    setErrMsg("");
+    try {
+      const formData = new FormData();
+
+      formData.append("type", data.type);
+      formData.append("description", data.description);
+      formData.append("amount", data.amount.toString());
+
+      if (data.type === "PEMASUKAN") {
+        formData.append("category", "Pemasukan");
+      } else {
+        formData.append("category", data.category);
+      }
+
+      if (data.extraNote) {
+        formData.append("extra_note", data.extraNote);
+      }
+
+      if (data.proofImage) {
+        formData.append("proof_image", data.proofImage);
+      }
+      await addFinance.mutateAsync(formData);
+
+      toast({
+        title: "Berhasil",
+        description: `Data keuangan  berhasil ditambahkan`,
+      });
+
+      form.reset();
+    } catch (e) {
+      const err = e as AxiosError;
+      switch (err.status) {
+        case 400:
+          setErrMsg("Terjadi kesalahan input data bahan");
+          break;
+        case 404:
+          setErrMsg("Data tidak ditemukan");
+        default:
+          setErrMsg("Terjadi kesalahan server");
+          break;
+      }
+    }
+  };
+
+  const handleEditFinance = async (data: AddFinanceFormInputs) => {
+    setErrMsg("");
+    try {
+      const formData = new FormData();
+
+      formData.append("type", data.type);
+      formData.append("description", data.description);
+      formData.append("amount", data.amount.toString());
+
+      if (data.type === "PEMASUKAN") {
+        formData.append("category", "Pemasukan");
+      } else {
+        formData.append("category", data.category);
+      }
+
+      if (data.extraNote) {
+        formData.append("extra_note", data.extraNote);
+      }
+
+      if (data.proofImage) {
+        formData.append("proof_image", data.proofImage);
+      }
+      await editFinance.mutateAsync({
+        financeId: selectedFinance.id,
+        formData: formData,
+      });
+
+      toast({
+        title: "Berhasil",
+        description: `Data keuangan berhasil diubah`,
+      });
+
+      setIsEditForm(false);
+      form.reset();
+    } catch (e) {
+      const err = e as AxiosError;
+      switch (err.status) {
+        case 400:
+          setErrMsg("Terjadi kesalahan input data bahan");
+          break;
+        case 404:
+          setErrMsg("Data tidak ditemukan");
+        default:
+          setErrMsg("Terjadi kesalahan server");
+          break;
+      }
+    }
+  };
+
+  const handleDeleteFinance = async () => {
+    setErrMsg("");
+    if (!selectedFinance) {
+      setErrMsg("Anda belum memilih data keuangan");
+      return;
+    }
+    try {
+      const response = await deleteFinance.mutateAsync({
+        id: selectedFinance.id,
+      });
+      if (response.status === 200) {
+        setSelectedFinance(null);
+        toast({
+          title: "Berhasil menghapus data keuangan",
+          description: `Anda berhasil menghapus data keuangan`,
+        });
+      }
+    } catch (e: unknown) {
+      const err = e as AxiosError;
+      switch (err.status) {
+        case 404:
+          setErrMsg("Data tidak ditemukan");
+        default:
+          setErrMsg("Terjadi kesalahan server");
+          break;
+      }
+    } finally {
+      form.reset();
+    }
+  };
+
+  const handleSelectFinance = (finance: FinanceData) => {
+    setSelectedFinance(finance);
+    setIsEditForm(true);
+
+    form.setValue("type", finance.type);
+    form.setValue("category", finance.category);
+    form.setValue("description", finance.description);
+    form.setValue("amount", finance.amount);
+    form.setValue("extraNote", finance.extraNote);
+    // form.setValue("proofImage", finance.proofImage);
+  };
+
+  const handleCancelEditFinance = (e: MouseEvent) => {
+    e.preventDefault();
+    setSelectedFinance(null);
+    setIsEditForm(false);
+    setErrMsg("");
+    form.reset();
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
+
   const handleOpenFromChange = (open: boolean) => {
     if (open) {
       setTempDateFrom(dateFrom);
@@ -100,6 +325,32 @@ export default function Finance() {
     setIsToOpen(false);
   };
 
+  const handleFormType = (isEditMode: boolean) => {
+    const formHandler = isEditMode ? handleEditFinance : handleAddFinance;
+    return form.handleSubmit(formHandler);
+  };
+
+  const handleExportFinances = async () => {
+    try {
+      const exportedFinance =
+        await axiosInstance.get<ApiResponse<FinanceData[]>>("/finances/export");
+
+      if (exportedFinance.data && exportedFinance.data?.data) {
+        exportFinanceToCSV(exportedFinance.data.data);
+
+        toast({
+          title: "Export data keuangan berhasil",
+          description: "Anda berhasil melakukan export data keuangan",
+        });
+      }
+    } catch {
+      toast({
+        title: "Export data keuangan gagal",
+        description: "Terjadi kesalahan server",
+      });
+    }
+  };
+
   return (
     <DashboardLayout
       title="Kelola Keuangan"
@@ -111,222 +362,483 @@ export default function Finance() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Tabs defaultValue="transactions" className="space-y-4">
+        <Tabs defaultValue="finance" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <TabsList>
-              <TabsTrigger value="transactions">Data Keuangan</TabsTrigger>
-              {/* <TabsTrigger value="reports">Laporan Harian/Mingguan</TabsTrigger> */}
+              <TabsTrigger value="finance">Data Keuangan</TabsTrigger>
+              <TabsTrigger value="reports">Laporan Keuangan</TabsTrigger>
             </TabsList>
             <div className="flex gap-2">
-              <AddFinanceDialog />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button
+                    className="w-full sm:w-fit"
+                    variant="outline"
+                    size="sm"
+                  >
                     <Download className="w-4 h-4 mr-2" />
                     Export
                   </Button>
                 </DropdownMenuTrigger>
-                {/* <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Export Excel
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={handleExportFinances}>
                     <FileText className="w-4 h-4 mr-2" />
                     Export CSV
                   </DropdownMenuItem>
-                </DropdownMenuContent> */}
+                </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
-          <TabsContent value="transactions">
-            <Card>
-              <CardHeader className="pb-4">
-                <div className="flex flex-row gap-4 items-center">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Cari transaksi, nota, atau kategori..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                  <Popover
-                    open={isFromOpen}
-                    onOpenChange={handleOpenFromChange}
+          <TabsContent className="space-y-4" value="finance">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <Card className="lg:col-span-1 h-fit">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">Input Keuangan</CardTitle>
+                  <CardDescription className="text-sm font-bold text-muted-foreground">
+                    Input dengan tanda (*) wajib diisi.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form
+                    onSubmit={handleFormType(isEditForm)}
+                    className="space-y-4"
                   >
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {dateFrom ? formatDateTable(dateFrom) : "Dari"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0 px-4 py-2"
-                      align="start"
-                    >
-                      <CalendarComponent
-                        mode="single"
-                        selected={tempDateFrom}
-                        onSelect={setTempDateFrom}
-                        disabled={(date) => date > new Date()}
-                        initialFocus
+                    {/* JENIS */}
+                    <div className="space-y-2">
+                      <Label>
+                        Jenis <RequiredInputIdentifier />
+                      </Label>
+                      <Controller
+                        name="type"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih Jenis" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="PEMASUKAN">
+                                PEMASUKAN
+                              </SelectItem>
+                              <SelectItem value="PENGELUARAN">
+                                PENGELUARAN
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                       />
-                      <div className="flex gap-2 mt-2 mb-2">
-                        <Button
-                          className="w-full"
-                          variant="outline"
-                          onClick={() => {
-                            setDateFrom(undefined);
-                            setIsFromOpen(false);
-                          }}
-                        >
-                          Batal
-                        </Button>
-                        <Button className="w-full" onClick={handleConfirmFrom}>
-                          Pilih
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <Popover open={isToOpen} onOpenChange={handleOpenToChange}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {dateTo ? formatDateTable(dateTo) : "Sampai"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0 px-4 py-2"
-                      align="start"
-                    >
-                      <CalendarComponent
-                        mode="single"
-                        selected={tempDateTo}
-                        onSelect={setTempDateTo}
-                        initialFocus
-                        disabled={(date) => date > new Date()}
-                      />
-                      <div className="flex gap-2 mt-2 mb-2">
-                        <Button
-                          className="w-full"
-                          variant="outline"
-                          onClick={() => {
-                            setDateTo(undefined);
-                            setIsToOpen(false);
-                          }}
-                        >
-                          Batal
-                        </Button>
-                        <Button className="w-full" onClick={handleConfirmTo}>
-                          Pilih
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0 relative max-h-[500px] overflow-auto border-t text-nowrap">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-background z-10 border-b">
-                    <TableRow>
-                      {/* <TableHead>No</TableHead> */}
-                      {/* <TableHead>Jenis</TableHead> */}
-                      <TableHead>Deskripsi</TableHead>
-                      <TableHead>Kategori</TableHead>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Bukti</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      Array.from({ length: 5 }).map((_, index) => (
-                        <TableRow key={index}>
-                          {Array.from({ length: 7 }).map((_, cellIndex) => (
-                            <TableCell key={cellIndex}>
-                              <Skeleton className="h-4 w-full rounded-md" />
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    ) : financeData?.data.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="p-0">
-                          <div className="flex min-h-[400px] w-full items-center justify-center">
-                            <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
-                              <Package className="h-12 w-12 mb-3 opacity-50" />
-                              <p className="text-sm font-medium">
-                                {searchQuery
-                                  ? "Tidak ada hasil pencarian"
-                                  : "Data masih kosong"}
-                              </p>
-                              {searchQuery && (
-                                <p className="text-xs mt-1 text-muted-foreground/80 max-w-xs">
-                                  Coba kata kunci lain atau tambah bahan baru
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      financeData?.data?.map(
-                        (f, index) =>
-                          f.proofImage && (
-                            <motion.tr
-                              key={f.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              className="group"
+                    </div>
+
+                    {/* PENGELUARAN */}
+                    {form.watch("type") === "PENGELUARAN" && (
+                      <div className="space-y-2">
+                        <Label>
+                          Kategori <RequiredInputIdentifier />
+                        </Label>
+                        <Controller
+                          name="category"
+                          control={form.control}
+                          render={({ field }) => (
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
                             >
-                              {/* <TableCell>{index + 1}</TableCell> */}
-                              {/* <TableCell>
-                                <div className="flex items-center gap-3">
-                                  {" "}
-                                   <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-destructive/10 text-destructive">
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih kategori" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {transactionCategories.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label>
+                        {form.watch("type") === "PENGELUARAN"
+                          ? "Deskripsi"
+                          : "Sumber Pemasukan"}
+                        <RequiredInputIdentifier />
+                      </Label>
+                      <Input
+                        {...form.register("description")}
+                        placeholder={
+                          form.watch("type") === "PENGELUARAN"
+                            ? "Misal: Pembelian gas 10kg"
+                            : "Misal: Pendanaan perusahaan"
+                        }
+                      />
+                    </div>
+
+                    {/* JUMLAH */}
+                    <div className="space-y-2">
+                      <Label>
+                        Jumlah (Rp) <RequiredInputIdentifier />
+                      </Label>
+                      <Controller
+                        name="amount"
+                        control={form.control}
+                        render={({ field }) => (
+                          <Input
+                            inputMode="numeric"
+                            value={formatCurrency(field.value)}
+                            onChange={(e) =>
+                              field.onChange(parseCurrency(e.target.value))
+                            }
+                          />
+                        )}
+                      />
+                    </div>
+
+                    {/* FOTO BUKTI */}
+                    <div className="space-y-2">
+                      <Label>
+                        Foto Bukti <RequiredInputIdentifier />
+                      </Label>
+                      <Controller
+                        name="proofImage"
+                        control={form.control}
+                        render={({ field: { value, onBlur, onChange } }) => (
+                          <Dropzone
+                            multiple={false}
+                            accept={{
+                              "image/jpeg": [".jpg", ".jpeg"],
+                              "image/png": [".png"],
+                            }}
+                            onDrop={async (files) => {
+                              if (!files || files.length === 0) return;
+                              const compressedFile = await compressImage(
+                                files[0],
+                              );
+                              onChange(compressedFile);
+                            }}
+                          >
+                            {({
+                              getRootProps,
+                              getInputProps,
+                              isDragActive,
+                            }) => (
+                              <div
+                                {...getRootProps()}
+                                className={`relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ease-in-out ${isDragActive ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 bg-background"} ${!!value ? "border-primary/50" : ""} `}
+                              >
+                                <input {...getInputProps()} onBlur={onBlur} />
+                                {value ? (
+                                  <div className="flex flex-col items-center gap-4 w-full">
+                                    <div className="relative aspect-video w-full overflow-hidden rounded-lg border shadow-sm">
+                                      <img
+                                        src={
+                                          typeof value === "string"
+                                            ? value
+                                            : URL.createObjectURL(value)
+                                        }
+                                        alt="Preview"
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="text-center">
+                                      <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                                        {value.name || "Gambar terpilih"}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Klik untuk ganti gambar
+                                      </p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col items-center gap-2 text-center">
+                                    <div className="p-4 rounded-full bg-muted">
+                                      <UploadCloud className="w-8 h-8 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-semibold text-foreground">
+                                        Klik untuk upload
+                                        <span className="font-normal text-muted-foreground">
+                                          atau seret gambar ke sini
+                                        </span>
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        PNG, JPG atau JPEG (Maks. 5MB)
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </Dropzone>
+                        )}
+                      />
+                    </div>
+
+                    {/* CATATAN */}
+                    <div className="space-y-2">
+                      <Label>Catatan Tambahan</Label>
+                      <Textarea {...form.register("extraNote")} rows={3} />
+                    </div>
+
+                    <div className="flex gap-4 pt-2 flex-wrap-reverse">
+                      {selectedFinance ? (
+                        <>
+                          <Button
+                            type="button"
+                            className="w-full"
+                            variant="outline"
+                            onClick={handleCancelEditFinance}
+                          >
+                            Batal
+                          </Button>
+                          <DeleteDialog
+                            handleDelete={handleDeleteFinance}
+                            isPending={deleteFinance.isPending}
+                          />
+                          <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={editFinance.isPending}
+                          >
+                            {editFinance.isPending ? (
+                              <Spinner color="text-background" />
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4 mr-0.5" />
+                                Simpan
+                              </>
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={addFinance.isPending}
+                        >
+                          {addFinance.isPending ? (
+                            <Spinner color="text-background" />
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-0.5" />
+                              Simpan
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    {errMsg && (
+                      <p className="text-sm text-destructive text-center">
+                        {errMsg}
+                      </p>
+                    )}
+                  </form>
+                </CardContent>
+              </Card>
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-row gap-4 items-center">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Cari transaksi, nota, atau kategori..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    <Popover
+                      open={isFromOpen}
+                      onOpenChange={handleOpenFromChange}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {dateFrom ? formatDateDetail(dateFrom) : "Dari"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-0 px-4 py-2"
+                        align="start"
+                      >
+                        <CalendarComponent
+                          mode="single"
+                          selected={tempDateFrom}
+                          onSelect={setTempDateFrom}
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                        />
+                        <div className="flex gap-2 mt-2 mb-2">
+                          <Button
+                            className="w-full"
+                            variant="outline"
+                            onClick={() => {
+                              setDateFrom(undefined);
+                              setIsFromOpen(false);
+                            }}
+                          >
+                            Batal
+                          </Button>
+                          <Button
+                            className="w-full"
+                            onClick={handleConfirmFrom}
+                          >
+                            Pilih
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <Popover open={isToOpen} onOpenChange={handleOpenToChange}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {dateTo ? formatDateTable(dateTo) : "Sampai"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-0 px-4 py-2"
+                        align="start"
+                      >
+                        <CalendarComponent
+                          mode="single"
+                          selected={tempDateTo}
+                          onSelect={setTempDateTo}
+                          initialFocus
+                          disabled={(date) => date > new Date()}
+                        />
+                        <div className="flex gap-2 mt-2 mb-2">
+                          <Button
+                            className="w-full"
+                            variant="outline"
+                            onClick={() => {
+                              setDateTo(undefined);
+                              setIsToOpen(false);
+                            }}
+                          >
+                            Batal
+                          </Button>
+                          <Button className="w-full" onClick={handleConfirmTo}>
+                            Pilih
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 relative max-h-full overflow-auto border-t text-nowrap">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background z-10 border-b">
+                      <TableRow>
+                        <TableHead>No</TableHead>
+                        <TableHead>Jenis</TableHead>
+                        <TableHead>Deskripsi</TableHead>
+                        <TableHead>Kategori</TableHead>
+                        <TableHead>Tanggal</TableHead>
+                        <TableHead>Jumlah</TableHead>
+                        <TableHead>Bukti</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        Array.from({ length: 5 }).map((_, index) => (
+                          <TableRow key={index}>
+                            {Array.from({ length: 7 }).map((_, cellIndex) => (
+                              <TableCell key={cellIndex}>
+                                <Skeleton className="h-4 w-full rounded-md" />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : financeData?.data.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="p-0">
+                            <div className="flex min-h-[400px] w-full items-center justify-center">
+                              <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
+                                <Wallet className="h-12 w-12 mb-3 opacity-50" />
+                                <p className="text-sm font-medium">
+                                  {searchQuery
+                                    ? "Tidak ada hasil pencarian"
+                                    : "Data masih kosong"}
+                                </p>
+                                {searchQuery && (
+                                  <p className="text-xs mt-1 text-muted-foreground/80 max-w-xs">
+                                    Coba kata kunci lain atau tambah bahan baru
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        financeData?.data?.map((f, index) => (
+                          <TableRow
+                            key={f.id}
+                            className={`cursor-pointer transition-colors hover:bg-muted/50 ${
+                              selectedFinance?.id === f.id ? "bg-muted" : ""
+                            }`}
+                            onClick={() => handleSelectFinance(f)}
+                          >
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                {f.type === "PENGELUARAN" ? (
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-destructive/10 text-destructive">
                                     <ArrowDownRight className="w-4 h-4" />
                                   </div>
-                                  <p>{f.description}</p>
-                                </div>
-                              </TableCell> */}
-                              <TableCell>
-                                <div>
-                                  <span className="font-medium block">
-                                    {f.description}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {f.extraNote}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{f.category}</Badge>
-                              </TableCell>
-                              <TableCell className="text-muted-foreground">
-                                {formatDateTable(f.createdAt)}
-                              </TableCell>
-                              <TableCell className="font-medium ">
-                                {formatCurrency(f.amount)}
-                              </TableCell>
-                              <TableCell>
-                                <ImageViewer src={f.proofImage} />
-                              </TableCell>
-                            </motion.tr>
-                          ),
-                      )
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                                ) : (
+                                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-success/10 text-success">
+                                    <ArrowUpRight className="w-4 h-4" />
+                                  </div>
+                                )}
+                                <p>{capitalizeFirstLetterString(f.type)}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <span className="font-medium block">
+                                  {f.description}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {f.extraNote}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{f.category}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatDateTable(f.createdAt)}
+                            </TableCell>
+                            <TableCell className="font-medium ">
+                              {formatCurrency(f.amount)}
+                            </TableCell>
+                            <TableCell>
+                              <ImageViewer src={f.proofImage} />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+            <DataTablePagination
+              currentPage={page}
+              pageSize={limit}
+              totalPages={financeData?.paging?.totalPage || 1}
+              totalItems={financeData?.paging?.totalItem || 0}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handleLimitChange}
+            />
           </TabsContent>
-
-          {/* <TabsContent value="reports">
-            <ReportViewer transactions={transactions} />
-          </TabsContent> */}
+          <TabsContent value="reports">
+            <ReportViewer transactions={financeData?.data || []} />
+          </TabsContent>
         </Tabs>
       </motion.div>
     </DashboardLayout>

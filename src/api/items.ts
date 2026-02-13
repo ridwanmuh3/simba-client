@@ -26,6 +26,7 @@ export const useAddItem = () => {
       queryClient.invalidateQueries({ queryKey: ["items-stock"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
+      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
     },
   });
 };
@@ -44,6 +45,7 @@ export const useEditItem = () => {
       queryClient.invalidateQueries({ queryKey: ["items-stock"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
+      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
     },
   });
 };
@@ -72,6 +74,7 @@ export const useUpdateStockItem = () => {
         queryKey: ["items"],
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
     },
   });
 };
@@ -91,6 +94,7 @@ export const useImportItems = () => {
         queryKey: ["items"],
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
     },
   });
 };
@@ -108,6 +112,7 @@ export const useDeleteItem = () => {
       queryClient.invalidateQueries({ queryKey: ["items-stock"] });
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
     },
   });
 };
@@ -128,6 +133,7 @@ export const useDeleteStockItem = () => {
         queryKey: ["items"],
       });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
     },
   });
 };
@@ -161,8 +167,8 @@ export const useGetAllItems = (
       );
 
       return {
-        data: response.data.data || [],
-        paging: response.data.paging || null,
+        data: response.data?.data || [],
+        paging: response.data?.paging || null,
       };
     },
     staleTime: 1000 * 60 * 5,
@@ -234,6 +240,29 @@ export const useGetAllItemsStocks = (
         data: response.data?.data || [],
         paging: response.data?.paging || null,
       };
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+};
+
+interface StocksFinanceSummary {
+  masterItemsTotalBudget?: number;
+  budgetIn?: number;
+  budgetOut?: number;
+  profit?: number;
+  currentBudget?: number;
+}
+
+export const useGetStocksFinanceSummary = () => {
+  return useQuery({
+    queryKey: ["stocks-finance-summary"],
+    queryFn: async () => {
+      const response = await axiosInstance.get<
+        ApiResponse<StocksFinanceSummary>
+      >("/items/stocks/summary");
+      console.log(response.data);
+      return response.data;
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

@@ -1,6 +1,12 @@
 import { Calendar, Package, Save, Search, Upload } from "lucide-react";
 import { Button } from "../../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../ui/card";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import {
@@ -34,7 +40,6 @@ import { AxiosError } from "axios";
 import { StockTracking } from "@/types/item";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
-import { useSearchParams } from "react-router";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import {
   UpdateItemStockFormInputs,
@@ -48,6 +53,7 @@ import {
 import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import Spinner from "@/components/shared/Spinner";
+import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
 
 const ReduceItemStockTab = () => {
   const form = useForm<UpdateItemStockFormInputs>({
@@ -85,7 +91,6 @@ const ReduceItemStockTab = () => {
     dateTo,
     "OUT",
   );
-  console.log(stocksData);
   const { data: itemsData } = useGetFullItems();
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
@@ -154,9 +159,6 @@ const ReduceItemStockTab = () => {
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
-        case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
-          break;
         case 404:
           setErrMsg("Data tidak ditemukan");
         default:
@@ -207,9 +209,9 @@ const ReduceItemStockTab = () => {
         <Card className="lg:col-span-1">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Bahan Keluar</CardTitle>
-            <p className="text-sm font-bold text-muted-foreground">
+            <CardDescription className="text-sm font-bold text-muted-foreground">
               Input dengan tanda (*) wajib diisi.
-            </p>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form
@@ -219,7 +221,8 @@ const ReduceItemStockTab = () => {
             >
               <div className="space-y-2">
                 <Label>
-                  Pilih Bahan<span className="text-destructive">*</span>
+                  Pilih Bahan
+                  <RequiredInputIdentifier />
                 </Label>
                 <Controller
                   name="itemId"
@@ -256,7 +259,8 @@ const ReduceItemStockTab = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>
-                    Stok<span className="text-destructive">*</span>
+                    Stok
+                    <RequiredInputIdentifier />
                   </Label>
                   <Input
                     type="number"
@@ -279,7 +283,8 @@ const ReduceItemStockTab = () => {
               </div>
               <div className="space-y-2">
                 <Label>
-                  Harga Satuan (Rp)<span className="text-destructive">*</span>
+                  Harga Satuan (Rp)
+                  <RequiredInputIdentifier />
                 </Label>
                 <Controller
                   name="itemUnitPrice"
@@ -481,12 +486,12 @@ const ReduceItemStockTab = () => {
                           {t.previousStock} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell className="text-red-500">
-                          -{t.previousStock - t.newStock}
+                          -{t.amount}
                         </TableCell>
                         <TableCell
                           className={`${index === 0 ? "font-bold" : ""}`}
                         >
-                          {t.newStock} {t.item?.measureUnit}
+                          {t.newStock || 0} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell>{formatCurrency(t.unitPrice)}</TableCell>
                       </TableRow>

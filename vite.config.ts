@@ -26,11 +26,23 @@ export default defineConfig(({ mode }) => {
               changeOrigin: true,
             },
           },
-          allowedHosts: ["599b-202-46-68-32.ngrok-free.app"],
+          allowedHosts: true,
         }
       : undefined,
     preview: {
+      host: "0.0.0.0",
       port: 4173,
+      proxy: {
+        "/api": {
+          target: "http://localhost:3000",
+          changeOrigin: true,
+        },
+        "/uploads": {
+          target: "http://localhost:3000",
+          changeOrigin: true,
+        },
+      },
+      allowedHosts: [".ngrok-free.app"],
     },
   };
 });

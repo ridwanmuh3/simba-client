@@ -1,3 +1,4 @@
+import imageCompression from "browser-image-compression";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useCurrentAuth } from "@/api/auth";
@@ -73,4 +74,60 @@ export const downloadHandler = async (filename: string) => {
       variant: "destructive",
     });
   }
+};
+
+export const compressImage = async (file: File): Promise<File> => {
+  const compressedBlob = await imageCompression(file, {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1600,
+    initialQuality: 0.5,
+    useWebWorker: true,
+  });
+
+  const jpgBlob =
+    compressedBlob.type === "image/jpeg"
+      ? compressedBlob
+      : await convertBlobToJpg(compressedBlob, 0.5);
+
+  return new File([jpgBlob], file.name.replace(/\.(png|jpeg|jpg)$/i, ".jpg"), {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+};
+
+const convertBlobToJpg = async (blob: Blob, quality: number): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) return reject("Canvas not supported");
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob(
+        (jpgBlob) => {
+          if (!jpgBlob) return reject("Failed to convert to JPG");
+          resolve(jpgBlob);
+        },
+        "image/jpeg",
+        quality,
+      );
+
+      URL.revokeObjectURL(url);
+    };
+
+    img.onerror = reject;
+    img.src = url;
+  });
+};
+
+export const capitalizeFirstLetterString = (str: string) => {
+  return str[0].toUpperCase() + str.slice(1).toLowerCase();
 };

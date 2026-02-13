@@ -22,7 +22,6 @@ export default function ImageViewer({ src }: ImageViewerProps) {
       </Button>
     );
   }
-  console.log(src);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

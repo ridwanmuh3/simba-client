@@ -14,7 +14,7 @@ export interface DashboardStats {
     in: number;
     out: number;
   }[];
-  expenseByType: {
+  expenseComposition: {
     category: string;
     amount: number;
   }[];
@@ -35,6 +35,6 @@ export const useDashboardStats = () => {
         await axiosInstance.get<ApiResponse<DashboardStats>>("/dashboard");
       return response.data;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 3,
   });
 };

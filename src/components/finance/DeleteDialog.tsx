@@ -48,10 +48,10 @@ const DeleteDialog = ({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Hapus Bahan</DialogTitle>
+          <DialogTitle>Hapus Data Keuangan</DialogTitle>
           <DialogDescription className="text-sm text-foreground">
-            Apakah yakin anda ingin menghapus bahan ini? Data bahan yang dihapus
-            tidak dapat dipulihkan.
+            Apakah yakin anda ingin menghapus data keuangan ini? Data data
+            keuangan yang dihapus tidak dapat dipulihkan.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

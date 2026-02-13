@@ -1,3 +1,7 @@
+export interface DeleteFinanceRequest {
+  id?: number;
+}
+
 export interface FinanceData {
   id?: number;
   type?: string;
