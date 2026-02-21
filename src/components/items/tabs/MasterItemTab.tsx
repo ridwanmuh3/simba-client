@@ -134,9 +134,9 @@ const MasterItemTab = () => {
           break;
         case 409:
           setErrMsg("Data bahan sudah ditambahkan");
+          break;
         default:
           setErrMsg("Terjadi kesalahan server");
-          break;
       }
     } finally {
       form.reset();
@@ -209,9 +209,9 @@ const MasterItemTab = () => {
       switch (err.status) {
         case 404:
           setErrMsg("Data tidak ditemukan");
+          break;
         default:
           setErrMsg("Terjadi kesalahan server");
-          break;
       }
     } finally {
       form.reset();
