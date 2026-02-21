@@ -186,6 +186,9 @@ const MasterItemTab = () => {
           setErrMsg("Terjadi kesalahan server");
           break;
       }
+    } finally {
+      setIsEditForm(false);
+      form.reset();
     }
   };
 
@@ -213,6 +216,7 @@ const MasterItemTab = () => {
       }
     } finally {
       form.reset();
+      setIsEditForm(false);
     }
   };
 
