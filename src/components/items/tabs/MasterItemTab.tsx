@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/table";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { downloadCSVTemplate, exportToCSV, parseCSV } from "@/lib/csv-utils";
+import { downloadCSV, exportToCSV } from "@/lib/csv-utils";
 import {
   MasterItemFormInputs,
   masterItemSchema,
@@ -92,6 +92,9 @@ const MasterItemTab = () => {
   const editItem = useEditItem();
   const importItem = useImportItems();
   const deleteItem = useDeleteItem();
+
+  // const debouncedSearch = useDebou;
+
   const { data: itemsData, isLoading: isItemsLoading } = useGetAllItems(
     searchQuery,
     page,
@@ -271,6 +274,18 @@ const MasterItemTab = () => {
   const handleFormType = (isEditMode: boolean) => {
     const formHandler = isEditMode ? handleEditMasterItem : handleAddMasterItem;
     return form.handleSubmit(formHandler);
+  };
+
+  const handleDownloadCsv = () => {
+    const headers = [
+      "Nama Bahan",
+      "Kategori",
+      "Stok",
+      "Satuan Perhitungan",
+      "Satuan Harga",
+    ];
+    const rows = [["Beras Bulog", "Karbohidrat", "100", "kg", "30000"]];
+    downloadCSV("template-bahan-mbg.csv", headers, rows);
   };
 
   return (
@@ -510,7 +525,7 @@ const MasterItemTab = () => {
                       <FileText className="w-4 h-4 mr-0.5" />
                       Export CSV
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={downloadCSVTemplate}>
+                    <DropdownMenuItem onClick={handleDownloadCsv}>
                       <FileDown className="w-4 h-4 mr-0.5" />
                       Download Template
                     </DropdownMenuItem>

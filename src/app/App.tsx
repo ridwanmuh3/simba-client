@@ -4,10 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { queryClient } from "@/lib/react-query";
-import Protected from "@/components/shared/Protected";
+import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { AuthProvider } from "@/components/shared/AuthProvider";
 import { lazy, Suspense } from "react";
 import Spinner from "@/components/shared/Spinner";
+import { UserRole } from "@/types/user";
+import PublicRoute from "@/components/shared/PublicRoute";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -25,23 +27,29 @@ const App = () => (
         <AuthProvider>
           <Suspense fallback={<Spinner />}>
             <Routes>
-              <Route index path="/" element={<Login />} />
+              <Route element={<PublicRoute />}>
+                <Route path="/" element={<Login />} />
+              </Route>
               <Route
-                element={<Protected allowedRoles={["Admin", "Super Admin"]} />}
+                element={
+                  <ProtectedRoute
+                    allowedRoles={[UserRole.ADMIN, UserRole.SUPER_ADMIN]}
+                  />
+                }
               >
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/items" element={<Items />} />
                 <Route path="/finance" element={<Finance />} />
               </Route>
-              <Route element={<Protected allowedRoles={["Super Admin"]} />}>
+
+              <Route
+                element={
+                  <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]} />
+                }
+              >
                 <Route path="/users" element={<Users />} />
               </Route>
-              <Route
-                path="*"
-                element={
-                  <ErrorPage code={404} message="Halaman tidak ditemukan" />
-                }
-              />
+
               <Route
                 path="/forbidden"
                 element={
@@ -49,6 +57,12 @@ const App = () => (
                     code={403}
                     message="Anda tidak diizinkan mengakses halaman ini"
                   />
+                }
+              />
+              <Route
+                path="*"
+                element={
+                  <ErrorPage code={404} message="Halaman tidak ditemukan" />
                 }
               />
             </Routes>

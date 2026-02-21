@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Card, CardContent } from "../ui/card";
 
 const StatsCard = ({
@@ -7,8 +8,8 @@ const StatsCard = ({
   bgIcon,
 }: {
   title: string;
-  value: React.ReactNode;
-  icon: React.ReactNode;
+  value: ReactNode;
+  icon: ReactNode;
   bgIcon: string;
 }) => (
   <Card className="hover-lift">

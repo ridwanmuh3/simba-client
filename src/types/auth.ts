@@ -1,3 +1,5 @@
+import { UserRole } from "./user";
+
 export interface UserLoginRequest {
   username?: string;
   password?: string;
@@ -7,7 +9,7 @@ export interface UserLoginRequest {
 export interface AuthUser {
   id: string;
   fullname: string;
-  role: string;
+  role: UserRole;
 }
 
 export interface AuthContextType {

@@ -1,5 +1,10 @@
 import { ModalType } from "./modal";
 
+/**
+ * ====
+ * TYPES
+ * ====
+ */
 export interface CreateUserRequest {
   fullname?: string;
   username?: string;
@@ -40,4 +45,14 @@ export interface UserModalStore {
   data: User | null;
   onOpen: (type: ModalType, data?: User) => void;
   onClose: () => void;
+}
+
+/**
+ * ====
+ * ENUM
+ * ====
+ */
+export enum UserRole {
+  ADMIN = "Admin",
+  SUPER_ADMIN = "Super Admin",
 }

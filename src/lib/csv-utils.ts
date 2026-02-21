@@ -10,6 +10,17 @@ const itemHeaders = [
   "Satuan Harga",
 ];
 
+const financeHeaders = [
+  "ID",
+  "Tipe",
+  "Kategori",
+  "Deskripsi",
+  "Jumlah Anggaran",
+  "Link Foto Bukti",
+  "Catatan Tambahan",
+  "Tanggal Ditambahkan",
+];
+
 export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
   const csvContent = [
     itemHeaders.join(","),
@@ -39,18 +50,8 @@ export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
-
-const financeHeaders = [
-  "ID",
-  "Tipe",
-  "Kategori",
-  "Deskripsi",
-  "Jumlah Anggaran",
-  "Link Foto Bukti",
-  "Catatan Tambahan",
-  "Tanggal Ditambahkan",
-];
 
 export const exportFinanceToCSV = (
   items: FinanceData[],
@@ -89,6 +90,7 @@ export const exportFinanceToCSV = (
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 export const parseCSV = (csvText: string): Item[] => {
@@ -180,21 +182,31 @@ export const parseFinanceCSV = (csvText: string): FinanceData[] => {
   });
 };
 
-export const downloadCSVTemplate = () => {
-  const exampleRow = ["Beras", "Karbohidrat", "100", "kg", "14000"];
+export const downloadCSV = (
+  filename: string,
+  headers: string[],
+  data: (string | number)[][],
+) => {
+  const escapeCSV = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
-  const csvContent = [itemHeaders.join(","), exampleRow.join(",")].join("\n");
+  const rows = [headers, ...data];
+
+  const csvContent = rows
+    .map((row) => row.map((cell) => escapeCSV(String(cell))).join(","))
+    .join("\n");
 
   const blob = new Blob(["\ufeff" + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
-  const link = document.createElement("a");
+
   const url = URL.createObjectURL(blob);
 
-  link.setAttribute("href", url);
-  link.setAttribute("download", "template-bahan-mbg.csv");
-  link.style.visibility = "hidden";
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
 };

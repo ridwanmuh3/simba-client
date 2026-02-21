@@ -28,9 +28,7 @@ const DeleteDialog = ({
     try {
       await handleDelete();
       setIsDeleteDialogOpen(false);
-    } catch (err) {
-      console.info(err);
-    }
+    } catch (err) {}
   };
 
   return (

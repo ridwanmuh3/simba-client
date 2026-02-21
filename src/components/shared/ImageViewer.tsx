@@ -32,15 +32,11 @@ export default function ImageViewer({ src }: ImageViewerProps) {
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
         <DialogTitle>Bukti Foto</DialogTitle>
-        <div className="relative w-full h-[600px] flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+        <div className="w-full max-h-[80vh] flex items-center justify-center bg-muted rounded-lg overflow-auto">
           <img
             src={src}
             alt="Bukti Transaksi"
-            className="max-w-full max-h-full object-contain"
-            // onError={(e) => {
-            //   const target = e.target as HTMLImageElement;
-            //   target.src = "/placeholder-image.png";
-            // }}
+            className="max-w-full max-h-[80vh] object-contain"
           />
         </div>
       </DialogContent>

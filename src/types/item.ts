@@ -48,3 +48,11 @@ export interface StockTracking {
   createdAt?: string;
   item?: Item;
 }
+
+export interface StocksFinanceSummary {
+  masterItemsTotalBudget?: number;
+  budgetIn?: number;
+  budgetOut?: number;
+  profit?: number;
+  currentBudget?: number;
+}

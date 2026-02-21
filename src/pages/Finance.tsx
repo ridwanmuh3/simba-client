@@ -11,7 +11,6 @@ import {
 import ReportViewer from "@/components/finance/ReportViewer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
 import {
   Table,
   TableBody,
@@ -23,7 +22,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ImageViewer from "../components/shared/ImageViewer";
-
 import {
   Search,
   Download,
@@ -43,7 +41,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import {
   capitalizeFirstLetterString,
   compressImage,
@@ -562,6 +559,7 @@ export default function Finance() {
                                       <p className="text-sm font-semibold text-foreground">
                                         Klik untuk upload
                                         <span className="font-normal text-muted-foreground">
+                                          {" "}
                                           atau seret gambar ke sini
                                         </span>
                                       </p>

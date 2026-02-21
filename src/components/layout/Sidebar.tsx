@@ -15,6 +15,7 @@ import logoBgn from "@/assets/sppg.webp";
 import { AuthContextType } from "@/types/auth";
 import LogoutDialog from "../shared/LogoutDialog";
 import { useSidebarStore } from "@/stores/use-sidebar-store";
+import { UserRole } from "@/types/user";
 
 interface SidebarProps {
   authContext: AuthContextType;
@@ -25,25 +26,25 @@ const menuItems = [
     title: "Dashboard",
     icon: LayoutDashboard,
     path: "/dashboard",
-    roles: ["Super Admin", "Admin"],
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     title: "Kelola Bahan",
     icon: Package,
     path: "/items",
-    roles: ["Super Admin", "Admin"],
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     title: "Kelola Pengguna",
     icon: Users,
     path: "/users",
-    roles: ["Super Admin"],
+    roles: [UserRole.SUPER_ADMIN],
   },
   {
     title: "Kelola Keuangan",
     icon: Wallet,
     path: "/finance",
-    roles: ["Super Admin", "Admin"],
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
 ];
 

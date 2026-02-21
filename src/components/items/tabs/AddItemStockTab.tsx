@@ -240,7 +240,7 @@ const AddItemStockTab = () => {
                       value={field.value}
                       onValueChange={(val) => {
                         field.onChange(val);
-                        const selectedItm = itemsData?.data?.find(
+                        const selectedItm = itemsData?.find(
                           (item) => item.id === val,
                         );
 
@@ -254,7 +254,7 @@ const AddItemStockTab = () => {
                         <SelectValue placeholder="Pilih bahan" />
                       </SelectTrigger>
                       <SelectContent>
-                        {itemsData?.data?.map((t) => (
+                        {itemsData?.map((t) => (
                           <SelectItem key={t?.id} value={t?.id}>
                             {t?.name}
                           </SelectItem>

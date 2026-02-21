@@ -16,6 +16,7 @@ import {
 import logoBgn from "@/assets/sppg.webp";
 import { useAuth } from "@/hooks/use-auth";
 import { LoginFormInputs, loginSchema } from "@/schemas/auth/login-auth";
+import dayjs from "dayjs";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -108,7 +109,6 @@ const Login = () => {
                     <Input
                       {...form.register("username")}
                       id="username"
-                      placeholder="admin123"
                       className="pl-9"
                       disabled={isLoading}
                     />
@@ -128,7 +128,6 @@ const Login = () => {
                       {...form.register("password")}
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
                       className="pl-9 pr-10"
                       disabled={isLoading}
                     />
@@ -172,8 +171,6 @@ const Login = () => {
                     "Login"
                   )}
                 </Button>
-
-                {/* Error Global (Dari Backend/Context) */}
                 {errorMsg && (
                   <p className="text-red-500 text-sm text-center mt-2 font-medium">
                     {errorMsg}
@@ -184,7 +181,7 @@ const Login = () => {
           </Card>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            © {new Date().getFullYear()} SIMBA. All rights reserved.
+            © {dayjs().year()} SIMBA. All rights reserved.
           </p>
         </motion.div>
       </div>

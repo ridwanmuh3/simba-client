@@ -1,7 +1,6 @@
 import imageCompression from "browser-image-compression";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { useCurrentAuth } from "@/api/auth";
 import { toast } from "@/hooks/use-toast";
 
 export const cn = (...inputs: ClassValue[]) => {
@@ -42,18 +41,6 @@ export const parseCurrency = (value: string | number) => {
   const numeric = value.replace(/[^\d]/g, "");
 
   return numeric ? Number(numeric) : 0;
-};
-
-export const getUserFromCookie = () => {
-  const token = document.cookie;
-
-  if (!token) {
-    return null;
-  }
-
-  const { data: user } = useCurrentAuth();
-
-  return user;
 };
 
 export const downloadHandler = async (filename: string) => {
@@ -131,3 +118,8 @@ const convertBlobToJpg = async (blob: Blob, quality: number): Promise<Blob> => {
 export const capitalizeFirstLetterString = (str: string) => {
   return str[0].toUpperCase() + str.slice(1).toLowerCase();
 };
+
+export const isPlainObject = (
+  value: unknown,
+): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);

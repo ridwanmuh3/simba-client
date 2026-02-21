@@ -36,7 +36,7 @@ const StockOpnameTab = () => {
   const stocksSummary = useGetStocksFinanceSummary();
 
   const stocks = stocksData?.data ?? [];
-  const stocksBudgetSummary = stocksSummary.data?.data;
+  const stocksBudgetSummary = stocksSummary.data;
 
   const incomingStocks = stocks.filter((stock) => stock.type === "IN");
 

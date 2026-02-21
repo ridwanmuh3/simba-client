@@ -1,32 +1,53 @@
 import { axiosInstance } from "@/lib/axios";
+import { queryClient } from "@/lib/react-query";
 import { AuthUser, UserLoginRequest } from "@/types/auth";
+import { ApiResponse } from "@/types/response";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export const useLoginMutation = () => {
-  return useMutation({
-    mutationFn: async (request: UserLoginRequest) => {
-      const response = await axiosInstance.post("/auth/login", request);
-      return response.data;
+  return useMutation<AuthUser, Error, UserLoginRequest>({
+    mutationFn: async (request) => {
+      const { data } = await axiosInstance.post<ApiResponse<AuthUser>>(
+        "/auth/login",
+        request,
+      );
+      return data.data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["authUser"], data);
     },
   });
 };
 
 export const useLogoutMutation = () => {
-  return useMutation({
+  return useMutation<void, Error>({
     mutationFn: async () => {
-      return await axiosInstance.delete("/auth/logout");
+      await axiosInstance.delete("/auth/logout");
+    },
+    onSuccess: () => {
+      queryClient.clear();
     },
   });
 };
-export const useCurrentAuth = () => {
-  return useQuery({
+
+export const useCurrentAuth = (enabled: boolean) => {
+  return useQuery<AuthUser>({
     queryKey: ["authUser"],
     queryFn: async () => {
-      const response = await axiosInstance.get("/auth/_current");
-      return response.data.data as AuthUser;
+      const { data } =
+        await axiosInstance.get<ApiResponse<AuthUser>>("/auth/_current");
+      return data.data;
     },
     retry: false,
     staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    enabled,
+  });
+};
+
+export const fetchCurrentAuth = async () => {
+  return await queryClient.fetchQuery<AuthUser>({
+    queryKey: ["authUser"],
   });
 };

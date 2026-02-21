@@ -8,132 +8,259 @@ import {
   UpdateItemStockRequest,
   StockTracking,
   DeleteItemStockRequest,
+  StocksFinanceSummary,
 } from "@/types/item";
-import { ApiResponse } from "@/types/response";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { ApiResponse, PagingMetadata } from "@/types/response";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 
 export const useAddItem = () => {
-  return useMutation({
-    mutationFn: async (request: AddItemRequest) => {
-      const response = await axiosInstance.post<ApiResponse<Item>>(
+  return useMutation<ApiResponse<Item>, Error, AddItemRequest>({
+    mutationFn: async (request) => {
+      const { data } = await axiosInstance.post<ApiResponse<Item>>(
         "/items",
         request,
       );
-      return response.data;
+
+      return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] });
-      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
-      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+    onSuccess: ({ data: newItem }) => {
+      queryClient.setQueriesData({ queryKey: ["items"] }, (old: any) => {
+        if (!old?.data) return old;
+
+        return {
+          ...old,
+          data: [newItem, ...old.data],
+        };
+      });
+
+      queryClient.setQueriesData(
+        { queryKey: ["items-stock-mapping"] },
+        (old: Item[] | undefined) => {
+          if (!old) return [newItem];
+          return [newItem, ...old];
+        },
+      );
     },
   });
 };
 
 export const useEditItem = () => {
-  return useMutation({
-    mutationFn: async (request: EditItemRequest) => {
-      const response = await axiosInstance.put<ApiResponse<Item>>(
-        `/items/${request.id}`,
-        request,
+  return useMutation<ApiResponse<Item>, Error, EditItemRequest>({
+    mutationFn: async ({ id, ...rest }) => {
+      const { data } = await axiosInstance.put<ApiResponse<Item>>(
+        `/items/${id}`,
+        rest,
       );
-      return response.data;
+
+      return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] });
-      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
-      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+    onSuccess: ({ data: updatedItem }) => {
+      queryClient.setQueriesData({ queryKey: ["items"] }, (old: any) => {
+        if (!old?.data) return old;
+
+        return {
+          ...old,
+          data: old.data.map((item: Item) =>
+            item.id === updatedItem.id ? updatedItem : item,
+          ),
+        };
+      });
+
+      queryClient.setQueriesData(
+        { queryKey: ["items-stock-mapping"] },
+        (old: any) => {
+          if (!old) return old;
+
+          return old.map((item: Item) =>
+            item.id === updatedItem.id ? updatedItem : item,
+          );
+        },
+      );
     },
   });
 };
 
 export const useUpdateStockItem = () => {
-  return useMutation({
-    mutationFn: async (request: UpdateItemStockRequest) => {
-      const response = await axiosInstance.put<ApiResponse<StockTracking>>(
-        `/items/${request.itemId}/stocks`,
-        {
-          type: request.type,
-          amount: request.amount,
-          supplier: request.supplier,
-          unitPrice: request.unitPrice,
-        },
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["items-stock"],
-      });
-      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
+  return useMutation<ApiResponse<StockTracking>, Error, UpdateItemStockRequest>(
+    {
+      mutationFn: async ({ itemId, type, amount, supplier, unitPrice }) => {
+        const { data } = await axiosInstance.put<ApiResponse<StockTracking>>(
+          `/items/${itemId}/stocks`,
+          {
+            type,
+            amount,
+            supplier,
+            unitPrice,
+          },
+        );
 
-      queryClient.invalidateQueries({
-        queryKey: ["items"],
-      });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+        return data;
+      },
+      onSuccess: ({ data: updatedStock }) => {
+        queryClient.setQueriesData(
+          { queryKey: ["items-stock"] },
+          (old: any) => {
+            if (!old?.data) return old;
+
+            return {
+              ...old,
+              data: old.data.map((stock: StockTracking) =>
+                stock.id === updatedStock.id ? updatedStock : stock,
+              ),
+            };
+          },
+        );
+
+        queryClient.invalidateQueries({
+          queryKey: ["dashboard-stats"],
+        });
+
+        queryClient.invalidateQueries({
+          queryKey: ["stocks-finance-summary"],
+        });
+      },
     },
-  });
+  );
 };
 
 export const useImportItems = () => {
-  return useMutation({
-    mutationFn: async (request: FormData) => {
-      const response = await axiosInstance.post("/items/import", request);
-      return response.data;
+  return useMutation<ApiResponse<boolean>, Error, FormData>({
+    mutationFn: async (formData) => {
+      const { data } = await axiosInstance.post<ApiResponse<boolean>>(
+        "/items/import",
+        formData,
+      );
+
+      return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["items-stock"],
-      });
-      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
-      queryClient.invalidateQueries({
-        queryKey: ["items"],
-      });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["items"] }),
+        queryClient.invalidateQueries({ queryKey: ["items-stock"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["items-stock-mapping"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["dashboard-stats"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["stocks-finance-summary"],
+        }),
+      ]);
     },
   });
 };
 
 export const useDeleteItem = () => {
-  return useMutation({
-    mutationFn: async (request: DeleteItemRequest) => {
-      const response = await axiosInstance.delete<ApiResponse<boolean>>(
-        `/items/${request.id}`,
+  return useMutation<
+    ApiResponse<boolean>,
+    Error,
+    DeleteItemRequest,
+    {
+      previousItems: [any, any][];
+      previousStocks: [any, any][];
+      previousMapping: [any, any][];
+    }
+  >({
+    mutationFn: async ({ id }) => {
+      const { data } = await axiosInstance.delete<ApiResponse<boolean>>(
+        `/items/${id}`,
       );
-      return response.data;
+
+      return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] });
-      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
-      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
+
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: ["items"] });
+
+      const previousItems = queryClient.getQueriesData({ queryKey: ["items"] });
+
+      const previousStocks = queryClient.getQueriesData({
+        queryKey: ["items-stock"],
+      });
+
+      const previousMapping = queryClient.getQueriesData({
+        queryKey: ["items-stock-mapping"],
+      });
+
+      // update items list
+      queryClient.setQueriesData({ queryKey: ["items"] }, (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.filter((item: any) => item.id !== id),
+        };
+      });
+
+      return { previousItems, previousStocks, previousMapping };
+    },
+
+    onError: (_err, _vars, context) => {
+      context?.previousItems?.forEach(([key, data]) =>
+        queryClient.setQueryData(key, data),
+      );
+
+      context?.previousStocks?.forEach(([key, data]) =>
+        queryClient.setQueryData(key, data),
+      );
+
+      context?.previousMapping?.forEach(([key, data]) =>
+        queryClient.setQueryData(key, data),
+      );
+    },
+
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({
+        queryKey: ["stocks-finance-summary"],
+      });
     },
   });
 };
 
 export const useDeleteStockItem = () => {
-  return useMutation({
-    mutationFn: async (request: DeleteItemStockRequest) => {
-      const response = await axiosInstance.delete<ApiResponse<boolean>>(
-        `/items/${request.id}/stocks/${request.stockId}`,
+  return useMutation<
+    ApiResponse<boolean>,
+    Error,
+    DeleteItemStockRequest,
+    { previousStocks: [any, any][] }
+  >({
+    mutationFn: async ({ id, stockId }) => {
+      const { data } = await axiosInstance.delete<ApiResponse<boolean>>(
+        `/items/${id}/stocks/${stockId}`,
       );
-      return response.data;
+
+      return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onMutate: async ({ stockId }) => {
+      await queryClient.cancelQueries({ queryKey: ["items-stock"] });
+
+      const previousStocks = queryClient.getQueriesData({
         queryKey: ["items-stock"],
       });
-      queryClient.invalidateQueries({
-        queryKey: ["items"],
+
+      queryClient.setQueriesData({ queryKey: ["items-stock"] }, (old: any) => {
+        if (!old?.data) return old;
+
+        return {
+          ...old,
+          data: old.data.filter((stock: any) => stock.id !== stockId),
+        };
       });
+
+      return { previousStocks };
+    },
+    onError: (_err, _vars, context) => {
+      context?.previousStocks?.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({
+        queryKey: ["stocks-finance-summary"],
+      });
     },
   });
 };
@@ -142,53 +269,54 @@ export const useGetAllItems = (
   searchQuery: string,
   page: number,
   limit: number,
+  dateFrom?: Date,
+  dateTo?: Date,
 ) => {
-  return useQuery({
-    queryKey: ["items-stock", searchQuery, page, limit],
+  const startDate = dateFrom?.toISOString() ?? null;
+  const endDate = dateTo?.toISOString() ?? null;
+
+  return useQuery<{
+    data: Item[];
+    paging: PagingMetadata;
+  }>({
+    queryKey: ["items-stock", { searchQuery, page, limit, startDate, endDate }],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: String(page),
-        size: String(limit),
+      const { data } = await axiosInstance.get<ApiResponse<Item[]>>("/items", {
+        params: {
+          page,
+          size: limit,
+          search_query: searchQuery || undefined,
+          start_date: startDate || undefined,
+          end_date: endDate || undefined,
+        },
       });
 
-      if (searchQuery) {
-        params.append("search_query", searchQuery);
-      }
-
-      // if (dateFrom) {
-      //   params.append("start_date", dateFrom.toISOString());
-      // }
-      // if (dateTo) {
-      //   params.append("end_date", dateTo.toISOString());
-      // }
-
-      const response = await axiosInstance.get<ApiResponse<Item[]>>(
-        `/items?${params.toString()}`,
-      );
-
       return {
-        data: response.data?.data || [],
-        paging: response.data?.paging || null,
+        data: data.data ?? [],
+        paging: data.paging ?? null,
       };
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+    enabled: page > 0 && limit > 0,
   });
 };
 
 export const useGetFullItems = () => {
-  return useQuery({
+  return useQuery<Item[]>({
     queryKey: ["items-stock-mapping"],
     queryFn: async () => {
-      const response =
-        await axiosInstance.get<ApiResponse<Item[]>>(`/items/export`);
-      return {
-        data: response.data?.data || [],
-        paging: response.data?.paging || null,
-      };
+      const { data } =
+        await axiosInstance.get<ApiResponse<Item[]>>("/items/export");
+
+      return data.data ?? [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: Infinity,
+    gcTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };
 
@@ -200,71 +328,63 @@ export const useGetAllItemsStocks = (
   dateTo?: Date,
   transactionType = "ALL",
 ) => {
-  return useQuery({
+  const startDate = dateFrom?.toISOString() ?? null;
+  const endDate = dateTo?.toISOString() ?? null;
+
+  return useQuery<{
+    data: StockTracking[];
+    paging: PagingMetadata;
+  }>({
     queryKey: [
       "items-stock",
-      searchQuery,
-      page,
-      limit,
-      dateFrom,
-      dateTo,
-      transactionType,
+      {
+        searchQuery,
+        page,
+        limit,
+        startDate,
+        endDate,
+        transactionType,
+      },
     ],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: String(page),
-        size: String(limit),
-      });
-
-      if (searchQuery) {
-        params.append("search_query", searchQuery);
-      }
-
-      if (dateFrom) {
-        params.append("start_date", dateFrom.toISOString());
-      }
-
-      if (dateTo) {
-        params.append("end_date", dateTo.toISOString());
-      }
-
-      if (transactionType && transactionType !== "ALL") {
-        params.append("type", transactionType);
-      }
-
-      const response = await axiosInstance.get<ApiResponse<StockTracking[]>>(
-        `/items/stocks?${params.toString()}`,
+      const { data } = await axiosInstance.get<ApiResponse<StockTracking[]>>(
+        "/items/stocks",
+        {
+          params: {
+            page,
+            size: limit,
+            search_query: searchQuery || undefined,
+            start_date: startDate || undefined,
+            end_date: endDate || undefined,
+            type: transactionType !== "ALL" ? transactionType : undefined,
+          },
+        },
       );
 
       return {
-        data: response.data?.data || [],
-        paging: response.data?.paging || null,
+        data: data.data ?? [],
+        paging: data.paging ?? null,
       };
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 };
 
-interface StocksFinanceSummary {
-  masterItemsTotalBudget?: number;
-  budgetIn?: number;
-  budgetOut?: number;
-  profit?: number;
-  currentBudget?: number;
-}
-
 export const useGetStocksFinanceSummary = () => {
-  return useQuery({
+  return useQuery<StocksFinanceSummary>({
     queryKey: ["stocks-finance-summary"],
     queryFn: async () => {
-      const response = await axiosInstance.get<
+      const { data } = await axiosInstance.get<
         ApiResponse<StocksFinanceSummary>
       >("/items/stocks/summary");
-      console.log(response.data);
-      return response.data;
+
+      return data.data;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 };
