@@ -131,9 +131,9 @@ const AddItemStockTab = () => {
           break;
         case 404:
           setErrMsg("Data tidak ditemukan");
+          break;
         default:
           setErrMsg("Terjadi kesalahan server");
-          break;
       }
     }
   };
@@ -170,9 +170,9 @@ const AddItemStockTab = () => {
       switch (err.status) {
         case 404:
           setErrMsg("Data tidak ditemukan");
+          break;
         default:
           setErrMsg("Terjadi kesalahan server");
-          break;
       }
     } finally {
       form.reset();
@@ -240,7 +240,7 @@ const AddItemStockTab = () => {
                       value={field.value}
                       onValueChange={(val) => {
                         field.onChange(val);
-                        const selectedItm = itemsData?.find(
+                        const selectedItm = itemsData?.data?.find(
                           (item) => item.id === val,
                         );
 
@@ -254,7 +254,7 @@ const AddItemStockTab = () => {
                         <SelectValue placeholder="Pilih bahan" />
                       </SelectTrigger>
                       <SelectContent>
-                        {itemsData?.map((t) => (
+                        {itemsData?.data?.map((t) => (
                           <SelectItem key={t?.id} value={t?.id}>
                             {t?.name}
                           </SelectItem>

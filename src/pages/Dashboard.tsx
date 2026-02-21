@@ -80,18 +80,21 @@ const Dashboard = () => {
     },
   ];
 
-  const total = expenseComposition.reduce((sum, e) => sum + e.amount, 0);
+  const safeExpenseComposition = expenseComposition || [];
+  const safeMonthlyBudget = monthlyBudget || [];
+  const safeSystemActivities = systemActivities || [];
+  const total = safeExpenseComposition?.reduce((sum, e) => sum + e.amount, 0);
 
   const expenseCategories =
     total > 0
-      ? expenseComposition.map((e, index) => ({
+      ? safeExpenseComposition?.map((e, index) => ({
           name: e.category,
           value: Number(((e.amount / total) * 100).toFixed(1)),
           color: `hsl(var(--chart-${(index % 5) + 1}))`,
         }))
       : [];
 
-  const monthlyExpenseData = monthlyBudget.map((m) => ({
+  const monthlyExpenseData = safeMonthlyBudget?.map((m) => ({
     month: m.month,
     pemasukan: m.in,
     pengeluaran: m.out,
@@ -107,7 +110,7 @@ const Dashboard = () => {
         monthlyExpense={monthlyExpenseData}
         expenseCategories={expenseCategories}
       />
-      <SystemActivity activities={systemActivities} />
+      <SystemActivity activities={safeSystemActivities} />
     </DashboardLayout>
   );
 };

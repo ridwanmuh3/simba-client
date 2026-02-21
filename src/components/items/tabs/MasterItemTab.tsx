@@ -93,8 +93,6 @@ const MasterItemTab = () => {
   const importItem = useImportItems();
   const deleteItem = useDeleteItem();
 
-  // const debouncedSearch = useDebou;
-
   const { data: itemsData, isLoading: isItemsLoading } = useGetAllItems(
     searchQuery,
     page,

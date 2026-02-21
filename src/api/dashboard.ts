@@ -9,7 +9,8 @@ export const useDashboardStats = () => {
     queryFn: async () => {
       const { data } =
         await axiosInstance.get<ApiResponse<DashboardStats>>("/dashboard");
-      return data.data;
+      console.log(data);
+      return data?.data;
     },
     select: (data) => data,
     staleTime: 1000 * 60 * 3,

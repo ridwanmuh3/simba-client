@@ -192,7 +192,7 @@ const StockOpnameTab = () => {
                   <span className="text-sm text-semibold ">Anggaran Kasar</span>
                   <span className="font-semibold">
                     {formatCurrency(
-                      stocksBudgetSummary.masterItemsTotalBudget || 0,
+                      stocksBudgetSummary?.data?.masterItemsTotalBudget || 0,
                     )}
                   </span>
                 </div>
@@ -201,7 +201,8 @@ const StockOpnameTab = () => {
                     Total Masuk
                   </span>
                   <span className="font-semibold text-green-600">
-                    + {formatCurrency(stocksBudgetSummary.budgetOut || 0)}
+                    +{" "}
+                    {formatCurrency(stocksBudgetSummary?.data?.budgetOut || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center gap-0.5">
@@ -209,21 +210,23 @@ const StockOpnameTab = () => {
                     Total Keluar
                   </span>
                   <span className="font-semibold text-red-600">
-                    - {formatCurrency(stocksBudgetSummary.budgetIn || 0)}
+                    - {formatCurrency(stocksBudgetSummary?.data?.budgetIn || 0)}
                   </span>
                 </div>
                 <div className="border-t pt-4 flex justify-between items-center gap-0.5">
                   <span className="text-sm font-semibold">Laba</span>
                   <span
-                    className={`font-bold ${stocksBudgetSummary.profit < 0 ? "text-red-600" : stocksBudgetSummary.profit > 0 ? "text-green-600" : "text-muted-foreground"}`}
+                    className={`font-bold ${stocksBudgetSummary?.data?.profit < 0 ? "text-red-600" : stocksBudgetSummary?.data?.profit > 0 ? "text-green-600" : "text-muted-foreground"}`}
                   >
-                    {formatCurrency(stocksBudgetSummary.profit || 0)}
+                    {formatCurrency(stocksBudgetSummary?.data?.profit || 0)}
                   </span>
                 </div>
                 <div className="border-t pt-4 flex justify-between items-center gap-0.5">
                   <span className="font-semibold text-sm">Anggaran Bersih</span>
                   <span className="font-bold text-lg text-primary">
-                    {formatCurrency(stocksBudgetSummary.currentBudget || 0)}
+                    {formatCurrency(
+                      stocksBudgetSummary?.data?.currentBudget || 0,
+                    )}
                   </span>
                 </div>
               </CardContent>
