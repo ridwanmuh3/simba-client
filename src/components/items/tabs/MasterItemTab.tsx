@@ -236,7 +236,7 @@ const MasterItemTab = () => {
     }
   };
 
-  const handleImportCsv = async (file: any) => {
+  const handleImportCsv = async (file: File) => {
     const formData = new FormData();
     formData.append("import_file", file);
 

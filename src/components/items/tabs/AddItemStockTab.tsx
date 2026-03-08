@@ -437,9 +437,9 @@ const AddItemStockTab = () => {
                     <TableHead>Tanggal Dibuat</TableHead>
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
-                    <TableHead>Stok Sebelumnya</TableHead>
+                    <TableHead>Akumulasi Sebelumnya</TableHead>
                     <TableHead>Stok Tambah</TableHead>
-                    <TableHead>Stok Baru</TableHead>
+                    <TableHead>Akumulasi</TableHead>
                     <TableHead>Penyuplai</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -493,12 +493,10 @@ const AddItemStockTab = () => {
                         <TableCell>
                           {t.previousStock} {t.item?.measureUnit}
                         </TableCell>
-                        <TableCell className="text-green-500">
+                        <TableCell className="text-green-500 font-bold">
                           +{t.newStock - t.previousStock}
                         </TableCell>
-                        <TableCell
-                          className={`${index === 0 ? "font-bold" : ""} `}
-                        >
+                        <TableCell>
                           {t.newStock} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell>{t.supplier}</TableCell>

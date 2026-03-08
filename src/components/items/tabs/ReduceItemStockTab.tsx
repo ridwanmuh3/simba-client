@@ -101,11 +101,12 @@ const ReduceItemStockTab = () => {
     }
 
     if (values.amount <= 0) {
-      setErrMsg("Jumlah stok keluar harus lebih dari 0");
+      setErrMsg("Jumlah stok keluar harus lebih besar dari 0");
       return;
     }
+    console.log(values.amount, selectedStock.item?.stock);
 
-    if (values.amount > selectedStock.item.stock) {
+    if (values.amount > selectedStock.item?.stock) {
       setErrMsg("Stok tidak mencukupi");
       return;
     }
@@ -126,8 +127,13 @@ const ReduceItemStockTab = () => {
       form.reset();
       setSelectedStock(null);
       setSelectedItemId("");
-    } catch {
-      setErrMsg("Terjadi kesalahan server");
+    } catch (e) {
+      const err = e as AxiosError;
+      if (err.status === 400) {
+        setErrMsg("Terjadi kesalahan input atau stok anda tidak mencukupi");
+      } else {
+        setErrMsg("Terjadi kesalahan server");
+      }
     }
   };
 
@@ -148,14 +154,13 @@ const ReduceItemStockTab = () => {
         id: selectedItemId,
         stockId: selectedStock?.id,
       });
-      if (response.status === 200) {
-        setSelectedStock(null);
-        setSelectedItemId("");
-        toast({
-          title: "Berhasil menghapus data bahan",
-          description: `Anda berhasil menghapus data bahan`,
-        });
-      }
+      setSelectedStock(null);
+      setSelectedItemId("");
+      toast({
+        title: "Berhasil menghapus data bahan",
+        description: `Anda berhasil menghapus data bahan`,
+      });
+      form.reset();
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
@@ -165,8 +170,6 @@ const ReduceItemStockTab = () => {
         default:
           setErrMsg("Terjadi kesalahan server");
       }
-    } finally {
-      form.reset();
     }
   };
 
@@ -429,9 +432,9 @@ const ReduceItemStockTab = () => {
                     <TableHead>Tanggal Dibuat</TableHead>
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
-                    <TableHead>Stok Sebelumnya</TableHead>
+                    <TableHead>Akumulasi Sebelumnya</TableHead>
                     <TableHead>Stok Kurang</TableHead>
-                    <TableHead>Stok Baru</TableHead>
+                    <TableHead>Akumulasi</TableHead>
                     <TableHead>Harga Satuan</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -485,12 +488,10 @@ const ReduceItemStockTab = () => {
                         <TableCell>
                           {t.previousStock} {t.item?.measureUnit}
                         </TableCell>
-                        <TableCell className="text-red-500">
+                        <TableCell className="text-red-500 font-bold">
                           -{t.amount}
                         </TableCell>
-                        <TableCell
-                          className={`${index === 0 ? "font-bold" : ""}`}
-                        >
+                        <TableCell>
                           {t.newStock || 0} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell>{formatCurrency(t.unitPrice)}</TableCell>

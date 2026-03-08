@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { useGetAllItemsStocks, useGetStocksFinanceSummary } from "@/api/items";
+import {
+  useGetAllItemsStocks,
+  useGetItemsStocksSummary,
+  useGetStocksFinanceSummary,
+} from "@/api/items";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -28,7 +32,7 @@ const StockOpnameTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const { data: stocksData, isLoading } = useGetAllItemsStocks(
+  const { data: stocksData, isLoading } = useGetItemsStocksSummary(
     searchQuery,
     page,
     limit,
@@ -37,14 +41,6 @@ const StockOpnameTab = () => {
 
   const stocks = stocksData?.data ?? [];
   const stocksBudgetSummary = stocksSummary.data;
-
-  const incomingStocks = stocks.filter((stock) => stock.type === "IN");
-
-  const outcomingStocks = stocks.filter((stock) => stock.type === "OUT");
-
-  const uniqueStocks = Array.from(
-    new Map(stocks.map((s) => [s.item?.id, s])).values(),
-  );
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -79,7 +75,7 @@ const StockOpnameTab = () => {
                 <TableHeader className="sticky top-0 bg-background z-10 border-b">
                   <TableRow>
                     <TableHead className="w-12">No</TableHead>
-                    <TableHead>Kode</TableHead>{" "}
+                    <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Kategori</TableHead>
                     <TableHead>Stok Awal</TableHead>
@@ -121,56 +117,43 @@ const StockOpnameTab = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    uniqueStocks.map((stock, index) => {
-                      const totalIn = incomingStocks
-                        .filter((t) => t.item?.id === stock.item?.id)
-                        .reduce((sum, t) => sum + t.amount, 0);
-
-                      const totalOut = outcomingStocks
-                        .filter((t) => t.item?.id === stock.item?.id)
-                        .reduce((sum, t) => sum + t.amount, 0);
-
+                    stocks.map((stock, index) => {
                       return (
-                        <TableRow key={stock.item?.id}>
+                        <TableRow key={stock.itemId}>
                           <TableCell>
                             {(page - 1) * limit + index + 1}
                           </TableCell>
                           <TableCell className="font-mono text-sm">
-                            {stock.item?.id}
+                            {stock.itemId}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {stock.item?.name}
+                            {stock.name}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="secondary">
-                              {stock.item?.category}
-                            </Badge>
+                            <Badge variant="secondary">{stock.category}</Badge>
                           </TableCell>
                           <TableCell>
-                            {stock.item?.initialStock} {stock.item?.measureUnit}
+                            {stock.initialStock} {stock.measureUnit}
                           </TableCell>
                           <TableCell className="text-green-600">
-                            +{totalIn}
+                            +{stock.totalIn}
                           </TableCell>
                           <TableCell className="text-red-600">
-                            -{totalOut}
+                            -{stock.totalOut}
                           </TableCell>
                           <TableCell>
                             <span
                               className={
-                                stock.item?.stock < 20
+                                stock.currentStock < 20
                                   ? "text-destructive font-bold"
                                   : "font-medium"
                               }
                             >
-                              {stock.item?.stock} {stock.item?.measureUnit}
+                              {stock.currentStock} {stock.measureUnit}
                             </span>
                           </TableCell>
                           <TableCell className="font-medium">
-                            {formatCurrency(
-                              (stock.item?.stock || 0) *
-                                (stock.item?.unitPrice || 0),
-                            )}
+                            {formatCurrency(stock.stockValue)}
                           </TableCell>
                         </TableRow>
                       );
@@ -201,8 +184,7 @@ const StockOpnameTab = () => {
                     Total Masuk
                   </span>
                   <span className="font-semibold text-green-600">
-                    +{" "}
-                    {formatCurrency(stocksBudgetSummary?.data?.budgetOut || 0)}
+                    +{formatCurrency(stocksBudgetSummary?.data?.budgetOut || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center gap-0.5">

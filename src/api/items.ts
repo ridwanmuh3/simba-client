@@ -261,7 +261,57 @@ export const useGetStocksFinanceSummary = () => {
       const response = await axiosInstance.get<
         ApiResponse<StocksFinanceSummary>
       >("/items/stocks/summary");
-      console.log(response.data);
+
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+};
+
+interface ItemStocksSummary {
+  itemId?: string;
+  name?: string;
+  category?: string;
+  initialStock?: number;
+  measureUnit: string;
+  totalIn?: number;
+  totalOut?: number;
+  currentStock?: number;
+  stockValue?: number;
+}
+
+export const useGetItemsStocksSummary = (
+  searchQuery: string,
+  page: number,
+  limit: number,
+  dateFrom?: Date,
+  dateTo?: Date,
+) => {
+  return useQuery({
+    queryKey: ["items-stocks-summary"],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(limit),
+      });
+
+      if (searchQuery) {
+        params.append("search_query", searchQuery);
+      }
+
+      if (dateFrom) {
+        params.append("start_date", dateFrom.toISOString());
+      }
+
+      if (dateTo) {
+        params.append("end_date", dateTo.toISOString());
+      }
+
+      const response = await axiosInstance.get<
+        ApiResponse<ItemStocksSummary[]>
+      >(`/items/stocks/opname?${params.toString()}`);
+
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
