@@ -184,7 +184,7 @@ const StockOpnameTab = () => {
                     Total Masuk
                   </span>
                   <span className="font-semibold text-green-600">
-                    +{formatCurrency(stocksBudgetSummary?.data?.budgetOut || 0)}
+                    +{formatCurrency(stocksBudgetSummary?.data?.budgetIn || 0)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center gap-0.5">
@@ -192,7 +192,7 @@ const StockOpnameTab = () => {
                     Total Keluar
                   </span>
                   <span className="font-semibold text-red-600">
-                    - {formatCurrency(stocksBudgetSummary?.data?.budgetIn || 0)}
+                    - {formatCurrency(stocksBudgetSummary?.data?.budgetOut || 0)}
                   </span>
                 </div>
                 <div className="border-t pt-4 flex justify-between items-center gap-0.5">
