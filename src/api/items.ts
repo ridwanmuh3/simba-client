@@ -27,6 +27,7 @@ export const useAddItem = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
       queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
     },
   });
 };
@@ -46,6 +47,7 @@ export const useEditItem = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
       queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
     },
   });
 };
@@ -65,16 +67,12 @@ export const useUpdateStockItem = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["items-stock"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
-
-      queryClient.invalidateQueries({
-        queryKey: ["items"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["items"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
     },
   });
 };
@@ -86,15 +84,12 @@ export const useImportItems = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["items-stock"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
-      queryClient.invalidateQueries({
-        queryKey: ["items"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["items"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
     },
   });
 };
@@ -113,6 +108,7 @@ export const useDeleteItem = () => {
       queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
     },
   });
 };
@@ -126,14 +122,12 @@ export const useDeleteStockItem = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["items-stock"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["items"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["items-stock"] });
+      queryClient.invalidateQueries({ queryKey: ["items"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stock-mapping"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["stocks-finance-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
     },
   });
 };
@@ -254,6 +248,34 @@ interface StocksFinanceSummary {
   currentBudget?: number;
 }
 
+export interface GenerateInvoiceRequest {
+  companyName: string;
+  companyAddress: string;
+  companyContact: string;
+  invoiceNo: string;
+  date: string;
+  poNo?: string;
+  quoNo?: string;
+  receiverName: string;
+  receiverAddress: string;
+  dateFrom?: string;
+  dateTo?: string;
+  keterangan?: string;
+  penanggungjawab: string;
+  jabatan: string;
+}
+
+export const useGenerateInvoice = () => {
+  return useMutation({
+    mutationFn: async (request: GenerateInvoiceRequest) => {
+      const response = await axiosInstance.post("/items/invoice", request, {
+        responseType: "blob",
+      });
+      return response.data;
+    },
+  });
+};
+
 export const useGetStocksFinanceSummary = () => {
   return useQuery({
     queryKey: ["stocks-finance-summary"],
@@ -289,7 +311,14 @@ export const useGetItemsStocksSummary = (
   dateTo?: Date,
 ) => {
   return useQuery({
-    queryKey: ["items-stocks-summary"],
+    queryKey: [
+      "items-stocks-summary",
+      searchQuery,
+      page,
+      limit,
+      dateFrom?.toISOString(),
+      dateTo?.toISOString(),
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(page),

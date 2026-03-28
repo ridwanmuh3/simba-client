@@ -9,7 +9,6 @@ export const useDashboardStats = () => {
     queryFn: async () => {
       const { data } =
         await axiosInstance.get<ApiResponse<DashboardStats>>("/dashboard");
-      console.log(data);
       return data?.data;
     },
     select: (data) => data,

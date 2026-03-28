@@ -56,8 +56,6 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
           description: `Anda telah mengubah pengguna dengan username "${user.username}"`,
         });
         form.reset();
-      } else {
-        console.log(status);
       }
     } catch (err: unknown) {
       const e = err as AxiosError;

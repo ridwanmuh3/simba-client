@@ -12,7 +12,6 @@ import {
 export const useAddFinance = () => {
   return useMutation<ApiResponse<FinanceData>, Error, FormData>({
     mutationFn: async (formData) => {
-      console.log(formData);
       const { data } = await axiosInstance.post<ApiResponse<FinanceData>>(
         "/finances",
         formData,
@@ -118,9 +117,8 @@ export const useDeleteFinance = () => {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["dashboard-stats"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["finances"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     },
   });
 };

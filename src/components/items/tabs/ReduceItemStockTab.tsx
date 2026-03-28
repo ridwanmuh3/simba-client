@@ -1,4 +1,4 @@
-import { Calendar, Package, Save, Search, Upload } from "lucide-react";
+import { Calendar, Package, Save, Search } from "lucide-react";
 import { Button } from "../../ui/button";
 import {
   Card,
@@ -54,6 +54,7 @@ import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import Spinner from "@/components/shared/Spinner";
 import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
+import InvoiceDialog from "../InvoiceDialog";
 
 const ReduceItemStockTab = () => {
   const form = useForm<UpdateItemStockFormInputs>({
@@ -104,7 +105,6 @@ const ReduceItemStockTab = () => {
       setErrMsg("Jumlah stok keluar harus lebih besar dari 0");
       return;
     }
-    console.log(values.amount, selectedStock.item?.stock);
 
     if (values.amount > selectedStock.item?.stock) {
       setErrMsg("Stok tidak mencukupi");
@@ -422,6 +422,7 @@ const ReduceItemStockTab = () => {
                   </div>
                 </PopoverContent>
               </Popover>
+              <InvoiceDialog />
             </div>
           </CardHeader>
           <CardContent className="p-0">
