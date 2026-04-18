@@ -31,11 +31,11 @@ const SystemActivity = ({ activities }: SystemActivityProps) => {
                 >
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      activity.type.includes("ADD")
+                      activity.type?.includes("ADD")
                         ? "bg-success/10 text-success"
-                        : activity.type.includes("UPDATE")
+                        : activity.type?.includes("UPDATE")
                           ? "bg-primary/10 text-primary"
-                          : activity.type.includes("USER")
+                          : activity.type?.includes("USER")
                             ? "bg-warning/10 text-warning"
                             : "bg-muted text-muted-foreground"
                     }`}

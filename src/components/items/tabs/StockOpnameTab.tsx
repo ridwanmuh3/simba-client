@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useGetItemsStocksSummary,
   useGetStocksFinanceSummary,
@@ -50,6 +50,10 @@ const StockOpnameTab = () => {
     setLimit(newLimit);
     setPage(1);
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   return (
     <TabsContent value="stok-opname" className="space-y-4">
@@ -119,7 +123,7 @@ const StockOpnameTab = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    stocks.map((stock) => {
+                    stocks.map((stock, index) => {
                       const totalIn = stock.totalIn ?? 0;
                       const totalOut = stock.totalOut ?? 0;
                       const initialStock = stock.initialStock ?? 0;
@@ -131,7 +135,7 @@ const StockOpnameTab = () => {
                       return (
                         <TableRow key={stock.itemId}>
                           <TableCell className="font-medium text-muted-foreground">
-                            {(page - 1) * limit + stocks.indexOf(stock) + 1}
+                            {(page - 1) * limit + index + 1}
                           </TableCell>
                           {/* 1. Kode */}
                           <TableCell className="font-mono text-sm">
@@ -168,13 +172,9 @@ const StockOpnameTab = () => {
                             </span>
                           </TableCell>
                           {/* 9. Nilai Harga Beli */}
-                          <TableCell>
-                            {formatCurrency(buyPrice)}
-                          </TableCell>
+                          <TableCell>{formatCurrency(buyPrice)}</TableCell>
                           {/* 10. Nilai Harga Jual */}
-                          <TableCell>
-                            {formatCurrency(sellPrice)}
-                          </TableCell>
+                          <TableCell>{formatCurrency(sellPrice)}</TableCell>
                           {/* 12. Selisih Harga */}
                           <TableCell
                             className={
@@ -194,7 +194,7 @@ const StockOpnameTab = () => {
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={4} className="font-bold text-right">
-                      Total Halaman Ini
+                      Total Harga Halaman Ini
                     </TableCell>
                     <TableCell className="font-bold">
                       {stocks.reduce(
@@ -203,13 +203,15 @@ const StockOpnameTab = () => {
                       )}
                     </TableCell>
                     <TableCell className="font-bold text-green-600">
-                      +{stocks.reduce(
+                      +
+                      {stocks.reduce(
                         (acc, curr) => acc + (curr.totalIn ?? 0),
                         0,
                       )}
                     </TableCell>
                     <TableCell className="font-bold text-red-600">
-                      -{stocks.reduce(
+                      -
+                      {stocks.reduce(
                         (acc, curr) => acc + (curr.totalOut ?? 0),
                         0,
                       )}
@@ -249,6 +251,16 @@ const StockOpnameTab = () => {
                   </TableRow>
                 </TableFooter>
               </Table>
+            </div>
+            <div className="px-2 pb-2 pt-1">
+              <DataTablePagination
+                currentPage={page}
+                pageSize={limit}
+                totalPages={stocksData?.paging?.totalPage || 1}
+                totalItems={stocksData?.paging?.totalItem || 0}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handleLimitChange}
+              />
             </div>
           </CardContent>
         </Card>
@@ -325,14 +337,6 @@ const StockOpnameTab = () => {
           )}
         </Card>
       </div>
-      <DataTablePagination
-        currentPage={page}
-        pageSize={limit}
-        totalPages={stocksData?.paging?.totalPage || 1}
-        totalItems={stocksData?.paging?.totalItem || 0}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handleLimitChange}
-      />
     </TabsContent>
   );
 };

@@ -9,6 +9,7 @@ export interface InvoiceHistoryData {
   invoiceNumber: string;
   poNumber: string;
   quoNumber: string;
+  hasItems: boolean;
   createdAt: string;
   updatedAt: string;
 }

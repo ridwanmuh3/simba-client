@@ -1,0 +1,70 @@
+{
+	admin off
+}
+
+{$APP_DOMAIN:simbambg.my.id}, {$APP_WWW_DOMAIN:www.simbambg.my.id} {
+	route {
+		root * /usr/share/caddy
+		encode zstd gzip
+
+		header {
+			-Server
+			X-Content-Type-Options "nosniff"
+			X-Frame-Options "DENY"
+			Referrer-Policy "strict-origin-when-cross-origin"
+			Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+			Permissions-Policy "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+			Cross-Origin-Opener-Policy "same-origin"
+			Cross-Origin-Resource-Policy "same-origin"
+			X-Permitted-Cross-Domain-Policies "none"
+			Content-Security-Policy "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self';"
+		}
+
+		@hidden path_regexp hidden (^|/)\.
+		respond @hidden 404
+
+		@api_bad_method {
+			path /api /api/*
+			not method GET HEAD POST PUT PATCH DELETE OPTIONS
+		}
+		respond @api_bad_method 405
+
+		@uploads_bad_method {
+			path /uploads /uploads/*
+			not method GET HEAD OPTIONS
+		}
+		respond @uploads_bad_method 405
+
+		@app_bad_method {
+			not path /api /api/* /uploads /uploads/*
+			not method GET HEAD OPTIONS
+		}
+		respond @app_bad_method 405
+
+		handle /api {
+			redir /api/ 308
+		}
+
+		handle /api/* {
+			reverse_proxy backend:3000
+		}
+
+		handle /uploads {
+			redir /uploads/ 308
+		}
+
+		handle /uploads/* {
+			reverse_proxy backend:3000
+		}
+
+		@static {
+			path *.css *.js *.jpg *.jpeg *.svg *.ico *.png *.webp *.woff *.woff2 *.ttf
+		}
+		header @static Cache-Control "public, max-age=31536000, immutable"
+
+		try_files {path} /index.html
+		file_server {
+			hide .env .git .gitignore .DS_Store
+		}
+	}
+}

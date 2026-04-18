@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "docker:build": "docker build -t simba-client:latest .",
-    "docker:run": "docker run -p 8080:80 simba-client:latest"
+    "docker:run": "docker run -p 80:80 -p 443:443 simba-client:latest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

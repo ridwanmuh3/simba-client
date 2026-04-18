@@ -15,14 +15,14 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN bun run build
 
 
-FROM nginxinc/nginx-unprivileged:alpine
+FROM caddy:2-alpine
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
+RUN apk add --no-cache wget
 
-EXPOSE 8080
+COPY --from=builder /app/dist /usr/share/caddy
+COPY Caddyfile /etc/caddy/Caddyfile
+
+EXPOSE 80 443
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=5 \
-  CMD wget -qO- http://localhost:8080/ || exit 1
-
-CMD ["nginx", "-g", "daemon off;"]
+  CMD wget --server-response --spider --max-redirect=0 --header='Host: simbambg.my.id' http://127.0.0.1/ 2>&1 | grep -q ' 308 '

@@ -29,7 +29,7 @@ import {
   useGetFullItems,
   useUpdateStockItem,
 } from "@/api/items";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, parseCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AxiosError } from "axios";
 import { StockTracking } from "@/types/item";
@@ -122,6 +122,7 @@ const AddItemStockTab = () => {
       form.reset();
       setSelectedStock(null);
       setSelectedItemId("");
+      setIsEditMode(false);
     } catch (e) {
       const err = e as AxiosError;
       switch (err.status) {
@@ -151,8 +152,8 @@ const AddItemStockTab = () => {
     form.setValue("itemName", stockTracking.item.name);
     form.setValue("amount", 0);
     form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
-    form.setValue("itemUnitPrice", stockTracking.item.unitPrice);
-    form.setValue("supplier", "");
+    form.setValue("itemUnitPrice", stockTracking.unitPrice ?? stockTracking.item.unitPrice ?? 0);
+    form.setValue("supplier", stockTracking.supplier ?? "");
   };
 
   const handleDeleteItemStock = async () => {
@@ -267,12 +268,18 @@ const AddItemStockTab = () => {
                       value={field.value}
                       onChange={(val) => {
                         setIsEditMode(false);
+                        setSelectedStock(null);
                         field.onChange(val);
                         const selectedItm = itemsData?.data?.find(
                           (item) => item.id === val,
                         );
                         if (selectedItm) {
-                          handleSelectStockTracking({ item: selectedItm });
+                          setSelectedItemId(selectedItm.id);
+                          form.setValue("itemName", selectedItm.name);
+                          form.setValue("amount", 0);
+                          form.setValue("itemMeasureUnit", selectedItm.measureUnit);
+                          form.setValue("itemUnitPrice", selectedItm.unitPrice);
+                          form.setValue("supplier", "");
                         }
                       }}
                     />
@@ -295,7 +302,7 @@ const AddItemStockTab = () => {
                 <div className="space-y-2">
                   <Label>Satuan</Label>
                   <Input
-                    value={selectedStock?.item?.measureUnit || "-"}
+                    value={form.watch("itemMeasureUnit") || "-"}
                     disabled
                   />
                   {form.formState.errors.itemMeasureUnit && (
@@ -307,9 +314,19 @@ const AddItemStockTab = () => {
               </div>
               <div className="space-y-2">
                 <Label>Harga Satuan (Rp)</Label>
-                <Input
-                  value={formatCurrency(selectedStock?.item?.unitPrice || 0)}
-                  disabled
+                <Controller
+                  name="itemUnitPrice"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Input
+                      inputMode="numeric"
+                      value={formatCurrency(field.value)}
+                      onChange={(e) => {
+                        const raw = parseCurrency(e.target.value);
+                        field.onChange(raw);
+                      }}
+                    />
+                  )}
                 />
                 {form.formState.errors.itemUnitPrice && (
                   <p className="text-sm text-destructive">
@@ -321,8 +338,7 @@ const AddItemStockTab = () => {
                 <Label>Total Harga</Label>
                 <Input
                   value={formatCurrency(
-                    (form.watch("itemUnitPrice") || 0) *
-                    (form.watch("amount") || 0),
+                    (form.watch("itemUnitPrice") || 0) * (form.watch("amount") || 0),
                   )}
                   disabled
                 />
@@ -469,13 +485,15 @@ const AddItemStockTab = () => {
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Perubahan Stok</TableHead>
                     <TableHead>Penyuplai</TableHead>
+                    <TableHead>Harga Beli</TableHead>
+                    <TableHead>Total Harga</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isStocksLoading ? (
-                    Array.from({ length: 6 }).map((_, index) => (
+                    Array.from({ length: 7 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 6 }).map((_, cellIndex) => (
+                        {Array.from({ length: 7 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>
@@ -484,7 +502,7 @@ const AddItemStockTab = () => {
                     ))
                   ) : filteredStocksTracking.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="p-0">
+                      <TableCell colSpan={8} className="p-0">
                         <div className="flex w-full items-center justify-center">
                           <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                             <Package className="h-12 w-12 mb-3 opacity-50" />
@@ -503,20 +521,21 @@ const AddItemStockTab = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredStocksTracking.map((t) => (
+                    filteredStocksTracking.map((t, index) => (
                       <TableRow
                         key={t.id}
-                        className={`cursor-pointer transition ${selectedStock?.id === t.id
-                          ? "bg-muted"
-                          : "hover:bg-muted/50"
-                          }`}
+                        className={`cursor-pointer transition ${
+                          selectedStock?.id === t.id
+                            ? "bg-muted"
+                            : "hover:bg-muted/50"
+                        }`}
                         onClick={() => {
                           setIsEditMode(true);
                           handleSelectStockTracking(t);
                         }}
                       >
                         <TableCell className="font-medium text-muted-foreground">
-                          {(page - 1) * limit + filteredStocksTracking.indexOf(t) + 1}
+                          {(page - 1) * limit + index + 1}
                         </TableCell>
                         <TableCell>{formatDateDetail(t.createdAt)}</TableCell>
                         <TableCell className="font-mono text-sm">
@@ -530,7 +549,7 @@ const AddItemStockTab = () => {
                             </span>
                             <span className="text-muted-foreground/40">→</span>
                             <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-semibold text-green-600 ring-1 ring-inset ring-green-500/20">
-                              +{t.newStock - t.previousStock}
+                              +{t.amount}
                             </span>
                             <span className="text-muted-foreground/40">→</span>
                             <span className="font-semibold tabular-nums">
@@ -539,6 +558,12 @@ const AddItemStockTab = () => {
                           </div>
                         </TableCell>
                         <TableCell>{t.supplier}</TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(t.unitPrice || 0)}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(t.totalPrice || 0)}
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -546,33 +571,43 @@ const AddItemStockTab = () => {
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={4} className="font-bold text-right">
-                      Akumulasi Halaman Ini
+                      Total Harga Halaman Ini
                     </TableCell>
-                    <TableCell className="font-bold">
+                    <TableCell className="font-bold text-right">
                       <span className="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-bold text-green-600 ring-1 ring-inset ring-green-500/20">
                         +
                         {filteredStocksTracking?.reduce(
-                          (acc, curr) => acc + (curr.newStock - curr.previousStock),
+                          (acc, curr) => acc + (curr.amount || 0),
                           0,
                         ) || 0}
                       </span>
                     </TableCell>
-                    <TableCell />
+                    <TableCell colSpan={2} />
+                    <TableCell className="font-bold">
+                      {formatCurrency(
+                        filteredStocksTracking?.reduce(
+                          (acc, curr) => acc + (curr.totalPrice || 0),
+                          0,
+                        ) || 0,
+                      )}
+                    </TableCell>
                   </TableRow>
                 </TableFooter>
               </Table>
             </div>
+            <div className="px-2 pb-2 pt-1">
+              <DataTablePagination
+                currentPage={page}
+                pageSize={limit}
+                totalPages={stocksData?.paging?.totalPage || 1}
+                totalItems={stocksData?.paging?.totalItem || 0}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handleLimitChange}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
-      <DataTablePagination
-        currentPage={page}
-        pageSize={limit}
-        totalPages={stocksData?.paging?.totalPage || 1}
-        totalItems={stocksData?.paging?.totalItem || 0}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handleLimitChange}
-      />
     </TabsContent>
   );
 };

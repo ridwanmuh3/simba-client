@@ -52,6 +52,7 @@ import {
   useDeleteFinance,
   useEditFinance,
   useGetAllFinances,
+  useGetAllFinancesForReport,
 } from "@/api/finance";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -153,6 +154,7 @@ export default function Finance() {
   const addFinance = useAddFinance();
   const editFinance = useEditFinance();
   const deleteFinance = useDeleteFinance();
+  const { data: reportTransactions = [] } = useGetAllFinancesForReport();
   const transactionType = form.watch("type");
   const proofImageValue = form.watch("proofImage");
   const financeRows = useMemo(() => financeData?.data ?? [], [financeData?.data]);
@@ -934,20 +936,22 @@ export default function Finance() {
                       </TableRow>
                     </TableFooter>
                   </Table>
+                  <div className="px-2 pb-2 pt-1">
+                    <DataTablePagination
+                      currentPage={page}
+                      pageSize={limit}
+                      totalPages={financeData?.paging?.totalPage || 1}
+                      totalItems={financeData?.paging?.totalItem || 0}
+                      onPageChange={handlePageChange}
+                      onPageSizeChange={handleLimitChange}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </div>
-            <DataTablePagination
-              currentPage={page}
-              pageSize={limit}
-              totalPages={financeData?.paging?.totalPage || 1}
-              totalItems={financeData?.paging?.totalItem || 0}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handleLimitChange}
-            />
           </TabsContent>
           <TabsContent value="reports">
-            <ReportViewer transactions={financeRows} />
+            <ReportViewer transactions={reportTransactions} />
           </TabsContent>
         </Tabs>
       </motion.div>

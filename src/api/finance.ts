@@ -51,9 +51,8 @@ export const useAddFinance = () => {
         },
       );
 
-      queryClient.invalidateQueries({
-        queryKey: ["dashboard-stats"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["finances-report"] });
     },
   });
 };
@@ -95,9 +94,8 @@ export const useEditFinance = () => {
         },
       );
 
-      queryClient.invalidateQueries({
-        queryKey: ["dashboard-stats"],
-      });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["finances-report"] });
     },
   });
 };
@@ -144,7 +142,22 @@ export const useDeleteFinance = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["finances"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["finances-report"] });
     },
+  });
+};
+
+export const useGetAllFinancesForReport = () => {
+  return useQuery<FinanceData[]>({
+    queryKey: ["finances-report"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<ApiResponse<FinanceData[]>>(
+        "/finances/export",
+      );
+      return data.data ?? [];
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 };
 

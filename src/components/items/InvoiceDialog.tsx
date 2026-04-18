@@ -110,6 +110,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
   const [keterangan, setKeterangan] = useState("");
   const [penanggungjawab, setPenanggungjawab] = useState("");
   const [jabatan, setJabatan] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
 
   const [isFromOpen, setIsFromOpen] = useState(false);
   const [isToOpen, setIsToOpen] = useState(false);
@@ -157,6 +158,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
     setKeterangan("");
     setPenanggungjawab("");
     setJabatan("");
+    setBankAccount("");
     setDateFrom(undefined);
     setDateTo(undefined);
 
@@ -217,6 +219,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       keterangan,
       penanggungjawab,
       jabatan,
+      bankAccount,
     };
 
     try {
@@ -600,6 +603,14 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                   onChange={(e) => setJabatan(e.target.value)}
                 />
               </div>
+            </div>
+            <div className="space-y-1">
+              <Label>No. Rekening</Label>
+              <Input
+                placeholder="Nama Bank - 1234567890 a.n. Pemilik (opsional)"
+                value={bankAccount}
+                onChange={(e) => setBankAccount(e.target.value)}
+              />
             </div>
           </div>
 

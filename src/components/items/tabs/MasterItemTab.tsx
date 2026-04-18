@@ -206,9 +206,7 @@ const MasterItemTab = () => {
         category: values.category,
         measureUnit: values.measureUnit,
         stock: values.stock,
-        // In edit mode the "Stok Awal" input represents the corrected initial
-        // stock — send it as initialStock so backend syncs tracks accordingly.
-        initialStock: values.stock,
+        initialStock: values.initialStock,
         unitPrice: values.pricePerUnit,
         dateAdded: values.dateAdded,
       });
@@ -333,6 +331,10 @@ const MasterItemTab = () => {
     setLimit(newLimit);
     setPage(1);
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   const handleFormType = (isEditMode: boolean) => {
     const formHandler = isEditMode ? handleEditMasterItem : handleAddMasterItem;
@@ -697,22 +699,23 @@ const MasterItemTab = () => {
                     <TableHead>Kategori</TableHead>
                     <TableHead>Stok</TableHead>
                     <TableHead>Harga Satuan</TableHead>
+                    <TableHead>Total Harga</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isItemsLoading ? (
                     Array.from({ length: 5 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 7 }).map((_, cellIndex) => (
+                        {Array.from({ length: 8 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>
                         ))}
                       </TableRow>
                     ))
-                  ) : itemsData.data?.length === 0 ? (
+                  ) : itemsData?.data?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="p-0">
+                      <TableCell colSpan={8} className="p-0">
                         <div className="flex w-full items-center justify-center">
                           <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                             <Package className="h-12 w-12 mb-3 opacity-50" />
@@ -731,7 +734,7 @@ const MasterItemTab = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    itemsData.data?.map((item) => (
+                    itemsData.data?.map((item, index) => (
                       <TableRow
                         key={item.id}
                         className={`cursor-pointer transition-colors hover:bg-muted/50 ${
@@ -740,7 +743,7 @@ const MasterItemTab = () => {
                         onClick={() => handleSelectItem(item)}
                       >
                         <TableCell className="font-medium text-muted-foreground">
-                          {(page - 1) * limit + itemsData.data.indexOf(item) + 1}
+                          {(page - 1) * limit + index + 1}
                         </TableCell>
                         <TableCell>
                           {item.createdAt
@@ -770,6 +773,9 @@ const MasterItemTab = () => {
                         <TableCell className="font-medium">
                           {formatCurrency(item.unitPrice)}
                         </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(item.stock * item.unitPrice)}
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -777,29 +783,40 @@ const MasterItemTab = () => {
                 <TableFooter>
                   <TableRow>
                     <TableCell colSpan={5} className="font-bold text-right">
-                      Total Halaman Ini
+                      Total Harga Halaman Ini
                     </TableCell>
                     <TableCell className="font-bold">
-                      {itemsData?.data?.reduce((acc, curr) => acc + curr.stock, 0) || 0}
+                      {itemsData?.data?.reduce(
+                        (acc, curr) => acc + curr.stock,
+                        0,
+                      ) || 0}
                     </TableCell>
+                    <TableCell className="font-bold">-</TableCell>
                     <TableCell className="font-bold">
-                      {formatCurrency(itemsData?.data?.reduce((acc, curr) => acc + curr.unitPrice, 0) || 0)}
+                      {formatCurrency(
+                        itemsData?.data?.reduce(
+                          (acc, curr) => acc + (curr.stock * curr.unitPrice),
+                          0,
+                        ) || 0,
+                      )}
                     </TableCell>
                   </TableRow>
                 </TableFooter>
               </Table>
             </div>
+            <div className="px-2 pb-2 pt-1">
+              <DataTablePagination
+                currentPage={page}
+                pageSize={limit}
+                totalPages={itemsData?.paging?.totalPage || 1}
+                totalItems={itemsData?.paging?.totalItem || 0}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handleLimitChange}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
-      <DataTablePagination
-        currentPage={page}
-        pageSize={limit}
-        totalPages={itemsData?.paging?.totalPage || 1}
-        totalItems={itemsData?.paging?.totalItem || 0}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handleLimitChange}
-      />
     </TabsContent>
   );
 };

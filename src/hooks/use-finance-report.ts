@@ -3,6 +3,8 @@ import {
   endOfDay,
   endOfMonth,
   format,
+  getHours,
+  getDate,
   isSameDay,
   startOfDay,
   startOfMonth,
@@ -97,6 +99,21 @@ export const useFinanceReport = (
     const tenDaysSummary = calculateSummary(tenDaysTransactions);
     const monthlySummary = calculateSummary(monthlyTransactions);
 
+    // Daily trend: group by hour (0-23)
+    const dailyTrend: FinanceTrendPoint[] = Array.from({ length: 24 }, (_, hour) => {
+      const hourTransactions = dailyTransactions.filter(
+        (t) => getHours(new Date(t.createdAt)) === hour,
+      );
+      const masuk = hourTransactions
+        .filter((t) => t.type === "PEMASUKAN")
+        .reduce((sum, t) => sum + t.amount, 0);
+      const keluar = hourTransactions
+        .filter((t) => t.type === "PENGELUARAN")
+        .reduce((sum, t) => sum + t.amount, 0);
+      return { label: `${String(hour).padStart(2, "0")}:00`, masuk, keluar };
+    });
+
+    // 10-day trend: group by day (unchanged)
     const tenDaysTrend = eachDayOfInterval({
       start: tenDaysStart,
       end: tenDaysEnd,
@@ -114,31 +131,36 @@ export const useFinanceReport = (
         .reduce((sum, transaction) => sum + transaction.amount, 0);
 
       return {
-        label: format(day, "EEEE", { locale: id }),
+        label: format(day, "dd MMM", { locale: id }),
         masuk,
         keluar,
       };
+    });
+
+    // Monthly trend: group by week (Minggu 1-4)
+    const monthlyTrend: FinanceTrendPoint[] = [1, 2, 3, 4].map((week) => {
+      const weekStart = (week - 1) * 7 + 1;
+      const weekEnd = week === 4 ? 31 : week * 7;
+      const weekTransactions = monthlyTransactions.filter((t) => {
+        const day = getDate(new Date(t.createdAt));
+        return day >= weekStart && day <= weekEnd;
+      });
+      const masuk = weekTransactions
+        .filter((t) => t.type === "PEMASUKAN")
+        .reduce((sum, t) => sum + t.amount, 0);
+      const keluar = weekTransactions
+        .filter((t) => t.type === "PENGELUARAN")
+        .reduce((sum, t) => sum + t.amount, 0);
+      return { label: `Minggu ${week}`, masuk, keluar };
     });
 
     return {
       dailySummary,
       tenDaysSummary,
       monthlySummary,
-      dailyTrend: [
-        {
-          label: format(reportDate, "dd MMM"),
-          masuk: dailySummary.totalIn,
-          keluar: dailySummary.totalOut,
-        },
-      ],
+      dailyTrend,
       tenDaysTrend,
-      monthlyTrend: [
-        {
-          label: format(reportDate, "MMMM yyyy", { locale: id }),
-          masuk: monthlySummary.totalIn,
-          keluar: monthlySummary.totalOut,
-        },
-      ],
+      monthlyTrend,
       dailyCategory: calculateCategoryBreakdown(dailyTransactions),
       tenDaysCategory: calculateCategoryBreakdown(tenDaysTransactions),
       monthlyCategory: calculateCategoryBreakdown(monthlyTransactions),

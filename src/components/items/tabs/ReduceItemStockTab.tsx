@@ -92,7 +92,7 @@ const ReduceItemStockTab = () => {
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
 
-    if (!selectedStock) {
+    if (!values.itemId) {
       setErrMsg("Pilih bahan yang ingin dikurangi stoknya terlebih dahulu.");
       return;
     }
@@ -104,9 +104,11 @@ const ReduceItemStockTab = () => {
       return;
     }
 
-    if (values.amount > selectedStock.item?.stock) {
+    const freshItem = itemsData?.data?.find((i) => i.id === values.itemId);
+    const availableStock = freshItem?.stock ?? 0;
+    if (availableStock > 0 && values.amount > availableStock) {
       setErrMsg(
-        `Stok tidak mencukupi. Stok tersedia hanya ${selectedStock.item?.stock} ${selectedStock.item?.measureUnit ?? ""}.`,
+        `Stok tidak mencukupi. Stok tersedia hanya ${availableStock} ${freshItem?.measureUnit ?? ""}.`,
       );
       return;
     }
@@ -153,7 +155,7 @@ const ReduceItemStockTab = () => {
     form.setValue("itemName", stockTracking.item.name);
     form.setValue("amount", 0);
     form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
-    form.setValue("itemUnitPrice", stockTracking.item.unitPrice);
+    form.setValue("itemUnitPrice", stockTracking.unitPrice ?? stockTracking.item.unitPrice ?? 0);
   };
 
   const handleDeleteItemStock = async () => {
@@ -189,6 +191,8 @@ const ReduceItemStockTab = () => {
             "Gagal menghapus riwayat stok keluar. Periksa koneksi Anda atau coba lagi.",
           );
       }
+    } finally {
+      form.reset();
     }
   };
 
@@ -268,12 +272,17 @@ const ReduceItemStockTab = () => {
                       value={field.value}
                       onChange={(val) => {
                         field.onChange(val);
+                        setSelectedStock(null);
+                        setIsEditStock(false);
                         const selectedItm = itemsData?.data?.find(
                           (item) => item.id === val,
                         );
                         if (selectedItm) {
                           setSelectedItemId(selectedItm.id);
-                          handleSelectStockTracking({ item: selectedItm });
+                          form.setValue("itemName", selectedItm.name);
+                          form.setValue("amount", 0);
+                          form.setValue("itemMeasureUnit", selectedItm.measureUnit);
+                          form.setValue("itemUnitPrice", selectedItm.unitPrice);
                         }
                       }}
                     />
@@ -296,7 +305,7 @@ const ReduceItemStockTab = () => {
                 <div className="space-y-2">
                   <Label>Satuan</Label>
                   <Input
-                    value={selectedStock?.item?.measureUnit || "-"}
+                    value={form.watch("itemMeasureUnit") || "-"}
                     disabled
                   />
                   {form.formState.errors.itemMeasureUnit && (
@@ -335,8 +344,7 @@ const ReduceItemStockTab = () => {
                 <Label>Total Harga</Label>
                 <Input
                   value={formatCurrency(
-                    (form.watch("itemUnitPrice") || 0) *
-                      (form.watch("amount") || 0),
+                    (form.watch("itemUnitPrice") || 0) * (form.watch("amount") || 0),
                   )}
                   disabled
                 />
@@ -482,22 +490,24 @@ const ReduceItemStockTab = () => {
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Perubahan Stok</TableHead>
+                    <TableHead>Harga Jual</TableHead>
+                    <TableHead>Total Harga</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isStocksLoading ? (
                     Array.from({ length: 6 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 6 }).map((_, cellIndex) => (
+                        {Array.from({ length: 7 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>
                         ))}
                       </TableRow>
                     ))
-                  ) : stocksData.data?.length === 0 ? (
+                  ) : stocksData?.data?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="p-0">
+                      <TableCell colSpan={7} className="p-0">
                         <div className="flex w-full items-center justify-center">
                           <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                             <Package className="h-12 w-12 mb-3 opacity-50" />
@@ -516,7 +526,7 @@ const ReduceItemStockTab = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    stocksData.data?.map((t) => (
+                    stocksData?.data?.map((t, index) => (
                       <TableRow
                         key={t.id}
                         className={`cursor-pointer transition ${
@@ -524,10 +534,13 @@ const ReduceItemStockTab = () => {
                             ? "bg-muted"
                             : "hover:bg-muted/50"
                         }`}
-                        onClick={() => handleSelectStockTracking(t)}
+                        onClick={() => {
+                          setIsEditStock(true);
+                          handleSelectStockTracking(t);
+                        }}
                       >
                         <TableCell className="font-medium text-muted-foreground">
-                          {(page - 1) * limit + stocksData.data.indexOf(t) + 1}
+                          {(page - 1) * limit + index + 1}
                         </TableCell>
                         <TableCell>{formatDateDetail(t.createdAt)}</TableCell>
                         <TableCell className="font-mono text-sm">
@@ -549,37 +562,56 @@ const ReduceItemStockTab = () => {
                             </span>
                           </div>
                         </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(t.unitPrice || 0)}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(t.totalPrice || 0)}
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={4} className="font-bold text-right">
-                      Akumulasi Halaman Ini
+                    <TableCell colSpan={3} className="font-bold text-right">
+                      Total Harga Halaman Ini
                     </TableCell>
-                    <TableCell className="font-bold">
+                    <TableCell className="font-bold text-right">
                       <span className="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-bold text-red-600 ring-1 ring-inset ring-red-500/20">
                         -
-                        {stocksData?.data?.reduce((acc, curr) => acc + curr.amount, 0) ||
-                          0}
+                        {stocksData?.data?.reduce(
+                          (acc, curr) => acc + curr.amount,
+                          0,
+                        ) || 0}
                       </span>
+                    </TableCell>
+                    <TableCell colSpan={2} />
+                    <TableCell className="font-bold">
+                      {formatCurrency(
+                        stocksData?.data?.reduce(
+                          (acc, curr) => acc + (curr.totalPrice || 0),
+                          0,
+                        ) || 0,
+                      )}
                     </TableCell>
                   </TableRow>
                 </TableFooter>
               </Table>
             </div>
+            <div className="px-2 pb-2 pt-1">
+              <DataTablePagination
+                currentPage={page}
+                pageSize={limit}
+                totalPages={stocksData?.paging?.totalPage || 1}
+                totalItems={stocksData?.paging?.totalItem || 0}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handleLimitChange}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
-      <DataTablePagination
-        currentPage={page}
-        pageSize={limit}
-        totalPages={stocksData?.paging?.totalPage || 1}
-        totalItems={stocksData?.paging?.totalItem || 0}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handleLimitChange}
-      />
     </TabsContent>
   );
 };

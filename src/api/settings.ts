@@ -6,6 +6,7 @@ export type CompanyProfile = {
   companyName: string;
   companyAddress: string;
   companyContact: string;
+  bankAccount: string;
 };
 
 export type DocumentSequence = {
@@ -21,6 +22,12 @@ export const useGetCompanyProfile = () => {
         await axiosInstance.get<ApiResponse<CompanyProfile>>(
           "/settings/company",
         );
+
+      if (response.data?.data && !response.data.data.bankAccount) {
+        response.data.data.bankAccount =
+          "BNI 2048441550 A.N Koperasi Konsumen Dewa Makmur Multi Sejahtera";
+      }
+
       return response.data;
     },
   });

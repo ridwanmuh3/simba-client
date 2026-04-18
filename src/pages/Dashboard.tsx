@@ -9,12 +9,25 @@ import DashboardStatsCards from "@/components/dashboard/DashboardStatsCards";
 import { BudgetStats, StockStats } from "@/types/dashboard";
 
 const Dashboard = () => {
-  const { data: dashboard, isLoading } = useDashboardStats();
+  const { data: dashboard, isLoading, isError, error } = useDashboardStats();
 
-  if (isLoading || !dashboard) {
+  if (isLoading) {
     return (
       <DashboardLayout title="Dashboard">
         <Spinner />
+      </DashboardLayout>
+    );
+  }
+
+  if (isError || !dashboard) {
+    return (
+      <DashboardLayout title="Dashboard">
+        <div className="flex h-[50vh] items-center justify-center text-destructive">
+          <p>
+            Gagal memuat data dashboard:{" "}
+            {error instanceof Error ? error.message : "Terjadi kesalahan"}
+          </p>
+        </div>
       </DashboardLayout>
     );
   }
@@ -35,19 +48,18 @@ const Dashboard = () => {
     {
       title: "Total Bahan",
       value: totalItems.toLocaleString("id-ID"),
-      // change: "Berdasarkan seluruh data",
       icon: Package,
       color: "primary",
     },
     {
       title: "Stok Bahan Masuk",
-      value: stockIn.toLocaleString("id-ID"),
+      value: stockIn.toLocaleString("id-ID", { maximumFractionDigits: 4 }),
       icon: PackagePlus,
       color: "success",
     },
     {
       title: "Stok Bahan Keluar",
-      value: stockOut.toLocaleString("id-ID"),
+      value: stockOut.toLocaleString("id-ID", { maximumFractionDigits: 4 }),
       icon: PackageMinus,
       color: "destructive",
     },
@@ -58,24 +70,18 @@ const Dashboard = () => {
       title: "Total Anggaran",
       value: formatCurrency(totalBudget),
       icon: Wallet,
-      // trend: "up",
-      // change: "Akumulasi anggaran",
       color: "primary",
     },
     {
       title: "Anggaran Masuk",
       value: formatCurrency(budgetIn),
       icon: Wallet,
-      // trend: "up",
-      // change: "Dana diterima",
       color: "success",
     },
     {
       title: "Anggaran Keluar",
       value: formatCurrency(budgetOut),
       icon: Wallet,
-      // trend: "down",
-      // change: "Realisasi belanja",
       color: "destructive",
     },
   ];

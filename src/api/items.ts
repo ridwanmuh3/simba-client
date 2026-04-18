@@ -56,7 +56,7 @@ export const useEditItem = () => {
 export const useUpdateStockItem = () => {
   return useMutation({
     mutationFn: async (request: UpdateItemStockRequest) => {
-      const response = await axiosInstance.put<ApiResponse<StockTracking>>(
+      const response = await axiosInstance.post<ApiResponse<StockTracking>>(
         `/items/${request.itemId}/stocks`,
         {
           type: request.type,
@@ -265,6 +265,7 @@ export interface GenerateInvoiceRequest {
   keterangan?: string;
   penanggungjawab: string;
   jabatan: string;
+  bankAccount?: string;
 }
 
 export const useGenerateInvoice = () => {
@@ -286,6 +287,37 @@ export const useGenerateInvoice = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+    },
+  });
+};
+
+export const useDownloadInvoicePDF = () => {
+  return useMutation({
+    mutationFn: async ({
+      id,
+      mode,
+    }: {
+      id: number;
+      mode?: "download" | "view";
+    }) => {
+      const params = new URLSearchParams();
+      if (mode === "view") {
+        params.set("mode", "view");
+      }
+
+      const qs = params.toString();
+      const response = await axiosInstance.get<Blob>(
+        `/items/invoices/${id}/pdf${qs ? `?${qs}` : ""}`,
+        { responseType: "blob" },
+      );
+
+      const disposition = response.headers["content-disposition"] ?? "";
+      const match = /filename="?([^";]+)"?/i.exec(disposition);
+      const filename = match?.[1]
+        ? decodeURIComponent(match[1])
+        : `invoice-${id}.pdf`;
+
+      return { blob: response.data, filename };
     },
   });
 };
@@ -324,9 +356,9 @@ export const useGetInvoiceHistory = (
         params.append("end_date", dateTo.toISOString());
       }
 
-      const response = await axiosInstance.get<ApiResponse<InvoiceHistoryData[]>>(
-        `/items/invoices?${params.toString()}`,
-      );
+      const response = await axiosInstance.get<
+        ApiResponse<InvoiceHistoryData[]>
+      >(`/items/invoices?${params.toString()}`);
 
       return {
         data: response.data?.data || [],

@@ -48,6 +48,7 @@ export interface StockTracking {
   newStock?: number;
   amount?: number;
   unitPrice?: number;
+  totalPrice?: number;
   createdAt?: string;
   item?: Item;
 }
