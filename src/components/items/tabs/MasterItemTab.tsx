@@ -99,6 +99,44 @@ const MasterItemTab = () => {
   const [limit, setLimit] = useState(10);
   const [isDateAddedOpen, setIsDateAddedOpen] = useState(false);
 
+  const [savedCategories, setSavedCategories] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("simba_custom_categories") ?? "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const [savedUnits, setSavedUnits] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("simba_custom_units") ?? "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  const saveCustomCategory = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    setSavedCategories((prev) => {
+      if (prev.includes(trimmed)) return prev;
+      const next = [...prev, trimmed];
+      localStorage.setItem("simba_custom_categories", JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const saveCustomUnit = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    setSavedUnits((prev) => {
+      if (prev.includes(trimmed)) return prev;
+      const next = [...prev, trimmed];
+      localStorage.setItem("simba_custom_units", JSON.stringify(next));
+      return next;
+    });
+  };
+
   const addItem = useAddItem();
   const editItem = useEditItem();
   const importItem = useImportItems();
@@ -114,10 +152,12 @@ const MasterItemTab = () => {
     setErrMsg("");
 
     if (values.category === "Lainnya") {
+      saveCustomCategory(values.customCategory);
       values.category = values.customCategory;
     }
 
     if (values.measureUnit === "lainnya") {
+      saveCustomUnit(values.customMeasureUnit);
       values.measureUnit = values.customMeasureUnit;
     }
     try {
@@ -192,10 +232,12 @@ const MasterItemTab = () => {
     setErrMsg("");
 
     if (values.category === "Lainnya") {
+      saveCustomCategory(values.customCategory);
       values.category = values.customCategory;
     }
 
     if (values.measureUnit === "lainnya") {
+      saveCustomUnit(values.customMeasureUnit);
       values.measureUnit = values.customMeasureUnit;
     }
 
@@ -363,6 +405,7 @@ const MasterItemTab = () => {
     { value: "Sayuran", label: "Sayuran" },
     { value: "Buah Buahan", label: "Buah-Buahan" },
     { value: "Pendukung", label: "Pendukung" },
+    ...savedCategories.map((c) => ({ value: c, label: c })),
     { value: "Lainnya", label: "Lainnya" },
   ];
 
@@ -374,6 +417,7 @@ const MasterItemTab = () => {
     { value: "botol", label: "Botol" },
     { value: "dus", label: "Dus" },
     { value: "bungkus", label: "Bungkus" },
+    ...savedUnits.map((u) => ({ value: u, label: u })),
     { value: "lainnya", label: "Lainnya" },
   ];
 

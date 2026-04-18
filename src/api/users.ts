@@ -33,7 +33,7 @@ export const useEditUser = () => {
         `/users/${request.id}`,
         {
           fullname: request.fullname,
-          password: request.password,
+          old_password: request.password,
         },
       );
       return response.data.status;

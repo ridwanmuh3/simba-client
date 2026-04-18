@@ -489,7 +489,9 @@ const ReduceItemStockTab = () => {
                     <TableHead>Tanggal Input</TableHead>
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
-                    <TableHead>Perubahan Stok</TableHead>
+                    <TableHead>Stok Sebelumnya</TableHead>
+                    <TableHead>Keluar</TableHead>
+                    <TableHead>Stok Sekarang</TableHead>
                     <TableHead>Harga Jual</TableHead>
                     <TableHead>Total Harga</TableHead>
                   </TableRow>
@@ -498,7 +500,7 @@ const ReduceItemStockTab = () => {
                   {isStocksLoading ? (
                     Array.from({ length: 6 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 7 }).map((_, cellIndex) => (
+                        {Array.from({ length: 9 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>
@@ -507,7 +509,7 @@ const ReduceItemStockTab = () => {
                     ))
                   ) : stocksData?.data?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="p-0">
+                      <TableCell colSpan={9} className="p-0">
                         <div className="flex w-full items-center justify-center">
                           <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                             <Package className="h-12 w-12 mb-3 opacity-50" />
@@ -547,20 +549,16 @@ const ReduceItemStockTab = () => {
                           {t.item?.id}
                         </TableCell>
                         <TableCell>{t.item?.name}</TableCell>
+                        <TableCell className="tabular-nums text-muted-foreground">
+                          {t.previousStock} {t.item?.measureUnit}
+                        </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1.5 text-sm">
-                            <span className="text-muted-foreground tabular-nums">
-                              {t.previousStock}
-                            </span>
-                            <span className="text-muted-foreground/40">→</span>
-                            <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-500/20">
-                              -{t.amount}
-                            </span>
-                            <span className="text-muted-foreground/40">→</span>
-                            <span className="font-semibold tabular-nums">
-                              {t.newStock || 0} {t.item?.measureUnit}
-                            </span>
-                          </div>
+                          <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-500/20">
+                            -{t.amount}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-semibold tabular-nums">
+                          {t.newStock || 0} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell className="font-medium">
                           {formatCurrency(t.unitPrice || 0)}
@@ -574,10 +572,11 @@ const ReduceItemStockTab = () => {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={3} className="font-bold text-right">
+                    <TableCell colSpan={4} className="font-bold text-right">
                       Total Harga Halaman Ini
                     </TableCell>
-                    <TableCell className="font-bold text-right">
+                    <TableCell />
+                    <TableCell className="font-bold">
                       <span className="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-bold text-red-600 ring-1 ring-inset ring-red-500/20">
                         -
                         {stocksData?.data?.reduce(

@@ -67,19 +67,19 @@ const Dashboard = () => {
 
   const budgetStats: BudgetStats[] = [
     {
-      title: "Total Anggaran",
+      title: "Total Anggaran (1 Tahun)",
       value: formatCurrency(totalBudget),
       icon: Wallet,
       color: "primary",
     },
     {
-      title: "Anggaran Masuk",
+      title: "Anggaran Masuk (1 Tahun)",
       value: formatCurrency(budgetIn),
       icon: Wallet,
       color: "success",
     },
     {
-      title: "Anggaran Keluar",
+      title: "Anggaran Keluar (1 Tahun)",
       value: formatCurrency(budgetOut),
       icon: Wallet,
       color: "destructive",

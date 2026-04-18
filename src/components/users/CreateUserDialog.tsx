@@ -150,7 +150,7 @@ const CreateUserDialog = () => {
                     <SelectValue placeholder="Pilih role" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* <SelectItem value="Super Admin">Super Admin</SelectItem> */}
+                    <SelectItem value="Super Admin">Super Admin</SelectItem>
                     <SelectItem value="Admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>

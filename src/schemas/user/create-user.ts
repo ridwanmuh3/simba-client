@@ -13,13 +13,17 @@ export const createUserSchema = z.object({
     .string()
     .min(2, "Panjang nama lengkap minimal 2 karakter")
     .max(50, "Nama lengkap terlalu panjang")
-    .refine((val) => /^[a-zA-Z ]/.test(val)),
-  role: z.enum(["Admin"]),
+    .refine((val) => /^[a-zA-Z ]+$/.test(val), "Nama lengkap hanya boleh huruf dan spasi"),
+  role: z.enum(["Admin", "Super Admin"], {
+    errorMap: () => ({ message: "Role harus dipilih" }),
+  }),
   password: z
     .string()
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])[\x20-\x7E]{4,30}$/,
-      "Password harus 8 karakter, mengandung huruf besar, kecil, angka, dan simbol.",
+    .min(4, "Password minimal 4 karakter")
+    .max(30, "Password maksimal 30 karakter")
+    .refine(
+      (val) => /^[\x20-\x7E]+$/.test(val),
+      "Password hanya boleh karakter ASCII",
     ),
 });
 
