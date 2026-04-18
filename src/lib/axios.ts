@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import camelcaseKeys from "camelcase-keys";
 import snakecaseKeys from "snakecase-keys";
 import { isPlainObject } from "./utils";
@@ -30,6 +30,28 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+let isRefreshing = false;
+type RetryableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+interface FailedQueuePromise {
+  resolve: () => void;
+  reject: (reason?: unknown) => void;
+}
+
+let failedQueue: FailedQueuePromise[] = [];
+
+const processQueue = (error: unknown) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+
+  failedQueue = [];
+};
+
 axiosInstance.interceptors.response.use(
   (response) => {
     const contentType = response.headers["content-type"];
@@ -40,5 +62,45 @@ axiosInstance.interceptors.response.use(
 
     return response;
   },
-  (error) => Promise.reject(error),
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
+
+    // Check for 401, ensure we haven't already retried, and avoid intercepting auth routes to prevent loops
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      originalRequest.url !== "/auth/login" &&
+      originalRequest.url !== "/auth/refresh"
+    ) {
+      if (isRefreshing) {
+        return new Promise<void>(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return axiosInstance(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await axiosInstance.post("/auth/refresh");
+        processQueue(null);
+        return axiosInstance(originalRequest);
+      } catch (refreshError: unknown) {
+        processQueue(refreshError);
+        // Dispatch an event or handle global logout here if needed
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  },
 );

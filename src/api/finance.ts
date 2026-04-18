@@ -9,6 +9,18 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 
+interface FinanceListQueryData {
+  data: FinanceData[];
+  paging: PagingMetadata;
+}
+
+const buildEmptyPaging = (page: number, size: number): PagingMetadata => ({
+  page,
+  size,
+  totalItem: 0,
+  totalPage: 1,
+});
+
 export const useAddFinance = () => {
   return useMutation<ApiResponse<FinanceData>, Error, FormData>({
     mutationFn: async (formData) => {
@@ -25,14 +37,19 @@ export const useAddFinance = () => {
       return data;
     },
     onSuccess: ({ data: newFinance }) => {
-      queryClient.setQueriesData({ queryKey: ["finances"] }, (old: any) => {
-        if (!old?.data) return old;
+      if (!newFinance) return;
 
-        return {
-          ...old,
-          data: [newFinance, ...old.data],
-        };
-      });
+      queryClient.setQueriesData<FinanceListQueryData>(
+        { queryKey: ["finances"] },
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            data: [newFinance, ...old.data],
+          };
+        },
+      );
 
       queryClient.invalidateQueries({
         queryKey: ["dashboard-stats"],
@@ -62,16 +79,21 @@ export const useEditFinance = () => {
     },
 
     onSuccess: ({ data: updatedFinance }) => {
-      queryClient.setQueriesData({ queryKey: ["finances"] }, (old: any) => {
-        if (!old?.data) return old;
+      if (!updatedFinance) return;
 
-        return {
-          ...old,
-          data: old.data.map((item: FinanceData) =>
-            item.id === updatedFinance.id ? updatedFinance : item,
-          ),
-        };
-      });
+      queryClient.setQueriesData<FinanceListQueryData>(
+        { queryKey: ["finances"] },
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            data: old.data.map((item) =>
+              item.id === updatedFinance.id ? updatedFinance : item,
+            ),
+          };
+        },
+      );
 
       queryClient.invalidateQueries({
         queryKey: ["dashboard-stats"],
@@ -85,7 +107,7 @@ export const useDeleteFinance = () => {
     ApiResponse<boolean>,
     Error,
     DeleteFinanceRequest,
-    { previous: [unknown, any][] }
+    { previous: Array<[QueryKey, FinanceListQueryData | undefined]> }
   >({
     mutationFn: async ({ id }) => {
       const { data } = await axiosInstance.delete<ApiResponse<boolean>>(
@@ -96,24 +118,27 @@ export const useDeleteFinance = () => {
     onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: ["finances"] });
 
-      const previous = queryClient.getQueriesData({
+      const previous = queryClient.getQueriesData<FinanceListQueryData>({
         queryKey: ["finances"],
       });
 
-      queryClient.setQueriesData({ queryKey: ["finances"] }, (old: any) => {
-        if (!old?.data) return old;
+      queryClient.setQueriesData<FinanceListQueryData>(
+        { queryKey: ["finances"] },
+        (old) => {
+          if (!old) return old;
 
-        return {
-          ...old,
-          data: old.data.filter((item: FinanceData) => item.id !== id),
-        };
-      });
+          return {
+            ...old,
+            data: old.data.filter((item) => item.id !== id),
+          };
+        },
+      );
 
       return { previous };
     },
     onError: (_err, _vars, context) => {
       context?.previous?.forEach(([key, data]) => {
-        queryClient.setQueryData(key as QueryKey, data);
+        queryClient.setQueryData(key, data);
       });
     },
     onSettled: () => {
@@ -130,13 +155,10 @@ export const useGetAllFinances = (
   dateFrom?: Date,
   dateTo?: Date,
 ) => {
-  const startDate = dateFrom?.toISOString() ?? null;
-  const endDate = dateTo?.toISOString() ?? null;
+  const startDate = dateFrom?.toISOString();
+  const endDate = dateTo?.toISOString();
 
-  return useQuery<{
-    data: FinanceData[];
-    paging: PagingMetadata;
-  }>({
+  return useQuery<FinanceListQueryData>({
     queryKey: ["finances", { searchQuery, page, limit, startDate, endDate }],
     queryFn: async () => {
       const { data } = await axiosInstance.get<ApiResponse<FinanceData[]>>(
@@ -146,15 +168,15 @@ export const useGetAllFinances = (
             page,
             size: limit,
             search_query: searchQuery || undefined,
-            start_date: startDate || undefined,
-            end_date: endDate || undefined,
+            start_date: startDate,
+            end_date: endDate,
           },
         },
       );
 
       return {
         data: data.data ?? [],
-        paging: data.paging ?? null,
+        paging: data.paging ?? buildEmptyPaging(page, limit),
       };
     },
     staleTime: 1000 * 60 * 10,

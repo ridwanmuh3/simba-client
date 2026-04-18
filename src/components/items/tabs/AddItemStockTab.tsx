@@ -9,13 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import ItemCombobox from "../ItemCombobox";
 import { TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -24,10 +18,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import {
   useDeleteStockItem,
   useGetAllItemsStocks,
@@ -53,6 +48,7 @@ import {
 import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import Spinner from "@/components/shared/Spinner";
+import InvoiceDialog from "../InvoiceDialog";
 
 const AddItemStockTab = () => {
   const form = useForm<UpdateItemStockFormInputs>({
@@ -66,6 +62,7 @@ const AddItemStockTab = () => {
       supplier: "",
     },
   });
+  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState("");
   const [selectedStock, setSelectedStock] = useState<StockTracking | null>(
     null,
@@ -97,12 +94,14 @@ const AddItemStockTab = () => {
     setErrMsg("");
 
     if (!values.itemId) {
-      setErrMsg("Pilih bahan terlebih dahulu");
+      setErrMsg("Pilih bahan yang ingin ditambahkan stoknya terlebih dahulu.");
       return;
     }
 
     if (values.amount <= 0) {
-      setErrMsg("Jumlah stok masuk harus lebih dari 0");
+      setErrMsg(
+        "Jumlah stok masuk harus lebih dari 0. Masukkan angka yang valid.",
+      );
       return;
     }
 
@@ -127,13 +126,19 @@ const AddItemStockTab = () => {
       const err = e as AxiosError;
       switch (err.status) {
         case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
+          setErrMsg(
+            "Data stok masuk tidak valid. Periksa kembali jumlah dan harga satuan.",
+          );
           break;
         case 404:
-          setErrMsg("Data tidak ditemukan");
+          setErrMsg(
+            "Bahan yang dipilih tidak ditemukan. Muat ulang halaman dan pilih ulang.",
+          );
           break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menambah stok. Periksa koneksi Anda atau coba lagi.",
+          );
       }
     }
   };
@@ -153,26 +158,34 @@ const AddItemStockTab = () => {
   const handleDeleteItemStock = async () => {
     setErrMsg("");
     try {
-      const response = await deleteStockItem.mutateAsync({
+      await deleteStockItem.mutateAsync({
         id: selectedItemId,
         stockId: selectedStock?.id,
       });
-      if (response.status === 200) {
-        setSelectedStock(null);
-        setSelectedItemId("");
-        toast({
-          title: "Berhasil menghapus data bahan",
-          description: `Anda berhasil menghapus data bahan`,
-        });
-      }
+      setSelectedStock(null);
+      setSelectedItemId("");
+      toast({
+        title: "Berhasil menghapus data bahan",
+        description: `Anda berhasil menghapus data bahan`,
+      });
+      setIsEditMode(false);
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
         case 404:
-          setErrMsg("Data tidak ditemukan");
+          setErrMsg(
+            "Riwayat stok tidak ditemukan. Kemungkinan sudah dihapus sebelumnya.",
+          );
+          break;
+        case 409:
+          setErrMsg(
+            "Riwayat stok tidak dapat dihapus karena akan membuat stok menjadi negatif.",
+          );
           break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menghapus riwayat stok. Periksa koneksi Anda atau coba lagi.",
+          );
       }
     } finally {
       form.reset();
@@ -212,6 +225,19 @@ const AddItemStockTab = () => {
     setIsToOpen(false);
   };
 
+  const handleCancelEditStock = (e: MouseEvent) => {
+    e.preventDefault();
+    setSelectedItemId("");
+    setSelectedStock(null);
+    form.reset();
+    setErrMsg("");
+    setIsEditMode(false);
+  };
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, dateFrom, dateTo]);
+
   return (
     <TabsContent value="bahan-masuk" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -236,31 +262,20 @@ const AddItemStockTab = () => {
                   name="itemId"
                   control={form.control}
                   render={({ field }) => (
-                    <Select
+                    <ItemCombobox
+                      items={itemsData?.data || []}
                       value={field.value}
-                      onValueChange={(val) => {
+                      onChange={(val) => {
+                        setIsEditMode(false);
                         field.onChange(val);
                         const selectedItm = itemsData?.data?.find(
                           (item) => item.id === val,
                         );
-
                         if (selectedItm) {
-                          setSelectedItemId(selectedItm.id);
                           handleSelectStockTracking({ item: selectedItm });
                         }
                       }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih bahan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {itemsData?.data?.map((t) => (
-                          <SelectItem key={t?.id} value={t?.id}>
-                            {t?.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   )}
                 />
               </div>
@@ -273,6 +288,7 @@ const AddItemStockTab = () => {
                     type="number"
                     {...form.register("amount")}
                     placeholder="1"
+                    step="any"
                     min={0}
                   />
                 </div>
@@ -306,7 +322,7 @@ const AddItemStockTab = () => {
                 <Input
                   value={formatCurrency(
                     (form.watch("itemUnitPrice") || 0) *
-                      (form.watch("amount") || 0),
+                    (form.watch("amount") || 0),
                   )}
                   disabled
                 />
@@ -324,11 +340,23 @@ const AddItemStockTab = () => {
                 )}
               </div>
               <div className="flex gap-4 pt-2 flex-wrap-reverse">
-                <DeleteDialog
-                  handleDelete={handleDeleteItemStock}
-                  isPending={deleteStockItem.isPending}
-                  disabledTrigger={!selectedItemId && !selectedStock}
-                />
+                {isEditMode && (
+                  <>
+                    <Button
+                      type="button"
+                      className="w-full"
+                      variant="outline"
+                      onClick={handleCancelEditStock}
+                    >
+                      Batal
+                    </Button>
+                    <DeleteDialog
+                      handleDelete={handleDeleteItemStock}
+                      isPending={deleteStockItem.isPending}
+                      disabledTrigger={!selectedItemId && !selectedStock}
+                    />
+                  </>
+                )}
                 <Button
                   type="submit"
                   className="w-full"
@@ -427,19 +455,19 @@ const AddItemStockTab = () => {
                   </div>
                 </PopoverContent>
               </Popover>
+              <InvoiceDialog stockType="IN" />
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="relative max-h-[500px] overflow-auto border-t text-nowrap">
+            <div className="relative overflow-x-auto border-t text-nowrap">
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10 border-b">
                   <TableRow>
-                    <TableHead>Tanggal Dibuat</TableHead>
+                    <TableHead className="w-[50px]">No</TableHead>
+                    <TableHead>Tanggal Input</TableHead>
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
-                    <TableHead>Akumulasi Sebelumnya</TableHead>
-                    <TableHead>Stok Tambah</TableHead>
-                    <TableHead>Akumulasi</TableHead>
+                    <TableHead>Perubahan Stok</TableHead>
                     <TableHead>Penyuplai</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -447,7 +475,7 @@ const AddItemStockTab = () => {
                   {isStocksLoading ? (
                     Array.from({ length: 6 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 7 }).map((_, cellIndex) => (
+                        {Array.from({ length: 6 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>
@@ -456,8 +484,8 @@ const AddItemStockTab = () => {
                     ))
                   ) : filteredStocksTracking.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="p-0">
-                        <div className="flex min-h-[400px] w-full items-center justify-center">
+                      <TableCell colSpan={6} className="p-0">
+                        <div className="flex w-full items-center justify-center">
                           <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                             <Package className="h-12 w-12 mb-3 opacity-50" />
                             <p className="text-sm font-medium">
@@ -475,35 +503,63 @@ const AddItemStockTab = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredStocksTracking.map((t, index) => (
+                    filteredStocksTracking.map((t) => (
                       <TableRow
                         key={t.id}
-                        className={`cursor-pointer transition ${
-                          selectedStock?.id === t.id
-                            ? "bg-muted"
-                            : "hover:bg-muted/50"
-                        }`}
-                        onClick={() => handleSelectStockTracking(t)}
+                        className={`cursor-pointer transition ${selectedStock?.id === t.id
+                          ? "bg-muted"
+                          : "hover:bg-muted/50"
+                          }`}
+                        onClick={() => {
+                          setIsEditMode(true);
+                          handleSelectStockTracking(t);
+                        }}
                       >
+                        <TableCell className="font-medium text-muted-foreground">
+                          {(page - 1) * limit + filteredStocksTracking.indexOf(t) + 1}
+                        </TableCell>
                         <TableCell>{formatDateDetail(t.createdAt)}</TableCell>
                         <TableCell className="font-mono text-sm">
                           {t.item?.id}
                         </TableCell>
                         <TableCell>{t.item?.name}</TableCell>
                         <TableCell>
-                          {t.previousStock} {t.item?.measureUnit}
-                        </TableCell>
-                        <TableCell className="text-green-500 font-bold">
-                          +{t.newStock - t.previousStock}
-                        </TableCell>
-                        <TableCell>
-                          {t.newStock} {t.item?.measureUnit}
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <span className="text-muted-foreground tabular-nums">
+                              {t.previousStock}
+                            </span>
+                            <span className="text-muted-foreground/40">→</span>
+                            <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-semibold text-green-600 ring-1 ring-inset ring-green-500/20">
+                              +{t.newStock - t.previousStock}
+                            </span>
+                            <span className="text-muted-foreground/40">→</span>
+                            <span className="font-semibold tabular-nums">
+                              {t.newStock} {t.item?.measureUnit}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>{t.supplier}</TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={4} className="font-bold text-right">
+                      Akumulasi Halaman Ini
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      <span className="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-bold text-green-600 ring-1 ring-inset ring-green-500/20">
+                        +
+                        {filteredStocksTracking?.reduce(
+                          (acc, curr) => acc + (curr.newStock - curr.previousStock),
+                          0,
+                        ) || 0}
+                      </span>
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                </TableFooter>
               </Table>
             </div>
           </CardContent>

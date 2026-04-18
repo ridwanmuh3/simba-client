@@ -1,4 +1,5 @@
 import {
+  Calendar,
   Download,
   FileDown,
   FileText,
@@ -7,6 +8,13 @@ import {
   Search,
   Upload,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,6 +40,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,7 +55,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChangeEvent, MouseEvent, useRef, useState } from "react";
+import { ChangeEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import {
   useAddItem,
   useDeleteItem,
@@ -62,7 +71,6 @@ import Spinner from "@/components/shared/Spinner";
 import { Item } from "@/types/item";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
-import { useSearchParams } from "react-router";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import { axiosInstance } from "@/lib/axios";
 import { ApiResponse } from "@/types/response";
@@ -79,6 +87,7 @@ const MasterItemTab = () => {
       pricePerUnit: 0,
       customCategory: "",
       customMeasureUnit: "",
+      dateAdded: new Date(),
     },
   });
   const [isEditForm, setIsEditForm] = useState(false);
@@ -88,6 +97,8 @@ const MasterItemTab = () => {
   const [errMsg, setErrMsg] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [isDateAddedOpen, setIsDateAddedOpen] = useState(false);
+
   const addItem = useAddItem();
   const editItem = useEditItem();
   const importItem = useImportItems();
@@ -109,7 +120,6 @@ const MasterItemTab = () => {
     if (values.measureUnit === "lainnya") {
       values.measureUnit = values.customMeasureUnit;
     }
-
     try {
       const response = await addItem.mutateAsync({
         name: values.name,
@@ -117,6 +127,7 @@ const MasterItemTab = () => {
         stock: values.stock,
         measureUnit: values.measureUnit,
         unitPrice: values.pricePerUnit,
+        dateAdded: values.dateAdded,
       });
       if (response.status === 201) {
         toast({
@@ -128,13 +139,19 @@ const MasterItemTab = () => {
       const err = e as AxiosError;
       switch (err.status) {
         case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
+          setErrMsg(
+            "Data bahan tidak valid. Pastikan nama, kategori, satuan, dan harga terisi dengan benar.",
+          );
           break;
         case 409:
-          setErrMsg("Data bahan sudah ditambahkan");
+          setErrMsg(
+            "Bahan dengan nama tersebut sudah ada. Gunakan nama lain atau edit bahan yang ada.",
+          );
           break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menambah bahan. Periksa koneksi Anda atau coba lagi.",
+          );
       }
     } finally {
       form.reset();
@@ -145,10 +162,30 @@ const MasterItemTab = () => {
     setSelectedItem(item);
     setIsEditForm(true);
     form.setValue("name", item.name);
-    form.setValue("category", item.category);
+
+    if (!foodOptions.some((option) => option.value === item.category)) {
+      form.setValue("category", "Lainnya");
+      form.setValue("customCategory", item.category);
+    } else {
+      form.setValue("category", item.category);
+    }
+
+    if (
+      !measureUnitOptions.some((option) => option.value === item.measureUnit)
+    ) {
+      form.setValue("measureUnit", "Lainnya");
+      form.setValue("customMeasureUnit", item.measureUnit);
+    } else {
+      form.setValue("measureUnit", item.measureUnit);
+    }
+
     form.setValue("stock", item.stock);
-    form.setValue("measureUnit", item.measureUnit);
+    form.setValue("initialStock", item.initialStock);
     form.setValue("pricePerUnit", item.unitPrice);
+    form.setValue(
+      "dateAdded",
+      item.createdAt ? new Date(item.createdAt) : new Date(),
+    );
   };
 
   const handleEditMasterItem = async (values: MasterItemFormInputs) => {
@@ -168,7 +205,12 @@ const MasterItemTab = () => {
         name: values.name,
         category: values.category,
         measureUnit: values.measureUnit,
+        stock: values.stock,
+        // In edit mode the "Stok Awal" input represents the corrected initial
+        // stock — send it as initialStock so backend syncs tracks accordingly.
+        initialStock: values.stock,
         unitPrice: values.pricePerUnit,
+        dateAdded: values.dateAdded,
       });
       if (response.status === 200) {
         toast({
@@ -180,10 +222,19 @@ const MasterItemTab = () => {
       const err = e as AxiosError;
       switch (err.status) {
         case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
+          setErrMsg(
+            "Perubahan tidak valid. Periksa kembali nama, kategori, satuan, dan harga bahan.",
+          );
+          break;
+        case 404:
+          setErrMsg(
+            "Bahan tidak ditemukan. Kemungkinan sudah dihapus oleh pengguna lain.",
+          );
           break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menyimpan perubahan bahan. Periksa koneksi Anda atau coba lagi.",
+          );
           break;
       }
     } finally {
@@ -209,10 +260,19 @@ const MasterItemTab = () => {
       const err = e as AxiosError;
       switch (err.status) {
         case 404:
-          setErrMsg("Data tidak ditemukan");
+          setErrMsg(
+            "Bahan tidak ditemukan. Kemungkinan sudah dihapus sebelumnya.",
+          );
+          break;
+        case 409:
+          setErrMsg(
+            "Bahan tidak dapat dihapus karena masih memiliki riwayat stok. Hapus riwayat stoknya terlebih dahulu.",
+          );
           break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menghapus bahan. Periksa koneksi Anda atau coba lagi.",
+          );
       }
     } finally {
       form.reset();
@@ -249,8 +309,9 @@ const MasterItemTab = () => {
       });
     } catch (error) {
       toast({
-        title: "Gagal menggunggah dokumen data bahan",
-        description: "Terjadi kesalahan server",
+        title: "Gagal mengunggah dokumen data bahan",
+        description:
+          "File CSV tidak dapat diproses. Pastikan format sesuai template dan kolom wajib (nama, kategori, stok, satuan, harga) terisi.",
         variant: "destructive",
       });
     }
@@ -280,15 +341,39 @@ const MasterItemTab = () => {
 
   const handleDownloadCsv = () => {
     const headers = [
+      "Tanggal Input",
       "Nama Bahan",
       "Kategori",
       "Stok",
       "Satuan Perhitungan",
       "Satuan Harga",
     ];
-    const rows = [["Beras Bulog", "Karbohidrat", "100", "kg", "30000"]];
+    const rows = [
+      ["30 Apr 2026 10:00", "Beras Bulog", "Karbohidrat", "100", "kg", "30000"],
+    ];
     downloadCSV("template-bahan-mbg.csv", headers, rows);
   };
+
+  const foodOptions = [
+    { value: "Karbohidrat", label: "Karbohidrat" },
+    { value: "Protein Hewani", label: "Protein Hewani" },
+    { value: "Protein Nabati", label: "Protein Nabati" },
+    { value: "Sayuran", label: "Sayuran" },
+    { value: "Buah Buahan", label: "Buah-Buahan" },
+    { value: "Pendukung", label: "Pendukung" },
+    { value: "Lainnya", label: "Lainnya" },
+  ];
+
+  const measureUnitOptions = [
+    { value: "kg", label: "Kilogram (kg)" },
+    { value: "liter", label: "Liter (lt)" },
+    { value: "ikat", label: "Ikat" },
+    { value: "buah", label: "Buah" },
+    { value: "botol", label: "Botol" },
+    { value: "dus", label: "Dus" },
+    { value: "bungkus", label: "Bungkus" },
+    { value: "lainnya", label: "Lainnya" },
+  ];
 
   return (
     <TabsContent value="data-bahan" className="space-y-4">
@@ -334,17 +419,11 @@ const MasterItemTab = () => {
                         <SelectValue placeholder="Pilih kategori" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Karbohidrat">Karbohidrat</SelectItem>
-                        <SelectItem value="Protein Hewani">
-                          Protein Hewani
-                        </SelectItem>
-                        <SelectItem value="Protein Nabati">
-                          Protein Nabati
-                        </SelectItem>
-                        <SelectItem value="Sayuran">Sayuran</SelectItem>
-                        <SelectItem value="Buah Buahan">Buah-Buahan</SelectItem>
-                        <SelectItem value="Pendukung">Pendukung</SelectItem>
-                        <SelectItem value="Lainnya">Lainnya</SelectItem>
+                        {foodOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
@@ -384,14 +463,11 @@ const MasterItemTab = () => {
                         <SelectValue placeholder="Pilih satuan" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="kg">Kilogram (kg)</SelectItem>
-                        <SelectItem value="liter">Liter (lt)</SelectItem>
-                        <SelectItem value="ikat">Ikat</SelectItem>
-                        <SelectItem value="buah">Buah</SelectItem>
-                        <SelectItem value="botol">Botol</SelectItem>
-                        <SelectItem value="dus">Dus</SelectItem>
-                        <SelectItem value="bungkus">Bungkus</SelectItem>
-                        <SelectItem value="lainnya">Lainnya</SelectItem>
+                        {measureUnitOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
@@ -448,11 +524,60 @@ const MasterItemTab = () => {
                   type="number"
                   placeholder="0"
                   min="0"
-                  disabled={isEditForm}
+                  step="any"
                 />
                 {form.formState.errors.stock && (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.stock.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateAdded">
+                  Tanggal Penambahan Bahan
+                  <RequiredInputIdentifier />
+                </Label>
+                <Controller
+                  name="dateAdded"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Popover
+                      open={isDateAddedOpen}
+                      onOpenChange={setIsDateAddedOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full justify-start font-normal"
+                        >
+                          <Calendar className="w-4 h-4 mr-2" />
+                          {field.value
+                            ? formatDateTable(field.value)
+                            : "Pilih tanggal"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-0 px-4 py-2"
+                        align="start"
+                      >
+                        <CalendarComponent
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(d) => {
+                            if (d) field.onChange(d);
+                            setIsDateAddedOpen(false);
+                          }}
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {form.formState.errors.dateAdded && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.dateAdded.message}
                   </p>
                 )}
               </div>
@@ -561,10 +686,12 @@ const MasterItemTab = () => {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="relative max-h-[500px] overflow-auto border-t text-nowrap">
+            <div className="relative overflow-x-auto border-t text-nowrap">
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10 border-b">
                   <TableRow>
+                    <TableHead className="w-[50px]">No</TableHead>
+                    <TableHead>Tanggal Input</TableHead>
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Kategori</TableHead>
@@ -576,7 +703,7 @@ const MasterItemTab = () => {
                   {isItemsLoading ? (
                     Array.from({ length: 5 }).map((_, index) => (
                       <TableRow key={index}>
-                        {Array.from({ length: 5 }).map((_, cellIndex) => (
+                        {Array.from({ length: 7 }).map((_, cellIndex) => (
                           <TableCell key={cellIndex}>
                             <Skeleton className="h-4 w-full rounded-md" />
                           </TableCell>
@@ -585,8 +712,8 @@ const MasterItemTab = () => {
                     ))
                   ) : itemsData.data?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="p-0">
-                        <div className="flex min-h-[400px] w-full items-center justify-center">
+                      <TableCell colSpan={7} className="p-0">
+                        <div className="flex w-full items-center justify-center">
                           <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                             <Package className="h-12 w-12 mb-3 opacity-50" />
                             <p className="text-sm font-medium">
@@ -612,6 +739,14 @@ const MasterItemTab = () => {
                         }`}
                         onClick={() => handleSelectItem(item)}
                       >
+                        <TableCell className="font-medium text-muted-foreground">
+                          {(page - 1) * limit + itemsData.data.indexOf(item) + 1}
+                        </TableCell>
+                        <TableCell>
+                          {item.createdAt
+                            ? formatDateDetail(new Date(item.createdAt))
+                            : "-"}
+                        </TableCell>
                         <TableCell className="font-mono text-sm">
                           {item.id}
                         </TableCell>
@@ -639,6 +774,19 @@ const MasterItemTab = () => {
                     ))
                   )}
                 </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={5} className="font-bold text-right">
+                      Total Halaman Ini
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      {itemsData?.data?.reduce((acc, curr) => acc + curr.stock, 0) || 0}
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      {formatCurrency(itemsData?.data?.reduce((acc, curr) => acc + curr.unitPrice, 0) || 0)}
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
               </Table>
             </div>
           </CardContent>

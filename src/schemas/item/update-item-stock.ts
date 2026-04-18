@@ -4,8 +4,8 @@ export const updateItemStockSchema = z.object({
   itemId: z.string(),
   itemName: z.string(),
   itemMeasureUnit: z.string(),
-  itemUnitPrice: z.coerce.number().min(1, "harga satuan minimal 1"),
-  amount: z.coerce.number().min(1, "minimal stok harus 1"),
+  itemUnitPrice: z.coerce.number().min(0, "harga tidak boleh negative"),
+  amount: z.coerce.number().min(0, "stok harus lebih dari 0"),
   supplier: z.coerce.string().optional(),
 });
 

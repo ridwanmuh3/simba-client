@@ -61,10 +61,25 @@ const CreateUserDialog = () => {
       const e = err as AxiosError;
       switch (e.status) {
         case 400:
-          setErrorMsg("Terjadi kesalahan input data");
+          setErrorMsg(
+            "Data pengguna tidak valid. Periksa kembali username, nama, dan password Anda.",
+          );
+          break;
+        case 409:
+          setErrorMsg(
+            "Username sudah digunakan. Silakan pilih username lain.",
+          );
+          break;
+        case 401:
+        case 403:
+          setErrorMsg(
+            "Anda tidak memiliki izin untuk menambah pengguna. Hubungi Super Admin.",
+          );
           break;
         default:
-          setErrorMsg("Terjadi kesalahan server");
+          setErrorMsg(
+            "Gagal menyimpan pengguna. Periksa koneksi Anda atau coba lagi.",
+          );
           break;
       }
     }

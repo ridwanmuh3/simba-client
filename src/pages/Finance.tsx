@@ -1,5 +1,6 @@
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
   Card,
@@ -18,6 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,9 +29,7 @@ import {
   Download,
   Calendar,
   ArrowDownRight,
-  FileSpreadsheet,
   FileText,
-  Package,
   ArrowUpRight,
   UploadCloud,
   Save,
@@ -62,7 +62,6 @@ import {
 import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { FinanceData } from "@/types/finance";
-import { AxiosError } from "axios";
 import { toast } from "@/hooks/use-toast";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -83,17 +82,15 @@ import Spinner from "@/components/shared/Spinner";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import { axiosInstance } from "@/lib/axios";
 import { ApiResponse } from "@/types/response";
-import { exportFinanceToCSV, exportToCSV } from "@/lib/csv-utils";
+import { exportFinanceToCSV } from "@/lib/csv-utils";
 
 const addFinanceSchema = z.object({
-  type: z.string(),
+  type: z.enum(["PEMASUKAN", "PENGELUARAN"]),
   category: z.string(),
   description: z.string().min(1, "Harus ada deskripsi"),
   amount: z.coerce.number().min(1, "Besaran uang harus lebih dari Rp. 1"),
   extraNote: z.string().optional(),
-  proofImage: z.instanceof(File, {
-    message: "Bukti foto wajib diupload",
-  }),
+  proofImage: z.instanceof(File).nullable().optional(),
 });
 
 type AddFinanceFormInputs = z.infer<typeof addFinanceSchema>;
@@ -106,6 +103,14 @@ const transactionCategories = [
   "Peralatan",
   "Lainnya",
 ];
+
+const getHttpStatusCode = (error: unknown): number | undefined => {
+  if (!axios.isAxiosError(error)) {
+    return undefined;
+  }
+
+  return error.response?.status;
+};
 
 export default function Finance() {
   const [errMsg, setErrMsg] = useState("");
@@ -122,7 +127,12 @@ export default function Finance() {
   const [selectedFinance, setSelectedFinance] = useState<FinanceData | null>(
     null,
   );
-  const { data: financeData, isLoading } = useGetAllFinances(
+  const {
+    data: financeData,
+    isLoading,
+    isError: isFinanceError,
+    error: financeError,
+  } = useGetAllFinances(
     searchQuery,
     page,
     limit,
@@ -143,12 +153,53 @@ export default function Finance() {
   const addFinance = useAddFinance();
   const editFinance = useEditFinance();
   const deleteFinance = useDeleteFinance();
+  const transactionType = form.watch("type");
+  const proofImageValue = form.watch("proofImage");
+  const financeRows = useMemo(() => financeData?.data ?? [], [financeData?.data]);
+  const financeErrorMessage = isFinanceError
+    ? financeError instanceof Error
+      ? financeError.message
+      : "Tidak dapat memuat data keuangan."
+    : "";
+  const selectedProofImagePreview = useMemo(() => {
+    if (!(proofImageValue instanceof File)) {
+      return selectedFinance?.proofImage ?? "";
+    }
+
+    return URL.createObjectURL(proofImageValue);
+  }, [proofImageValue, selectedFinance?.proofImage]);
+
+  useEffect(() => {
+    if (!(proofImageValue instanceof File)) {
+      return;
+    }
+
+    return () => {
+      URL.revokeObjectURL(selectedProofImagePreview);
+    };
+  }, [proofImageValue, selectedProofImagePreview]);
+
+  const currentPageNetTotal = useMemo(
+    () =>
+      financeRows.reduce(
+        (accumulator, row) =>
+          row.type === "PEMASUKAN"
+            ? accumulator + row.amount
+            : accumulator - row.amount,
+        0,
+      ),
+    [financeRows],
+  );
 
   const handleAddFinance = async (data: AddFinanceFormInputs) => {
     setErrMsg("");
     try {
       const formData = new FormData();
 
+      if (!data.proofImage) {
+        setErrMsg("Bukti foto wajib diupload");
+        return;
+      }
       formData.append("type", data.type);
       formData.append("description", data.description);
       formData.append("amount", data.amount.toString());
@@ -163,7 +214,7 @@ export default function Finance() {
         formData.append("extra_note", data.extraNote);
       }
 
-      if (data.proofImage) {
+      if (data.proofImage && data.proofImage instanceof File) {
         formData.append("proof_image", data.proofImage);
       }
       await addFinance.mutateAsync(formData);
@@ -172,18 +223,29 @@ export default function Finance() {
         title: "Berhasil",
         description: `Data keuangan  berhasil ditambahkan`,
       });
-
       form.reset();
-    } catch (e) {
-      const err = e as AxiosError;
-      switch (err.status) {
+    } catch (error: unknown) {
+      const statusCode = getHttpStatusCode(error);
+      switch (statusCode) {
         case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
+          setErrMsg(
+            "Data transaksi tidak valid. Pastikan jumlah, deskripsi, dan foto bukti sudah terisi dengan benar.",
+          );
+          break;
+        case 413:
+          setErrMsg(
+            "Ukuran foto bukti terlalu besar. Gunakan gambar di bawah 5MB.",
+          );
           break;
         case 404:
-          setErrMsg("Data tidak ditemukan");
+          setErrMsg(
+            "Kategori atau data terkait tidak ditemukan. Muat ulang halaman dan coba lagi.",
+          );
+          break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menyimpan data keuangan. Periksa koneksi Anda atau coba lagi.",
+          );
           break;
       }
     }
@@ -192,6 +254,16 @@ export default function Finance() {
   const handleEditFinance = async (data: AddFinanceFormInputs) => {
     setErrMsg("");
     try {
+      if (!selectedFinance) {
+        toast({
+          title: "Data belum dipilih",
+          description:
+            "Pilih salah satu data keuangan dari tabel terlebih dahulu sebelum mengubah.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const formData = new FormData();
 
       formData.append("type", data.type);
@@ -208,31 +280,39 @@ export default function Finance() {
         formData.append("extra_note", data.extraNote);
       }
 
-      if (data.proofImage) {
+      if (data.proofImage && data.proofImage instanceof File) {
         formData.append("proof_image", data.proofImage);
       }
+
       await editFinance.mutateAsync({
         financeId: selectedFinance.id,
         formData: formData,
       });
 
+      setSelectedFinance(null);
       toast({
         title: "Berhasil",
         description: `Data keuangan berhasil diubah`,
       });
-
       setIsEditForm(false);
       form.reset();
-    } catch (e) {
-      const err = e as AxiosError;
-      switch (err.status) {
+    } catch (error: unknown) {
+      const statusCode = getHttpStatusCode(error);
+      switch (statusCode) {
         case 400:
-          setErrMsg("Terjadi kesalahan input data bahan");
+          setErrMsg(
+            "Data transaksi tidak valid. Periksa kembali jumlah, deskripsi, dan foto bukti.",
+          );
           break;
         case 404:
-          setErrMsg("Data tidak ditemukan");
+          setErrMsg(
+            "Data keuangan tidak ditemukan. Kemungkinan sudah dihapus oleh pengguna lain.",
+          );
+          break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menyimpan perubahan. Periksa koneksi Anda atau coba lagi.",
+          );
           break;
       }
     }
@@ -241,31 +321,35 @@ export default function Finance() {
   const handleDeleteFinance = async () => {
     setErrMsg("");
     if (!selectedFinance) {
-      setErrMsg("Anda belum memilih data keuangan");
+      setErrMsg("Pilih data keuangan dari tabel terlebih dahulu sebelum menghapus.");
       return;
     }
     try {
-      const response = await deleteFinance.mutateAsync({
+      await deleteFinance.mutateAsync({
         id: selectedFinance.id,
       });
-      if (response.status === 200) {
-        setSelectedFinance(null);
-        toast({
-          title: "Berhasil menghapus data keuangan",
-          description: `Anda berhasil menghapus data keuangan`,
-        });
-      }
-    } catch (e: unknown) {
-      const err = e as AxiosError;
-      switch (err.status) {
+
+      setSelectedFinance(null);
+      toast({
+        title: "Berhasil menghapus data keuangan",
+        description: `Anda berhasil menghapus data keuangan`,
+      });
+      setIsEditForm(false);
+      form.reset();
+    } catch (error: unknown) {
+      const statusCode = getHttpStatusCode(error);
+      switch (statusCode) {
         case 404:
-          setErrMsg("Data tidak ditemukan");
+          setErrMsg(
+            "Data keuangan tidak ditemukan. Kemungkinan sudah dihapus sebelumnya.",
+          );
+          break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menghapus data keuangan. Periksa koneksi Anda atau coba lagi.",
+          );
           break;
       }
-    } finally {
-      form.reset();
     }
   };
 
@@ -332,7 +416,7 @@ export default function Finance() {
       const exportedFinance =
         await axiosInstance.get<ApiResponse<FinanceData[]>>("/finances/export");
 
-      if (exportedFinance.data && exportedFinance.data?.data) {
+      if (exportedFinance.data?.data) {
         exportFinanceToCSV(exportedFinance.data.data);
 
         toast({
@@ -343,10 +427,16 @@ export default function Finance() {
     } catch {
       toast({
         title: "Export data keuangan gagal",
-        description: "Terjadi kesalahan server",
+        description:
+          "Tidak dapat mengunduh data keuangan saat ini. Periksa koneksi Anda dan coba lagi.",
+        variant: "destructive",
       });
     }
   };
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, dateFrom, dateTo]);
 
   return (
     <DashboardLayout
@@ -430,7 +520,7 @@ export default function Finance() {
                     </div>
 
                     {/* PENGELUARAN */}
-                    {form.watch("type") === "PENGELUARAN" && (
+                    {transactionType === "PENGELUARAN" && (
                       <div className="space-y-2">
                         <Label>
                           Kategori <RequiredInputIdentifier />
@@ -460,7 +550,7 @@ export default function Finance() {
                     )}
                     <div className="space-y-2">
                       <Label>
-                        {form.watch("type") === "PENGELUARAN"
+                        {transactionType === "PENGELUARAN"
                           ? "Deskripsi"
                           : "Sumber Pemasukan"}
                         <RequiredInputIdentifier />
@@ -468,7 +558,7 @@ export default function Finance() {
                       <Input
                         {...form.register("description")}
                         placeholder={
-                          form.watch("type") === "PENGELUARAN"
+                          transactionType === "PENGELUARAN"
                             ? "Misal: Pembelian gas 10kg"
                             : "Misal: Pendanaan perusahaan"
                         }
@@ -525,18 +615,14 @@ export default function Finance() {
                             }) => (
                               <div
                                 {...getRootProps()}
-                                className={`relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ease-in-out ${isDragActive ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 bg-background"} ${!!value ? "border-primary/50" : ""} `}
+                                className={`relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ease-in-out ${isDragActive ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50 bg-background"} ${!value ? "border-primary/50" : ""} `}
                               >
                                 <input {...getInputProps()} onBlur={onBlur} />
                                 {value ? (
                                   <div className="flex flex-col items-center gap-4 w-full">
                                     <div className="relative aspect-video w-full overflow-hidden rounded-lg border shadow-sm">
                                       <img
-                                        src={
-                                          typeof value === "string"
-                                            ? value
-                                            : URL.createObjectURL(value)
-                                        }
+                                        src={selectedProofImagePreview}
                                         alt="Preview"
                                         className="h-full w-full object-cover"
                                       />
@@ -579,7 +665,11 @@ export default function Finance() {
                     {/* CATATAN */}
                     <div className="space-y-2">
                       <Label>Catatan Tambahan</Label>
-                      <Textarea {...form.register("extraNote")} rows={3} />
+                      <Textarea
+                        className="min-h-10"
+                        {...form.register("extraNote")}
+                        rows={2}
+                      />
                     </div>
 
                     <div className="flex gap-4 pt-2 flex-wrap-reverse">
@@ -727,7 +817,7 @@ export default function Finance() {
                     </Popover>
                   </div>
                 </CardHeader>
-                <CardContent className="p-0 relative max-h-full overflow-auto border-t text-nowrap">
+                <CardContent className="p-0 relative overflow-x-auto border-t text-nowrap">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background z-10 border-b">
                       <TableRow>
@@ -751,10 +841,18 @@ export default function Finance() {
                             ))}
                           </TableRow>
                         ))
-                      ) : financeData?.data.length === 0 ? (
+                      ) : isFinanceError ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="py-10 text-center">
+                            <p className="text-sm text-destructive">
+                              {financeErrorMessage}
+                            </p>
+                          </TableCell>
+                        </TableRow>
+                      ) : financeRows.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={7} className="p-0">
-                            <div className="flex min-h-[400px] w-full items-center justify-center">
+                            <div className="flex w-full items-center justify-center">
                               <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                                 <Wallet className="h-12 w-12 mb-3 opacity-50" />
                                 <p className="text-sm font-medium">
@@ -772,15 +870,19 @@ export default function Finance() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        financeData?.data?.map((f, index) => (
+                        financeRows.map((f, index) => (
                           <TableRow
                             key={f.id}
                             className={`cursor-pointer transition-colors hover:bg-muted/50 ${
                               selectedFinance?.id === f.id ? "bg-muted" : ""
-                            }`}
-                            onClick={() => handleSelectFinance(f)}
+                            } relative`}
+                            onClick={() => {
+                              handleSelectFinance(f);
+                            }}
                           >
-                            <TableCell>{index + 1}</TableCell>
+                            <TableCell>
+                              {(page - 1) * limit + index + 1}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 {f.type === "PENGELUARAN" ? (
@@ -821,6 +923,16 @@ export default function Finance() {
                         ))
                       )}
                     </TableBody>
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell colSpan={5} className="font-bold text-right">
+                          Total Bersih Halaman Ini
+                        </TableCell>
+                        <TableCell className="font-bold" colSpan={2}>
+                          {formatCurrency(currentPageNetTotal)}
+                        </TableCell>
+                      </TableRow>
+                    </TableFooter>
                   </Table>
                 </CardContent>
               </Card>
@@ -835,7 +947,7 @@ export default function Finance() {
             />
           </TabsContent>
           <TabsContent value="reports">
-            <ReportViewer transactions={financeData?.data || []} />
+            <ReportViewer transactions={financeRows} />
           </TabsContent>
         </Tabs>
       </motion.div>

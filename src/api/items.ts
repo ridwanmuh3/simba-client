@@ -9,6 +9,7 @@ import {
   StockTracking,
   DeleteItemStockRequest,
 } from "@/types/item";
+import { InvoiceHistoryData } from "@/types/invoice";
 import { ApiResponse } from "@/types/response";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -61,7 +62,7 @@ export const useUpdateStockItem = () => {
           type: request.type,
           amount: request.amount,
           supplier: request.supplier,
-          unitPrice: request.unitPrice,
+          unit_price: request.unitPrice,
         },
       );
       return response.data;
@@ -260,6 +261,7 @@ export interface GenerateInvoiceRequest {
   receiverAddress: string;
   dateFrom?: string;
   dateTo?: string;
+  stockType?: "IN" | "OUT";
   keterangan?: string;
   penanggungjawab: string;
   jabatan: string;
@@ -268,11 +270,71 @@ export interface GenerateInvoiceRequest {
 export const useGenerateInvoice = () => {
   return useMutation({
     mutationFn: async (request: GenerateInvoiceRequest) => {
-      const response = await axiosInstance.post("/items/invoice", request, {
-        responseType: "blob",
-      });
-      return response.data;
+      const response = await axiosInstance.post<Blob>(
+        "/items/invoice",
+        request,
+        { responseType: "blob" },
+      );
+
+      const disposition = response.headers["content-disposition"] ?? "";
+      const match = /filename="?([^";]+)"?/i.exec(disposition);
+      const filename = match?.[1]
+        ? decodeURIComponent(match[1])
+        : `invoice-${request.invoiceNo}.pdf`;
+
+      return { blob: response.data, filename };
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+    },
+  });
+};
+
+export const useGetInvoiceHistory = (
+  searchQuery: string,
+  page: number,
+  limit: number,
+  dateFrom?: Date,
+  dateTo?: Date,
+) => {
+  return useQuery({
+    queryKey: [
+      "invoice-history",
+      searchQuery,
+      page,
+      limit,
+      dateFrom?.toISOString(),
+      dateTo?.toISOString(),
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(limit),
+      });
+
+      if (searchQuery) {
+        params.append("search_query", searchQuery);
+      }
+
+      if (dateFrom) {
+        params.append("start_date", dateFrom.toISOString());
+      }
+
+      if (dateTo) {
+        params.append("end_date", dateTo.toISOString());
+      }
+
+      const response = await axiosInstance.get<ApiResponse<InvoiceHistoryData[]>>(
+        `/items/invoices?${params.toString()}`,
+      );
+
+      return {
+        data: response.data?.data || [],
+        paging: response.data?.paging || null,
+      };
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -291,15 +353,17 @@ export const useGetStocksFinanceSummary = () => {
   });
 };
 
-interface ItemStocksSummary {
+export interface ItemStocksSummary {
   itemId?: string;
   name?: string;
   category?: string;
   initialStock?: number;
-  measureUnit: string;
+  measureUnit?: string;
   totalIn?: number;
   totalOut?: number;
   currentStock?: number;
+  buyPrice?: number; // Ditambahkan untuk perhitungan frontend
+  sellPrice?: number; // Ditambahkan untuk perhitungan frontend
   stockValue?: number;
 }
 

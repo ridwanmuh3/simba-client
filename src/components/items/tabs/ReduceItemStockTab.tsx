@@ -9,13 +9,7 @@ import {
 } from "../../ui/card";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/select";
+import ItemCombobox from "../ItemCombobox";
 import { TabsContent } from "../../ui/tabs";
 import {
   Table,
@@ -24,10 +18,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "../../ui/table";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { MouseEvent, useEffect, useState } from "react";
 import {
   useDeleteStockItem,
   useGetAllItemsStocks,
@@ -82,6 +77,7 @@ const ReduceItemStockTab = () => {
   const [errMsg, setErrMsg] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [isEditStock, setIsEditStock] = useState(false);
   const updateStockItem = useUpdateStockItem();
   const deleteStockItem = useDeleteStockItem();
   const { data: stocksData, isLoading: isStocksLoading } = useGetAllItemsStocks(
@@ -97,17 +93,21 @@ const ReduceItemStockTab = () => {
     setErrMsg("");
 
     if (!selectedStock) {
-      setErrMsg("Pilih bahan terlebih dahulu");
+      setErrMsg("Pilih bahan yang ingin dikurangi stoknya terlebih dahulu.");
       return;
     }
 
     if (values.amount <= 0) {
-      setErrMsg("Jumlah stok keluar harus lebih besar dari 0");
+      setErrMsg(
+        "Jumlah stok keluar harus lebih dari 0. Masukkan angka yang valid.",
+      );
       return;
     }
 
     if (values.amount > selectedStock.item?.stock) {
-      setErrMsg("Stok tidak mencukupi");
+      setErrMsg(
+        `Stok tidak mencukupi. Stok tersedia hanya ${selectedStock.item?.stock} ${selectedStock.item?.measureUnit ?? ""}.`,
+      );
       return;
     }
 
@@ -127,12 +127,21 @@ const ReduceItemStockTab = () => {
       form.reset();
       setSelectedStock(null);
       setSelectedItemId("");
+      setIsEditStock(false);
     } catch (e) {
       const err = e as AxiosError;
       if (err.status === 400) {
-        setErrMsg("Terjadi kesalahan input atau stok anda tidak mencukupi");
+        setErrMsg(
+          "Data tidak valid atau stok tidak mencukupi. Periksa jumlah stok keluar dengan stok tersedia.",
+        );
+      } else if (err.status === 404) {
+        setErrMsg(
+          "Bahan yang dipilih tidak ditemukan. Muat ulang halaman dan pilih ulang.",
+        );
       } else {
-        setErrMsg("Terjadi kesalahan server");
+        setErrMsg(
+          "Gagal mengurangi stok. Periksa koneksi Anda atau coba lagi.",
+        );
       }
     }
   };
@@ -150,7 +159,7 @@ const ReduceItemStockTab = () => {
   const handleDeleteItemStock = async () => {
     setErrMsg("");
     try {
-      const response = await deleteStockItem.mutateAsync({
+      await deleteStockItem.mutateAsync({
         id: selectedItemId,
         stockId: selectedStock?.id,
       });
@@ -161,14 +170,24 @@ const ReduceItemStockTab = () => {
         description: `Anda berhasil menghapus data bahan`,
       });
       form.reset();
+      setIsEditStock(false);
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
         case 404:
-          setErrMsg("Data tidak ditemukan");
+          setErrMsg(
+            "Riwayat stok keluar tidak ditemukan. Kemungkinan sudah dihapus sebelumnya.",
+          );
+          break;
+        case 409:
+          setErrMsg(
+            "Riwayat tidak dapat dihapus karena akan membuat stok menjadi negatif.",
+          );
           break;
         default:
-          setErrMsg("Terjadi kesalahan server");
+          setErrMsg(
+            "Gagal menghapus riwayat stok keluar. Periksa koneksi Anda atau coba lagi.",
+          );
       }
     }
   };
@@ -206,10 +225,23 @@ const ReduceItemStockTab = () => {
     setPage(1);
   };
 
+  const handleCancelEditStock = (e: MouseEvent) => {
+    e.preventDefault();
+    setSelectedItemId("");
+    setSelectedStock(null);
+    form.reset();
+    setErrMsg("");
+    setIsEditStock(false);
+  };
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, dateFrom, dateTo]);
+
   return (
     <TabsContent value="bahan-keluar" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 h-fit">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Bahan Keluar</CardTitle>
             <CardDescription className="text-sm font-bold text-muted-foreground">
@@ -231,31 +263,20 @@ const ReduceItemStockTab = () => {
                   name="itemId"
                   control={form.control}
                   render={({ field }) => (
-                    <Select
+                    <ItemCombobox
+                      items={itemsData?.data || []}
                       value={field.value}
-                      onValueChange={(val) => {
+                      onChange={(val) => {
                         field.onChange(val);
                         const selectedItm = itemsData?.data?.find(
                           (item) => item.id === val,
                         );
-
                         if (selectedItm) {
                           setSelectedItemId(selectedItm.id);
                           handleSelectStockTracking({ item: selectedItm });
                         }
                       }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih bahan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {itemsData?.data?.map((t) => (
-                          <SelectItem key={t?.id} value={t?.id}>
-                            {t?.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   )}
                 />
               </div>
@@ -269,6 +290,7 @@ const ReduceItemStockTab = () => {
                     type="number"
                     {...form.register("amount")}
                     placeholder="1"
+                    step="any"
                   />
                 </div>
                 <div className="space-y-2">
@@ -320,26 +342,51 @@ const ReduceItemStockTab = () => {
                 />
               </div>
               <div className="flex gap-4 pt-2 flex-wrap-reverse">
-                <DeleteDialog
-                  handleDelete={handleDeleteItemStock}
-                  isPending={deleteStockItem.isPending}
-                  disabledTrigger={!selectedItemId && !selectedStock}
-                />
-                <Button
-                  type="submit"
-                  form="reduce-item-stock-form"
-                  className="w-full"
-                  disabled={updateStockItem.isPending}
-                >
-                  {updateStockItem.isPending ? (
-                    <Spinner color="text-background" />
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Simpan
-                    </>
-                  )}
-                </Button>
+                {selectedStock ? (
+                  <>
+                    <Button
+                      type="button"
+                      className="w-full"
+                      variant="outline"
+                      onClick={handleCancelEditStock}
+                    >
+                      Batal
+                    </Button>
+                    <DeleteDialog
+                      handleDelete={handleDeleteItemStock}
+                      isPending={deleteStockItem.isPending}
+                    />
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={updateStockItem.isPending}
+                    >
+                      {updateStockItem.isPending ? (
+                        <Spinner color="text-background" />
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 mr-0.5" />
+                          Simpan
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={updateStockItem.isPending}
+                  >
+                    {updateStockItem.isPending ? (
+                      <Spinner color="text-background" />
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-0.5" />
+                        Simpan
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
               {errMsg && (
                 <p className="text-sm text-destructive text-center">{errMsg}</p>
@@ -422,21 +469,19 @@ const ReduceItemStockTab = () => {
                   </div>
                 </PopoverContent>
               </Popover>
-              <InvoiceDialog />
+              <InvoiceDialog stockType="OUT" />
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="relative max-h-[500px] overflow-auto border-t text-nowrap">
+            <div className="relative overflow-x-auto border-t text-nowrap">
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10 border-b">
                   <TableRow>
-                    <TableHead>Tanggal Dibuat</TableHead>
+                    <TableHead className="w-[50px]">No</TableHead>
+                    <TableHead>Tanggal Input</TableHead>
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
-                    <TableHead>Akumulasi Sebelumnya</TableHead>
-                    <TableHead>Stok Kurang</TableHead>
-                    <TableHead>Akumulasi</TableHead>
-                    <TableHead>Harga Satuan</TableHead>
+                    <TableHead>Perubahan Stok</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -452,8 +497,8 @@ const ReduceItemStockTab = () => {
                     ))
                   ) : stocksData.data?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="p-0">
-                        <div className="flex min-h-[400px] w-full items-center justify-center">
+                      <TableCell colSpan={5} className="p-0">
+                        <div className="flex w-full items-center justify-center">
                           <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                             <Package className="h-12 w-12 mb-3 opacity-50" />
                             <p className="text-sm font-medium">
@@ -471,7 +516,7 @@ const ReduceItemStockTab = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    stocksData.data?.map((t, index) => (
+                    stocksData.data?.map((t) => (
                       <TableRow
                         key={t.id}
                         className={`cursor-pointer transition ${
@@ -481,25 +526,47 @@ const ReduceItemStockTab = () => {
                         }`}
                         onClick={() => handleSelectStockTracking(t)}
                       >
+                        <TableCell className="font-medium text-muted-foreground">
+                          {(page - 1) * limit + stocksData.data.indexOf(t) + 1}
+                        </TableCell>
                         <TableCell>{formatDateDetail(t.createdAt)}</TableCell>
                         <TableCell className="font-mono text-sm">
                           {t.item?.id}
                         </TableCell>
                         <TableCell>{t.item?.name}</TableCell>
                         <TableCell>
-                          {t.previousStock} {t.item?.measureUnit}
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <span className="text-muted-foreground tabular-nums">
+                              {t.previousStock}
+                            </span>
+                            <span className="text-muted-foreground/40">→</span>
+                            <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-500/20">
+                              -{t.amount}
+                            </span>
+                            <span className="text-muted-foreground/40">→</span>
+                            <span className="font-semibold tabular-nums">
+                              {t.newStock || 0} {t.item?.measureUnit}
+                            </span>
+                          </div>
                         </TableCell>
-                        <TableCell className="text-red-500 font-bold">
-                          -{t.amount}
-                        </TableCell>
-                        <TableCell>
-                          {t.newStock || 0} {t.item?.measureUnit}
-                        </TableCell>
-                        <TableCell>{formatCurrency(t.unitPrice)}</TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
+                <TableFooter>
+                  <TableRow>
+                    <TableCell colSpan={4} className="font-bold text-right">
+                      Akumulasi Halaman Ini
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      <span className="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-bold text-red-600 ring-1 ring-inset ring-red-500/20">
+                        -
+                        {stocksData?.data?.reduce((acc, curr) => acc + curr.amount, 0) ||
+                          0}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
               </Table>
             </div>
           </CardContent>

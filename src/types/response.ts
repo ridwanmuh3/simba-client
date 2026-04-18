@@ -3,7 +3,7 @@ export interface ApiResponse<T> {
   message?: string;
   data?: T;
   paging?: PagingMetadata;
-  error?: any;
+  error?: unknown;
 }
 
 export interface PagingMetadata {

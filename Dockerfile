@@ -1,6 +1,5 @@
-# =========================
-# 1️⃣ Builder Stage
-# =========================
+# syntax=docker/dockerfile:1
+
 FROM oven/bun:1.1.30-alpine AS builder
 
 WORKDIR /app
@@ -10,19 +9,20 @@ RUN bun install --frozen-lockfile
 
 COPY . .
 
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 RUN bun run build
 
-# =========================
-# 2️⃣ Runtime Stage
-# =========================
-FROM caddy:2.8-alpine
 
-WORKDIR /srv
+FROM nginxinc/nginx-unprivileged:alpine
 
-COPY --from=builder /app/dist /srv
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
 
-COPY Caddyfile /etc/caddy/Caddyfile
+EXPOSE 8080
 
-EXPOSE 80 443
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 \
+  CMD wget -qO- http://localhost:8080/ || exit 1
 
-CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+CMD ["nginx", "-g", "daemon off;"]

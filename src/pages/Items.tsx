@@ -5,12 +5,14 @@ import {
   PackagePlus,
   PackageMinus,
   ClipboardCheck,
+  ReceiptText,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MasterItemTab from "@/components/items/tabs/MasterItemTab";
 import AddItemStockTab from "@/components/items/tabs/AddItemStockTab";
 import ReduceItemStockTab from "@/components/items/tabs/ReduceItemStockTab";
 import StockOpnameTab from "@/components/items/tabs/StockOpnameTab";
+import InvoiceHistoryTab from "@/components/items/tabs/InvoiceHistoryTab";
 import { motion } from "framer-motion";
 
 const Items = () => {
@@ -21,6 +23,7 @@ const Items = () => {
     { value: "bahan-masuk", label: "Bahan Masuk", icon: PackagePlus },
     { value: "bahan-keluar", label: "Bahan Keluar", icon: PackageMinus },
     { value: "stok-opname", label: "Stok Opname", icon: ClipboardCheck },
+    { value: "riwayat-invoice", label: "Riwayat Invoice", icon: ReceiptText },
   ];
 
   return (
@@ -38,7 +41,7 @@ const Items = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-2 gap-2 min-[548px]:grid-cols-3 lg:w-auto lg:inline-flex">
             {tabItems.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
                 <tab.icon className="w-4 h-4" />
@@ -50,6 +53,7 @@ const Items = () => {
           <AddItemStockTab />
           <ReduceItemStockTab />
           <StockOpnameTab />
+          <InvoiceHistoryTab />
         </Tabs>
       </motion.div>
     </DashboardLayout>

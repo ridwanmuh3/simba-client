@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -42,23 +42,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const Users = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 5;
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const handlePageChange = (newPage: number) => {
-    setSearchParams((prev) => {
-      prev.set("page", String(newPage));
-      return prev;
-    });
+    setPage(newPage);
   };
 
   const handleLimitChange = (newLimit: number) => {
-    setSearchParams((prev) => {
-      prev.set("limit", String(newLimit));
-      prev.set("page", "1");
-      return prev;
-    });
+    setLimit(newLimit);
+    setPage(1);
   };
 
   const { data: usersData, isLoading: isUsersLoading } = useGetAllUsers(
@@ -109,6 +102,10 @@ const Users = () => {
       bgIcon: "bg-success/10",
     },
   ];
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   return (
     <DashboardLayout
@@ -174,6 +171,7 @@ const Users = () => {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[50px]">No</TableHead>
                   <TableHead>Pengguna</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
@@ -186,7 +184,7 @@ const Users = () => {
                 {isUsersLoading ? (
                   Array.from({ length: 5 }).map((_, index) => (
                     <TableRow key={index}>
-                      {Array.from({ length: 6 }).map((_, cellIndex) => (
+                      {Array.from({ length: 7 }).map((_, cellIndex) => (
                         <TableCell key={cellIndex}>
                           <Skeleton className="h-4 w-full rounded-md" />
                         </TableCell>
@@ -195,7 +193,7 @@ const Users = () => {
                   ))
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center">
+                    <TableCell colSpan={7} className="h-32 text-center">
                       <div className="flex w-full h-full flex-col items-center justify-center text-muted-foreground">
                         <Users2 className="h-8 w-8 mb-2 opacity-50" />
                         <p>Pengguna tidak ditemukan.</p>
@@ -211,6 +209,9 @@ const Users = () => {
                       transition={{ delay: index * 0.05 }}
                       className="group"
                     >
+                      <TableCell className="font-medium text-muted-foreground">
+                        {(page - 1) * limit + index + 1}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="w-9 h-9">

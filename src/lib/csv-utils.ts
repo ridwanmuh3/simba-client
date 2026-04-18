@@ -1,6 +1,7 @@
 import { FinanceData } from "@/types/finance";
 import { Item } from "@/types/item";
 import dayjs from "dayjs";
+import { formatDateDetail } from "./date-utils";
 
 const itemHeaders = [
   "Nama",
@@ -8,6 +9,7 @@ const itemHeaders = [
   "Stok",
   "Satuan Perhitungan",
   "Satuan Harga",
+  "Tanggal Penambahan",
 ];
 
 const financeHeaders = [
@@ -31,6 +33,7 @@ export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
         item.stock,
         item.measureUnit,
         item.unitPrice,
+        formatDateDetail(item.createdAt),
       ].join(","),
     ),
   ].join("\n");
@@ -53,6 +56,11 @@ export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
   URL.revokeObjectURL(url);
 };
 
+const escapeCSV = (value: string | number | null | undefined) => {
+  const str = String(value ?? "");
+  return `"${str.replace(/"/g, '""')}"`;
+};
+
 export const exportFinanceToCSV = (
   items: FinanceData[],
   filename: string = "finance-data",
@@ -62,13 +70,13 @@ export const exportFinanceToCSV = (
     ...items.map((item) =>
       [
         item.id ?? "",
-        `"${item.type ?? ""}"`,
-        `"${item.category ?? ""}"`,
-        `"${item.description ?? ""}"`,
+        escapeCSV(item.type),
+        escapeCSV(item.category),
+        escapeCSV(item.description),
         item.amount ?? 0,
-        `"${item.proofImage ?? ""}"`,
-        `"${item.extraNote ?? ""}"`,
-        `"${item.createdAt ?? ""}"`,
+        escapeCSV(item.proofImage),
+        escapeCSV(item.extraNote),
+        escapeCSV(formatDateDetail(item.createdAt)),
       ].join(","),
     ),
   ].join("\n");
@@ -86,11 +94,13 @@ export const exportFinanceToCSV = (
     `${filename}-${dayjs().format("DD-MM-YYYY-HH-mm-ss")}.csv`,
   );
 
-  link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
 };
 
 export const parseCSV = (csvText: string): Item[] => {
@@ -129,9 +139,9 @@ export const parseCSV = (csvText: string): Item[] => {
       id: values[0],
       name: values[1],
       category: values[2],
-      stock: parseInt(values[3]) || 0,
+      stock: parseFloat(values[3]) || 0,
       measureUnit: values[4],
-      unitPrice: parseInt(values[5]) || 0,
+      unitPrice: parseFloat(values[5]) || 0,
     };
   });
 };

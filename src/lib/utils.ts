@@ -57,7 +57,8 @@ export const downloadHandler = async (filename: string) => {
   } catch (error) {
     toast({
       title: "Gagal mengunduh dokumen",
-      description: "Terjadi kesalahan ketika mengunduh dokumen.",
+      description:
+        "Dokumen tidak dapat diunduh. Pastikan file tersedia dan browser Anda mengizinkan unduhan.",
       variant: "destructive",
     });
   }
@@ -123,3 +124,9 @@ export const isPlainObject = (
   value: unknown,
 ): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+export const getItemTotalPrice = (
+  _initialStock: number,
+  currentStock: number,
+  unitPrice: number,
+) => currentStock * unitPrice;

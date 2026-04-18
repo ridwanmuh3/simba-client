@@ -42,14 +42,24 @@ const DeleteUserDialog = ({ userId, username }: DeleteUserDialogProps) => {
       let errMsg = "";
       switch (status) {
         case 400:
-          errMsg = "Tidak bisa menghapus akun anda sendiri.";
+          errMsg =
+            "Anda tidak dapat menghapus akun Anda sendiri. Minta admin lain untuk melakukannya.";
+          break;
+        case 401:
+          errMsg =
+            "Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.";
           break;
         case 403:
           errMsg =
-            "Tidak bisa menghapus Super Admin terakhir. Sistem harus memiliki minimal satu Super Admin.";
+            "Tidak dapat menghapus Super Admin terakhir. Sistem harus memiliki minimal satu Super Admin.";
+          break;
+        case 404:
+          errMsg =
+            "Pengguna tidak ditemukan. Kemungkinan sudah dihapus sebelumnya.";
           break;
         default:
-          errMsg = "Terjadi kesalahan di server.";
+          errMsg =
+            "Gagal menghapus pengguna. Periksa koneksi Anda atau coba lagi.";
       }
       setErrorMsg(errMsg);
     }

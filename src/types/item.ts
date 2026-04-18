@@ -4,6 +4,7 @@ export interface AddItemRequest {
   stock?: number;
   measureUnit?: string;
   unitPrice?: number;
+  dateAdded?: Date | string;
 }
 
 export interface UpdateItemStockRequest {
@@ -16,6 +17,7 @@ export interface UpdateItemStockRequest {
 
 export interface EditItemRequest extends AddItemRequest {
   id?: string;
+  initialStock?: number;
 }
 
 export interface DeleteItemRequest {
@@ -35,6 +37,7 @@ export interface Item {
   measureUnit?: string;
   unitPrice?: number;
   totalPrice?: number;
+  createdAt?: string;
 }
 
 export interface StockTracking {

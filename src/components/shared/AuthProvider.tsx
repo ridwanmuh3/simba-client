@@ -33,15 +33,22 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         });
         navigate("/dashboard", { replace: true });
       } catch (e) {
-        let msg = "Terjadi kesalahan saat login";
+        let msg =
+          "Login gagal. Periksa koneksi internet Anda dan coba lagi.";
         if (isAxiosError(e)) {
           const status = e.response?.status;
           if (status === 400 || status === 401) {
-            msg = "Username atau password salah";
+            msg =
+              "Username atau password yang Anda masukkan salah. Silakan periksa kembali.";
           } else if (status === 404) {
-            msg = "Akun pengguna tidak ditemukan";
-          } else if (status === 500) {
-            msg = "Terjadi kesalahan di server";
+            msg =
+              "Akun dengan username tersebut tidak terdaftar. Pastikan username benar atau hubungi admin.";
+          } else if (status === 429) {
+            msg =
+              "Terlalu banyak percobaan login. Tunggu beberapa saat lalu coba lagi.";
+          } else if (status && status >= 500) {
+            msg =
+              "Server sedang bermasalah. Silakan coba lagi dalam beberapa saat.";
           }
         }
 
@@ -58,7 +65,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       toast({
         variant: "destructive",
         title: "Gagal logout",
-        description: "Terjadi kesalahan saat logout.",
+        description:
+          "Tidak dapat terhubung ke server untuk logout. Sesi Anda akan dibersihkan secara lokal.",
       });
     } finally {
       queryClient.removeQueries({ queryKey: ["authUser"] });

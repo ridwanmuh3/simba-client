@@ -68,7 +68,7 @@ const DashboardStatsCards = ({
                     {stat.title}
                   </p>
                   <p className="text-2xl font-bold">{stat.value}</p>
-                  <div className="flex items-center mt-2 gap-1.5">
+                  {/* <div className="flex items-center mt-2 gap-1.5">
                     <span>
                       {stat.trend === "up" ? (
                         <TrendingUp className="text-green-500 size-4" />
@@ -83,7 +83,7 @@ const DashboardStatsCards = ({
                     >
                       {stat.change}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
                 <div
                   className={`w-12 h-12 rounded-xl flex items-center justify-center ${

@@ -1,181 +1,56 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  format,
-  isSameDay,
-  startOfWeek,
-  endOfWeek,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  subDays,
-} from "date-fns";
-import { id } from "date-fns/locale";
+import { memo, useMemo, useState } from "react";
+import { Wallet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
 import {
-  LineChart,
   Line,
+  LineChart,
+  Pie,
+  PieChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
-import { Wallet } from "lucide-react";
+import { useFinanceReport } from "@/hooks/use-finance-report";
+import type {
+  FinanceCategoryPoint,
+  FinanceData,
+  FinanceSummary,
+  FinanceTrendPoint,
+} from "@/types/finance";
 
-export interface FinanceData {
-  id?: number;
-  type?: string;
-  category?: string;
-  description?: string;
-  amount?: number;
-  proofImage?: string;
-  extraNote?: string;
-  createdAt?: string;
-}
+type ReportTab = "daily" | "tenDays" | "monthly";
 
 interface ReportViewerProps {
   transactions: FinanceData[];
 }
 
-export default function ReportViewer({ transactions }: ReportViewerProps) {
-  const [tab, setTab] = useState("daily");
-  const today = new Date();
+interface SummarySectionProps {
+  summary: FinanceSummary;
+}
 
-  // =========================
-  // FILTER PERIODE
-  // =========================
+interface TrendChartSectionProps {
+  data: FinanceTrendPoint[];
+}
 
-  const dailyTransactions = useMemo(() => {
-    return transactions.filter((tx) =>
-      tx.createdAt ? isSameDay(new Date(tx.createdAt), today) : false,
-    );
-  }, [transactions]);
+interface CategorySectionProps {
+  data: FinanceCategoryPoint[];
+}
 
-  const tenDaysStart = subDays(today, 9);
-  const tenDaysEnd = today;
+const isReportTab = (value: string): value is ReportTab =>
+  value === "daily" || value === "tenDays" || value === "monthly";
 
-  const tenDaysTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
-      if (!tx.createdAt) return false;
-      const d = new Date(tx.createdAt);
-      return d >= tenDaysStart && d <= tenDaysEnd;
-    });
-  }, [transactions]);
-
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
-
-  const monthlyTransactions = useMemo(() => {
-    return transactions.filter((tx) => {
-      if (!tx.createdAt) return false;
-      const d = new Date(tx.createdAt);
-      return d >= monthStart && d <= monthEnd;
-    });
-  }, [transactions]);
-
-  // =========================
-  // SUMMARY
-  // =========================
-
-  const calculateSummary = (data: FinanceData[]) => {
-    const totalIn = data
-      .filter((t) => t.type === "PEMASUKAN")
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const totalOut = data
-      .filter((t) => t.type === "PENGELUARAN")
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    return {
-      totalIn,
-      totalOut,
-      profit: totalIn - totalOut,
-      count: data.length,
-    };
-  };
-
-  const dailySummary = calculateSummary(dailyTransactions);
-  const tenDaysSummary = calculateSummary(tenDaysTransactions);
-  const monthlySummary = calculateSummary(monthlyTransactions);
-
-  // =========================
-  // TREND DATA
-  // =========================
-
-  const tenDaysTrend = useMemo(() => {
-    const days = eachDayOfInterval({
-      start: tenDaysStart,
-      end: tenDaysEnd,
-    });
-
-    return days.map((day) => {
-      const dayTx = tenDaysTransactions.filter(
-        (tx) => tx.createdAt && isSameDay(new Date(tx.createdAt), day),
-      );
-
-      const masuk = dayTx
-        .filter((t) => t.type === "PEMASUKAN")
-        .reduce((s, t) => s + (t.amount || 0), 0);
-
-      const keluar = dayTx
-        .filter((t) => t.type === "PENGELUARAN")
-        .reduce((s, t) => s + (t.amount || 0), 0);
-
-      return {
-        label: format(day, "EEEE", { locale: id }),
-        masuk,
-        keluar,
-      };
-    });
-  }, [tenDaysTransactions]);
-
-  const monthlyTrend = useMemo(() => {
-    return [
-      {
-        label: format(today, "MMMM yyyy", { locale: id }),
-        masuk: monthlySummary.totalIn,
-        keluar: monthlySummary.totalOut,
-      },
-    ];
-  }, [monthlySummary]);
-
-  // =========================
-  // CATEGORY BREAKDOWN
-  // =========================
-
-  const categoryBreakdown = (data: FinanceData[]) => {
-    const grouped: Record<string, number> = {};
-
-    data
-      .filter((t) => t.type === "PENGELUARAN")
-      .forEach((t) => {
-        const key = t.category || "Lainnya";
-        grouped[key] = (grouped[key] || 0) + (t.amount || 0);
-      });
-
-    return Object.entries(grouped).map(([name, value]) => ({
-      name,
-      value,
-    }));
-  };
-
-  const dailyCategory = categoryBreakdown(dailyTransactions);
-  const tenDaysCategory = categoryBreakdown(tenDaysTransactions);
-  const monthlyCategory = categoryBreakdown(monthlyTransactions);
-
-  // =========================
-  // COMPONENT REUSABLE
-  // =========================
-
-  const SummarySection = ({ summary }: any) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+const SummarySection = memo(function SummarySection({
+  summary,
+}: SummarySectionProps) {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Card>
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">Pemasukan</p>
@@ -215,19 +90,25 @@ export default function ReportViewer({ transactions }: ReportViewerProps) {
       </Card>
     </div>
   );
+});
 
-  const ChartSection = ({ data }: any) => (
+const TrendChartSection = memo(function TrendChartSection({
+  data,
+}: TrendChartSectionProps) {
+  return (
     <Card className="lg:col-span-2">
-      <CardContent className="p-4 h-[300px]">
+      <CardContent className="h-[300px] p-4">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="label" />
             <YAxis
               domain={["auto", "auto"]}
-              tickFormatter={(v) => `${(v / 100_000).toFixed(0)} Rb`}
+              tickFormatter={(value: number) =>
+                `${(value / 100_000).toFixed(0)} Rb`
+              }
             />
-            <Tooltip formatter={(v: number) => formatCurrency(v)} />
+            <Tooltip formatter={(value: number) => formatCurrency(value)} />
             <Line
               type="monotone"
               dataKey="masuk"
@@ -245,91 +126,106 @@ export default function ReportViewer({ transactions }: ReportViewerProps) {
       </CardContent>
     </Card>
   );
+});
 
-  const CategorySection = ({ data }: any) => {
-    const total = data.reduce((sum: number, item: any) => sum + item.value, 0);
+const CategorySection = memo(function CategorySection({ data }: CategorySectionProps) {
+  const total = useMemo(
+    () => data.reduce((sum, item) => sum + item.value, 0),
+    [data],
+  );
 
+  if (data.length === 0) {
     return (
       <Card className="md:col-span-1">
         <CardContent className="p-4">
-          {data.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-center flex-col text-muted-foreground py-12 px-4">
-              <Wallet className="h-12 w-12 mb-3 opacity-50" />
-              <p className="text-muted-foreground font-medium text-sm">
-                Data masih kosong
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              {/* DONUT CHART */}
-              <div className="h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={75}
-                      paddingAngle={0}
-                    >
-                      {data.map((_: any, index: number) => (
-                        <Cell
-                          key={index}
-                          fill={`hsl(var(--chart-${index + 1}))`}
-                        />
-                      ))}
-                    </Pie>
-
-                    <Tooltip formatter={(v: number) => formatCurrency(v)} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* LEGEND CUSTOM */}
-              <div className="space-y-4">
-                {data.map((item: any, index: number) => {
-                  const percentage = ((item.value / total) * 100).toFixed(1);
-
-                  return (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{
-                            backgroundColor: `hsl(var(--chart-${index + 1}))`,
-                          }}
-                        />
-                        <span>{item.name}</span>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {formatCurrency(item.value)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {percentage}%
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <div className="flex h-[300px] flex-col items-center justify-center px-4 py-12 text-center text-muted-foreground">
+            <Wallet className="mb-3 h-12 w-12 opacity-50" />
+            <p className="text-sm font-medium text-muted-foreground">
+              Data masih kosong
+            </p>
+          </div>
         </CardContent>
       </Card>
     );
-  };
+  }
 
-  // =========================
-  // RENDER
-  // =========================
+  return (
+    <Card className="md:col-span-1">
+      <CardContent className="p-4">
+        <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-2">
+          <div className="h-[250px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={0}
+                >
+                  {data.map((item, index) => (
+                    <Cell
+                      key={`${item.name}-${index}`}
+                      fill={`hsl(var(--chart-${index + 1}))`}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="space-y-4">
+            {data.map((item, index) => {
+              const percentage =
+                total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0";
+
+              return (
+                <div
+                  key={`${item.name}-legend-${index}`}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{
+                        backgroundColor: `hsl(var(--chart-${index + 1}))`,
+                      }}
+                    />
+                    <span>{item.name}</span>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-semibold">{formatCurrency(item.value)}</p>
+                    <p className="text-xs text-muted-foreground">{percentage}%</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+export default function ReportViewer({ transactions }: ReportViewerProps) {
+  const [tab, setTab] = useState<ReportTab>("daily");
+  const reportDate = useMemo(() => new Date(), []);
+  const {
+    dailySummary,
+    tenDaysSummary,
+    monthlySummary,
+    dailyTrend,
+    tenDaysTrend,
+    monthlyTrend,
+    dailyCategory,
+    tenDaysCategory,
+    monthlyCategory,
+  } = useFinanceReport(transactions, reportDate);
 
   return (
     <Card className="rounded-2xl shadow-sm">
@@ -338,8 +234,15 @@ export default function ReportViewer({ transactions }: ReportViewerProps) {
       </CardHeader>
 
       <CardContent>
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-3 max-w-lg mb-6">
+        <Tabs
+          value={tab}
+          onValueChange={(value) => {
+            if (isReportTab(value)) {
+              setTab(value);
+            }
+          }}
+        >
+          <TabsList className="mb-6 grid max-w-lg grid-cols-3">
             <TabsTrigger value="daily">Harian</TabsTrigger>
             <TabsTrigger value="tenDays">Per 10 Hari</TabsTrigger>
             <TabsTrigger value="monthly">Bulanan</TabsTrigger>
@@ -348,15 +251,7 @@ export default function ReportViewer({ transactions }: ReportViewerProps) {
           <TabsContent value="daily" className="space-y-6">
             <SummarySection summary={dailySummary} />
             <div className="space-y-4">
-              <ChartSection
-                data={[
-                  {
-                    label: format(today, "dd MMM"),
-                    masuk: dailySummary.totalIn,
-                    keluar: dailySummary.totalOut,
-                  },
-                ]}
-              />
+              <TrendChartSection data={dailyTrend} />
               <CategorySection data={dailyCategory} />
             </div>
           </TabsContent>
@@ -364,7 +259,7 @@ export default function ReportViewer({ transactions }: ReportViewerProps) {
           <TabsContent value="tenDays" className="space-y-6">
             <SummarySection summary={tenDaysSummary} />
             <div className="space-y-4">
-              <ChartSection data={tenDaysTrend} />
+              <TrendChartSection data={tenDaysTrend} />
               <CategorySection data={tenDaysCategory} />
             </div>
           </TabsContent>
@@ -372,7 +267,7 @@ export default function ReportViewer({ transactions }: ReportViewerProps) {
           <TabsContent value="monthly" className="space-y-6">
             <SummarySection summary={monthlySummary} />
             <div className="space-y-4">
-              <ChartSection data={monthlyTrend} />
+              <TrendChartSection data={monthlyTrend} />
               <CategorySection data={monthlyCategory} />
             </div>
           </TabsContent>

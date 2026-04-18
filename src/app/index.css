@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -57,13 +57,25 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%), hsl(199 89% 60%));
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(199 89% 48%),
+      hsl(199 89% 60%)
+    );
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 99%));
-    --gradient-sidebar: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 20% 98%));
-    
+    --gradient-sidebar: linear-gradient(
+      180deg,
+      hsl(0 0% 100%),
+      hsl(210 20% 98%)
+    );
+
     --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.07), 0 2px 4px -2px hsl(215 25% 15% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.08), 0 4px 6px -4px hsl(215 25% 15% / 0.05);
+    --shadow-md:
+      0 4px 6px -1px hsl(215 25% 15% / 0.07),
+      0 2px 4px -2px hsl(215 25% 15% / 0.05);
+    --shadow-lg:
+      0 10px 15px -3px hsl(215 25% 15% / 0.08),
+      0 4px 6px -4px hsl(215 25% 15% / 0.05);
     --shadow-glow: 0 0 20px hsl(199 89% 48% / 0.15);
   }
 
@@ -120,7 +132,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: "Inter", sans-serif;
   }
 }
 
@@ -129,11 +141,11 @@
     @apply bg-card/80 backdrop-blur-sm border border-border/50;
     box-shadow: var(--shadow-md);
   }
-  
+
   .hover-lift {
     @apply transition-all duration-300 ease-out;
   }
-  
+
   .hover-lift:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
@@ -143,4 +155,63 @@
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
   }
+}
+
+/* react-time-picker — segment chip style */
+.react-time-picker {
+  font-family: "Inter", sans-serif;
+}
+
+.react-time-picker__wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  gap: 0;
+}
+
+.react-time-picker__inputGroup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.react-time-picker__inputGroup__input {
+  background: hsl(var(--muted));
+  border: none;
+  border-radius: 6px;
+  outline: none;
+  color: hsl(var(--foreground));
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 6px 4px;
+  min-width: 1.9em;
+  text-align: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.react-time-picker__inputGroup__input:focus {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.react-time-picker__inputGroup__input:invalid {
+  background: hsl(var(--muted));
+}
+
+.react-time-picker__inputGroup__divider {
+  color: hsl(var(--muted-foreground));
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0 1px;
+  user-select: none;
+  line-height: 1;
+}
+
+.react-time-picker__button,
+.react-time-picker__clock {
+  display: none;
 }

@@ -61,8 +61,22 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
       const e = err as AxiosError;
       let errMsg = "";
       switch (e.status) {
+        case 400:
+          errMsg =
+            "Data tidak valid. Pastikan nama lengkap terisi dan password minimal 6 karakter (atau kosongkan jika tidak ingin mengubah).";
+          break;
+        case 401:
+        case 403:
+          errMsg =
+            "Anda tidak memiliki izin untuk mengubah pengguna ini.";
+          break;
+        case 404:
+          errMsg =
+            "Pengguna tidak ditemukan. Kemungkinan sudah dihapus.";
+          break;
         default:
-          errMsg = "Terjadi kesalahan server";
+          errMsg =
+            "Gagal menyimpan perubahan. Periksa koneksi Anda atau coba lagi.";
           break;
       }
       setErrorMsg(errMsg);
