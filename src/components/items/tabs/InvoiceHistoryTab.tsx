@@ -225,8 +225,8 @@ const InvoiceHistoryTab = () => {
             Daftar invoice tersimpan dari tabel invoice.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 p-0">
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 px-6 pt-2">
+        <CardContent className="space-y-2 p-0">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 px-6">
             <div className="relative lg:col-span-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input

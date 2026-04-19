@@ -152,7 +152,10 @@ const AddItemStockTab = () => {
     form.setValue("itemName", stockTracking.item.name);
     form.setValue("amount", 0);
     form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
-    form.setValue("itemUnitPrice", stockTracking.unitPrice ?? stockTracking.item.unitPrice ?? 0);
+    form.setValue(
+      "itemUnitPrice",
+      stockTracking.unitPrice ?? stockTracking.item.unitPrice ?? 0,
+    );
     form.setValue("supplier", stockTracking.supplier ?? "");
   };
 
@@ -277,7 +280,10 @@ const AddItemStockTab = () => {
                           setSelectedItemId(selectedItm.id);
                           form.setValue("itemName", selectedItm.name);
                           form.setValue("amount", 0);
-                          form.setValue("itemMeasureUnit", selectedItm.measureUnit);
+                          form.setValue(
+                            "itemMeasureUnit",
+                            selectedItm.measureUnit,
+                          );
                           form.setValue("itemUnitPrice", selectedItm.unitPrice);
                           form.setValue("supplier", "");
                         }
@@ -338,7 +344,8 @@ const AddItemStockTab = () => {
                 <Label>Total Harga</Label>
                 <Input
                   value={formatCurrency(
-                    (form.watch("itemUnitPrice") || 0) * (form.watch("amount") || 0),
+                    (form.watch("itemUnitPrice") || 0) *
+                      (form.watch("amount") || 0),
                   )}
                   disabled
                 />

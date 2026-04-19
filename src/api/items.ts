@@ -182,7 +182,7 @@ export const useGetFullItems = () => {
         paging: response.data?.paging || null,
       };
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
     refetchOnWindowFocus: false,
   });
 };

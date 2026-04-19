@@ -213,7 +213,7 @@ const MasterItemTab = () => {
     if (
       !measureUnitOptions.some((option) => option.value === item.measureUnit)
     ) {
-      form.setValue("measureUnit", "Lainnya");
+      form.setValue("measureUnit", "lainnya");
       form.setValue("customMeasureUnit", item.measureUnit);
     } else {
       form.setValue("measureUnit", item.measureUnit);
@@ -247,8 +247,7 @@ const MasterItemTab = () => {
         name: values.name,
         category: values.category,
         measureUnit: values.measureUnit,
-        stock: values.stock,
-        initialStock: values.initialStock,
+        initialStock: values.stock,
         unitPrice: values.pricePerUnit,
         dateAdded: values.dateAdded,
       });
@@ -398,6 +397,9 @@ const MasterItemTab = () => {
     downloadCSV("template-bahan-mbg.csv", headers, rows);
   };
 
+  const defaultCategories = ["Karbohidrat", "Protein Hewani", "Protein Nabati", "Sayuran", "Buah Buahan", "Pendukung", "Lainnya"];
+  const defaultUnits = ["kg", "liter", "ikat", "buah", "botol", "dus", "bungkus", "lainnya"];
+
   const foodOptions = [
     { value: "Karbohidrat", label: "Karbohidrat" },
     { value: "Protein Hewani", label: "Protein Hewani" },
@@ -405,7 +407,9 @@ const MasterItemTab = () => {
     { value: "Sayuran", label: "Sayuran" },
     { value: "Buah Buahan", label: "Buah-Buahan" },
     { value: "Pendukung", label: "Pendukung" },
-    ...savedCategories.map((c) => ({ value: c, label: c })),
+    ...savedCategories
+      .filter((c) => !defaultCategories.includes(c))
+      .map((c) => ({ value: c, label: c })),
     { value: "Lainnya", label: "Lainnya" },
   ];
 
@@ -417,7 +421,9 @@ const MasterItemTab = () => {
     { value: "botol", label: "Botol" },
     { value: "dus", label: "Dus" },
     { value: "bungkus", label: "Bungkus" },
-    ...savedUnits.map((u) => ({ value: u, label: u })),
+    ...savedUnits
+      .filter((u) => !defaultUnits.includes(u))
+      .map((u) => ({ value: u, label: u })),
     { value: "lainnya", label: "Lainnya" },
   ];
 
