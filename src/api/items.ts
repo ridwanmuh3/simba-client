@@ -370,6 +370,20 @@ export const useGetInvoiceHistory = (
   });
 };
 
+export const useDeleteInvoice = () => {
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await axiosInstance.delete<ApiResponse<boolean>>(
+        `/items/invoices/${id}`,
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+    },
+  });
+};
+
 export const useGetStocksFinanceSummary = () => {
   return useQuery({
     queryKey: ["stocks-finance-summary"],

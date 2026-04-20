@@ -26,6 +26,7 @@ import {
   Eye,
   MoreHorizontal,
   Search,
+  Trash2,
 } from "lucide-react";
 import {
   Popover,
@@ -42,7 +43,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
-import { useDownloadInvoicePDF, useGetInvoiceHistory } from "@/api/items";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useDeleteInvoice, useDownloadInvoicePDF, useGetInvoiceHistory } from "@/api/items";
 import { AxiosError } from "axios";
 import { toast } from "@/hooks/use-toast";
 import type { InvoiceHistoryData } from "@/types/invoice";
@@ -79,6 +91,7 @@ const InvoiceHistoryTab = () => {
     dateTo,
   );
   const downloadInvoice = useDownloadInvoicePDF();
+  const deleteInvoice = useDeleteInvoice();
 
   const invoiceRows = useMemo(
     () => historyData?.data ?? [],
@@ -182,6 +195,22 @@ const InvoiceHistoryTab = () => {
     }
   };
 
+  const handleDeleteInvoice = async (invoice: InvoiceHistoryData) => {
+    try {
+      await deleteInvoice.mutateAsync(invoice.id);
+      toast({
+        title: "Berhasil",
+        description: `Invoice ${normalizeDocumentNumber(invoice.invoiceNumber)} berhasil dihapus.`,
+      });
+    } catch {
+      toast({
+        title: "Gagal hapus invoice",
+        description: "Terjadi kesalahan saat menghapus invoice.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleViewInvoice = async (invoice: InvoiceHistoryData) => {
     if (downloadInvoice.isPending) return;
     try {
@@ -191,15 +220,13 @@ const InvoiceHistoryTab = () => {
       });
 
       const url = window.URL.createObjectURL(blob);
-      const opened = window.open(url, "_blank", "noopener,noreferrer");
-      if (!opened) {
-        toast({
-          title: "Popup diblokir",
-          description:
-            "Browser memblokir tab baru. Izinkan popup untuk melihat nota.",
-          variant: "destructive",
-        });
-      }
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
 
       setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
     } catch (e) {
@@ -215,19 +242,21 @@ const InvoiceHistoryTab = () => {
   };
 
   return (
-    <TabsContent value="riwayat-invoice" className="space-y-4 px-1 md:px-2">
+    <TabsContent value="riwayat-invoice" className="space-y-4">
       <Card>
-        <CardHeader className="space-y-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            Riwayat invoice
-          </CardTitle>
-          <CardDescription>
-            Daftar invoice tersimpan dari tabel invoice.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 p-0">
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 px-6">
-            <div className="relative lg:col-span-1">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row gap-3 justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                Riwayat invoice
+              </CardTitle>
+              <CardDescription>
+                Daftar invoice tersimpan dari tabel invoice.
+              </CardDescription>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="relative sm:col-span-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
@@ -301,7 +330,8 @@ const InvoiceHistoryTab = () => {
               </PopoverContent>
             </Popover>
           </div>
-
+        </CardHeader>
+        <CardContent className="p-0">
           <div className="relative border-y text-nowrap overflow-x-auto">
             <Table className="relative w-full">
               <TableHeader className="sticky top-0 bg-background z-10 border-b">
@@ -409,6 +439,39 @@ const InvoiceHistoryTab = () => {
                                 </div>
                               </>
                             )}
+                            <DropdownMenuSeparator />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Hapus invoice
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Hapus Invoice</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Invoice{" "}
+                                    <span className="font-semibold">
+                                      {normalizeDocumentNumber(invoice.invoiceNumber)}
+                                    </span>{" "}
+                                    akan dihapus permanen dan tidak dapat dipulihkan.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => handleDeleteInvoice(invoice)}
+                                  >
+                                    Hapus
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

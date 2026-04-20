@@ -28,7 +28,9 @@ const DeleteDialog = ({
     try {
       await handleDelete();
       setIsDeleteDialogOpen(false);
-    } catch (_err) { /* error handled by caller's mutation onError */ }
+    } catch (_err) {
+      /* error handled by caller's mutation onError */
+    }
   };
 
   return (

@@ -1,9 +1,9 @@
 {
 	admin off
-	local_certs
 }
 
 {$APP_DOMAIN:simbambg.my.id}, {$APP_WWW_DOMAIN:www.simbambg.my.id} {
+	tls /certs/fullchain.crt /certs/private.key
 	route {
 		root * /usr/share/caddy
 		encode zstd gzip

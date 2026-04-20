@@ -1,16 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import Sidebar from "./Sidebar";
-import { Bell, Search, User } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useSidebarStore } from "@/stores/use-sidebar-store";
 import { useAuth } from "@/hooks/use-auth";

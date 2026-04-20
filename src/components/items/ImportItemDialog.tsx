@@ -14,7 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { Item } from "@/types/item";
 import { Button } from "@/components/ui/button";

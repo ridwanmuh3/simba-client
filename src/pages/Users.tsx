@@ -168,6 +168,7 @@ const Users = () => {
       >
         <Card>
           <CardContent className="p-0">
+            <div className="relative border-y text-nowrap overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
@@ -292,16 +293,19 @@ const Users = () => {
                 )}
               </TableBody>
             </Table>
+            </div>
+            <div className="px-2 pb-2 pt-1">
+              <DataTablePagination
+                currentPage={page}
+                pageSize={limit}
+                totalPages={usersData?.paging.totalPage || 1}
+                totalItems={usersData?.paging.totalItem || 0}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handleLimitChange}
+              />
+            </div>
           </CardContent>
         </Card>
-        <DataTablePagination
-          currentPage={page}
-          pageSize={limit}
-          totalPages={usersData?.paging.totalPage || 1}
-          totalItems={usersData?.paging.totalItem || 0}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handleLimitChange}
-        />
       </motion.div>
     </DashboardLayout>
   );

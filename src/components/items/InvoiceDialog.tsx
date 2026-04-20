@@ -7,9 +7,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import {
   Popover,
@@ -19,6 +26,20 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Calendar, Clock, FileText, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useGenerateInvoice, GenerateInvoiceRequest } from "@/api/items";
+import { toast } from "@/hooks/use-toast";
+import { combineDateTime, formatDateDetail } from "@/lib/date-utils";
+import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
+import dayjs from "dayjs";
+import { AxiosError } from "axios";
+import {
+  useGetCompanyProfile,
+  useGetNextDocumentNumbers,
+  useUpdateCompanyProfile,
+} from "@/api/settings";
 
 type TimeInputProps = { value: string; onChange: (v: string) => void };
 
@@ -76,13 +97,30 @@ const TimeInput = ({ value, onChange }: TimeInputProps) => {
     </div>
   );
 };
-import { useGenerateInvoice, GenerateInvoiceRequest } from "@/api/items";
-import { toast } from "@/hooks/use-toast";
-import { combineDateTime, formatDateDetail } from "@/lib/date-utils";
-import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
-import dayjs from "dayjs";
-import { AxiosError } from "axios";
-import { useGetCompanyProfile, useGetNextDocumentNumbers, useUpdateCompanyProfile } from "@/api/settings";
+
+const invoiceSchema = z
+  .object({
+    companyName: z.string().min(1, "Nama perusahaan wajib diisi"),
+    companyAddress: z.string().min(1, "Alamat perusahaan wajib diisi"),
+    companyContact: z.string().min(1, "Nomor kontak wajib diisi"),
+    invoiceNo: z.string().min(1, "Nomor invoice wajib diisi"),
+    poNo: z.string().optional(),
+    quoNo: z.string().optional(),
+    receiverName: z.string().min(1, "Nama penerima wajib diisi"),
+    receiverAddress: z.string().min(1, "Alamat penerima wajib diisi"),
+    keterangan: z.string().optional(),
+    penanggungjawab: z.string().min(1, "Nama penanggungjawab wajib diisi"),
+    jabatan: z.string().min(1, "Jabatan wajib diisi"),
+    bankAccount: z.string().optional(),
+    dateFrom: z.date().optional(),
+    dateTo: z.date().optional(),
+  })
+  .refine((d) => !d.dateFrom || !d.dateTo || d.dateFrom <= d.dateTo, {
+    message: "Tanggal awal harus lebih kecil atau sama dengan tanggal akhir",
+    path: ["dateTo"],
+  });
+
+type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
 interface InvoiceDialogProps {
   stockType?: "IN" | "OUT";
@@ -91,7 +129,17 @@ interface InvoiceDialogProps {
 const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
   const stockLabel = stockType === "IN" ? "bahan masuk" : "bahan keluar";
   const stockLabelTitle = stockType === "IN" ? "Bahan Masuk" : "Bahan Keluar";
+
   const [open, setOpen] = useState(false);
+  const [serverErr, setServerErr] = useState("");
+
+  const [isFromOpen, setIsFromOpen] = useState(false);
+  const [isToOpen, setIsToOpen] = useState(false);
+  const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
+  const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
+  const [timeFrom, setTimeFrom] = useState("00:00:00");
+  const [timeTo, setTimeTo] = useState("23:59:59");
+
   const generateInvoice = useGenerateInvoice();
   const updateCompanyProfile = useUpdateCompanyProfile();
   const { data: companyProfileData, refetch: refetchProfile } =
@@ -99,134 +147,94 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
   const { data: documentSequenceData, refetch: refetchSeq } =
     useGetNextDocumentNumbers();
 
-  const [companyName, setCompanyName] = useState("");
-  const [companyAddress, setCompanyAddress] = useState("");
-  const [companyContact, setCompanyContact] = useState("");
-  const [invoiceNo, setInvoiceNo] = useState("");
-  const [poNo, setPoNo] = useState("");
-  const [quoNo, setQuoNo] = useState("");
-  const [receiverName, setReceiverName] = useState("");
-  const [receiverAddress, setReceiverAddress] = useState("");
-  const [keterangan, setKeterangan] = useState("");
-  const [penanggungjawab, setPenanggungjawab] = useState("");
-  const [jabatan, setJabatan] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
+  const form = useForm<InvoiceFormValues>({
+    resolver: zodResolver(invoiceSchema),
+    defaultValues: {
+      companyName: "",
+      companyAddress: "",
+      companyContact: "",
+      invoiceNo: "",
+      poNo: "",
+      quoNo: "",
+      receiverName: "",
+      receiverAddress: "",
+      keterangan: "",
+      penanggungjawab: "",
+      jabatan: "",
+      bankAccount: "",
+      dateFrom: undefined,
+      dateTo: undefined,
+    },
+  });
 
-  const [isFromOpen, setIsFromOpen] = useState(false);
-  const [isToOpen, setIsToOpen] = useState(false);
-  const [dateFrom, setDateFrom] = useState<Date | undefined>();
-  const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
-  const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
-  const [timeFrom, setTimeFrom] = useState("00:00:00");
-  const [timeTo, setTimeTo] = useState("23:59:59");
-  const [errMsg, setErrMsg] = useState("");
-
-  const fillDocumentNumbers = async () => {
-    const response = await refetchSeq();
-    const nextNumbers = response.data?.data;
-
-    if (nextNumbers) {
-      setInvoiceNo(nextNumbers.nextInvoiceNo);
-      setQuoNo(nextNumbers.nextQuotationNo);
-    }
-  };
+  const dateFrom = form.watch("dateFrom");
+  const dateTo = form.watch("dateTo");
 
   useEffect(() => {
     if (open) {
-      if (companyProfileData?.data) {
-        setCompanyName(companyProfileData.data.companyName);
-        setCompanyAddress(companyProfileData.data.companyAddress);
-        setCompanyContact(companyProfileData.data.companyContact);
-      }
-      if (documentSequenceData?.data) {
-        setInvoiceNo(documentSequenceData.data.nextInvoiceNo);
-        setQuoNo(documentSequenceData.data.nextQuotationNo);
-      }
+      const profile = companyProfileData?.data;
+      const seq = documentSequenceData?.data;
+      form.reset({
+        companyName: profile?.companyName ?? "",
+        companyAddress: profile?.companyAddress ?? "",
+        companyContact: profile?.companyContact ?? "",
+        invoiceNo: seq?.nextInvoiceNo ?? "",
+        poNo: "",
+        quoNo: seq?.nextQuotationNo ?? "",
+        receiverName: "",
+        receiverAddress: "",
+        keterangan: "",
+        penanggungjawab: "",
+        jabatan: "",
+        bankAccount: profile?.bankAccount ?? "",
+        dateFrom: undefined,
+        dateTo: undefined,
+      });
+      setTempDateFrom(undefined);
+      setTempDateTo(undefined);
+      setTimeFrom("00:00:00");
+      setTimeTo("23:59:59");
+      setServerErr("");
     }
   }, [open, companyProfileData, documentSequenceData]);
 
-  const resetForm = () => {
-    setCompanyName(companyProfileData?.data?.companyName || "");
-    setCompanyAddress(companyProfileData?.data?.companyAddress || "");
-    setCompanyContact(companyProfileData?.data?.companyContact || "");
-    setInvoiceNo(documentSequenceData?.data?.nextInvoiceNo || "");
-    setPoNo("");
-    setQuoNo(documentSequenceData?.data?.nextQuotationNo || "");
-    setReceiverName("");
-    setReceiverAddress("");
-    setKeterangan("");
-    setPenanggungjawab("");
-    setJabatan("");
-    setBankAccount("");
-    setDateFrom(undefined);
-    setDateTo(undefined);
-
-    // fix: reset semua state tambahan
-    setTempDateFrom(undefined);
-    setTempDateTo(undefined);
-    setTimeFrom("00:00:00");
-    setTimeTo("23:59:59");
-    setIsFromOpen(false);
-    setIsToOpen(false);
-
-    setErrMsg("");
+  const fillDocumentNumbers = async () => {
+    const res = await refetchSeq();
+    const next = res.data?.data;
+    if (next) {
+      form.setValue("invoiceNo", next.nextInvoiceNo, { shouldValidate: true });
+      form.setValue("quoNo", next.nextQuotationNo, { shouldValidate: true });
+    }
   };
 
-  const handleGenerate = async () => {
-    setErrMsg("");
-
-    // prevent double submit
-    if (generateInvoice.isPending) return;
-
-    if (
-      !companyName ||
-      !companyAddress ||
-      !companyContact ||
-      !invoiceNo ||
-      !receiverName ||
-      !receiverAddress ||
-      !penanggungjawab ||
-      !jabatan
-    ) {
-      setErrMsg(
-        "Mohon lengkapi semua field bertanda (*): nama/alamat/kontak perusahaan, no. invoice, penerima, penanggungjawab, dan jabatan.",
-      );
-      return;
-    }
-
-    // fix: validasi tanggal
-    if (dateFrom && dateTo && dateFrom > dateTo) {
-      setErrMsg(
-        "Rentang tanggal tidak valid. Tanggal awal harus lebih kecil atau sama dengan tanggal akhir.",
-      );
-      return;
-    }
+  const onSubmit = async (values: InvoiceFormValues) => {
+    setServerErr("");
 
     const request: GenerateInvoiceRequest = {
-      companyName,
-      companyAddress,
-      companyContact,
-      invoiceNo,
+      companyName: values.companyName,
+      companyAddress: values.companyAddress,
+      companyContact: values.companyContact,
+      invoiceNo: values.invoiceNo,
       date: dayjs().locale("id").format("DD MMMM YYYY"),
-      poNo,
-      quoNo,
-      receiverName,
-      receiverAddress,
+      poNo: values.poNo ?? "",
+      quoNo: values.quoNo ?? "",
+      receiverName: values.receiverName,
+      receiverAddress: values.receiverAddress,
       stockType,
-      dateFrom: !dateFrom ? undefined : dateFrom.toISOString(),
-      dateTo: !dateTo ? undefined : dateTo.toISOString(),
-      keterangan,
-      penanggungjawab,
-      jabatan,
-      bankAccount,
+      dateFrom: values.dateFrom?.toISOString(),
+      dateTo: values.dateTo?.toISOString(),
+      keterangan: values.keterangan ?? "",
+      penanggungjawab: values.penanggungjawab,
+      jabatan: values.jabatan,
+      bankAccount: values.bankAccount ?? "",
     };
 
     try {
       await updateCompanyProfile.mutateAsync({
-        companyName,
-        companyAddress,
-        companyContact,
+        companyName: values.companyName,
+        companyAddress: values.companyAddress,
+        companyContact: values.companyContact,
+        bankAccount: values.bankAccount,
       });
 
       const { blob, filename } = await generateInvoice.mutateAsync(request);
@@ -235,58 +243,49 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", filename);
-
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 
-      // fix: delay revoke biar aman
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 1000);
-
-      toast({
-        title: "Berhasil",
-        description: "Invoice berhasil diunduh",
-      });
-
-      resetForm();
+      toast({ title: "Berhasil", description: "Invoice berhasil diunduh" });
       setOpen(false);
     } catch (e: unknown) {
-      const err = e as AxiosError<{ message?: string }>;
+      const err = e as AxiosError<{ error?: string }>;
       let msg = "Gagal mengunduh invoice. Periksa koneksi Anda dan coba lagi.";
 
       const data = err.response?.data;
 
-      // fix: safer blob parsing
       if (data instanceof Blob) {
         try {
           if (data.type === "application/json") {
             const text = await data.text();
-            const parsed = JSON.parse(text) as { message?: string };
-            if (parsed?.message) msg = parsed.message;
+            const parsed = JSON.parse(text) as { error?: string };
+            if (parsed?.error) msg = parsed.error;
           }
         } catch {
-          // ignore parsing error
+          // ignore
         }
-      } else if (data?.message) {
-        msg = data.message;
+      } else if (data?.error) {
+        msg = data.error;
       }
 
-      if (err.response?.status === 404) {
-        if (!data || !msg || msg === "Gagal mengunduh invoice. Periksa koneksi Anda dan coba lagi.") {
+      const status = err.response?.status;
+      if (status === 404) {
+        if (
+          msg === "Gagal mengunduh invoice. Periksa koneksi Anda dan coba lagi."
+        ) {
           msg = `Tidak ada data ${stockLabel} pada rentang tanggal yang dipilih. Coba ubah rentang tanggal atau kosongkan untuk mengambil semua data.`;
         }
-      } else if (err.response?.status === 400) {
+      } else if (status === 400) {
         msg =
           "Data invoice tidak valid. Periksa kembali semua field dan format data yang Anda masukkan.";
-      } else if (err.response?.status && err.response.status >= 500) {
+      } else if (status && status >= 500) {
         msg =
           "Server sedang bermasalah saat men-generate invoice. Silakan coba lagi beberapa saat.";
       }
 
-      setErrMsg(msg);
-
+      setServerErr(msg);
       toast({
         title: "Gagal generate invoice",
         description: msg,
@@ -294,6 +293,9 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       });
     }
   };
+
+  const isPending = generateInvoice.isPending;
+
   return (
     <Dialog
       open={open}
@@ -302,8 +304,6 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         if (val) {
           refetchProfile();
           refetchSeq();
-        } else {
-          resetForm();
         }
       }}
     >
@@ -321,329 +321,420 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
-          {/* Data Perusahaan */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-muted-foreground">
-              Data Perusahaan / Toko
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>
-                  Nama Perusahaan
-                  <RequiredInputIdentifier />
-                </Label>
-                <Input
-                  placeholder="PT. Contoh Sejahtera"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {/* Data Perusahaan */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-muted-foreground">
+                Data Perusahaan / Toko
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="companyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Nama Perusahaan <RequiredInputIdentifier />
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="PT. Contoh Sejahtera" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="companyContact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Nomor Kontak <RequiredInputIdentifier />
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="081234567890" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              <div className="space-y-1">
-                <Label>
-                  Nomor Kontak
-                  <RequiredInputIdentifier />
-                </Label>
-                <Input
-                  placeholder="081234567890"
-                  value={companyContact}
-                  onChange={(e) => setCompanyContact(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label>
-                Alamat Perusahaan
-                <RequiredInputIdentifier />
-              </Label>
-              <Input
-                placeholder="Jl. Contoh No. 123, Jakarta"
-                value={companyAddress}
-                onChange={(e) => setCompanyAddress(e.target.value)}
+              <FormField
+                control={form.control}
+                name="companyAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Alamat Perusahaan <RequiredInputIdentifier />
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Jl. Contoh No. 123, Jakarta"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-          </div>
 
-          {/* Data Invoice */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
+            {/* Detail Invoice */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h4 className="text-sm font-semibold text-muted-foreground">
+                  Detail Invoice
+                </h4>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={fillDocumentNumbers}
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  Iterasi nomor
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <FormField
+                  control={form.control}
+                  name="invoiceNo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        No. Invoice <RequiredInputIdentifier />
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="INV-001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="poNo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PO No.</FormLabel>
+                      <FormControl>
+                        <Input placeholder="PO-001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="quoNo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quo No.</FormLabel>
+                      <FormControl>
+                        <Input placeholder="QUO-001" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Ditujukan Kepada */}
+            <div className="space-y-3">
               <h4 className="text-sm font-semibold text-muted-foreground">
-                Detail Invoice
+                Ditujukan Kepada
               </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="receiverName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Nama Penerima <RequiredInputIdentifier />
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nama penerima" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="receiverAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Alamat Penerima <RequiredInputIdentifier />
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Alamat penerima" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Rentang Tanggal */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-muted-foreground">
+                Rentang Tanggal {stockLabelTitle}
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                Kosongkan untuk mengambil semua data {stockLabel}.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {/* Date From */}
+                <Popover open={isFromOpen} onOpenChange={setIsFromOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="min-w-[180px]"
+                    >
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateFrom ? formatDateDetail(dateFrom) : "Dari"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="flex">
+                      <CalendarComponent
+                        mode="single"
+                        selected={tempDateFrom}
+                        onSelect={setTempDateFrom}
+                        initialFocus
+                      />
+                      <div className="border-l flex flex-col p-3 w-[152px] gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Waktu (24j)
+                          </span>
+                        </div>
+                        <div className="flex justify-center">
+                          <TimeInput value={timeFrom} onChange={setTimeFrom} />
+                        </div>
+                        <div className="flex-1" />
+                        <div className="flex gap-1.5">
+                          <Button
+                            className="w-full"
+                            size="sm"
+                            variant="outline"
+                            type="button"
+                            onClick={() => {
+                              form.setValue("dateFrom", undefined, {
+                                shouldValidate: true,
+                              });
+                              setTempDateFrom(undefined);
+                              setIsFromOpen(false);
+                            }}
+                          >
+                            Batal
+                          </Button>
+                          <Button
+                            className="w-full"
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                              form.setValue(
+                                "dateFrom",
+                                combineDateTime(tempDateFrom, timeFrom),
+                                { shouldValidate: true },
+                              );
+                              setIsFromOpen(false);
+                            }}
+                          >
+                            Pilih
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Date To */}
+                <Popover open={isToOpen} onOpenChange={setIsToOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="min-w-[180px]"
+                    >
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateTo ? formatDateDetail(dateTo) : "Sampai"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="flex">
+                      <CalendarComponent
+                        mode="single"
+                        selected={tempDateTo}
+                        onSelect={setTempDateTo}
+                        initialFocus
+                      />
+                      <div className="border-l flex flex-col p-3 w-[152px] gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Waktu (24j)
+                          </span>
+                        </div>
+                        <div className="flex justify-center">
+                          <TimeInput value={timeTo} onChange={setTimeTo} />
+                        </div>
+                        <div className="flex-1" />
+                        <div className="flex gap-1.5">
+                          <Button
+                            className="w-full"
+                            size="sm"
+                            variant="outline"
+                            type="button"
+                            onClick={() => {
+                              form.setValue("dateTo", undefined, {
+                                shouldValidate: true,
+                              });
+                              setTempDateTo(undefined);
+                              setIsToOpen(false);
+                            }}
+                          >
+                            Batal
+                          </Button>
+                          <Button
+                            className="w-full"
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                              form.setValue(
+                                "dateTo",
+                                combineDateTime(tempDateTo, timeTo),
+                                { shouldValidate: true },
+                              );
+                              setIsToOpen(false);
+                            }}
+                          >
+                            Pilih
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {form.formState.errors.dateTo && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.dateTo.message}
+                </p>
+              )}
+            </div>
+
+            {/* Keterangan & Penanggungjawab */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-muted-foreground">
+                Keterangan & Penanggungjawab
+              </h4>
+              <FormField
+                control={form.control}
+                name="keterangan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Keterangan</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Catatan tambahan (opsional)"
+                        rows={2}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <FormField
+                  control={form.control}
+                  name="penanggungjawab"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Nama Penanggungjawab <RequiredInputIdentifier />
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nama penanggungjawab" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="jabatan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Jabatan <RequiredInputIdentifier />
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jabatan" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="bankAccount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>No. Rekening</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Nama Bank - 1234567890 a.n. Pemilik (opsional)"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {serverErr && (
+              <p className="text-sm text-destructive text-center">
+                {serverErr}
+              </p>
+            )}
+
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
-                size="sm"
                 variant="outline"
-                onClick={fillDocumentNumbers}
-                disabled={refetchSeq == null}
+                onClick={() => setOpen(false)}
+                disabled={isPending}
               >
-                <RefreshCw className="w-4 h-4 mr-1" />
-                Iterasi nomor
+                Batal
               </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label>
-                  No. Invoice
-                  <RequiredInputIdentifier />
-                </Label>
-                <Input
-                  placeholder="INV-001"
-                  value={invoiceNo}
-                  onChange={(e) => setInvoiceNo(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>PO No.</Label>
-                <Input
-                  placeholder="PO-001"
-                  value={poNo}
-                  onChange={(e) => setPoNo(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Quo No.</Label>
-                <Input
-                  placeholder="QUO-001"
-                  value={quoNo}
-                  onChange={(e) => setQuoNo(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Data Penerima */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-muted-foreground">
-              Ditujukan Kepada
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>
-                  Nama Penerima
-                  <RequiredInputIdentifier />
-                </Label>
-                <Input
-                  placeholder="Nama penerima"
-                  value={receiverName}
-                  onChange={(e) => setReceiverName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>
-                  Alamat Penerima
-                  <RequiredInputIdentifier />
-                </Label>
-                <Input
-                  placeholder="Alamat penerima"
-                  value={receiverAddress}
-                  onChange={(e) => setReceiverAddress(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Tanggal */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-muted-foreground">
-              Rentang Tanggal {stockLabelTitle}
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Kosongkan untuk mengambil semua data {stockLabel}.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Popover open={isFromOpen} onOpenChange={setIsFromOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="min-w-[180px]">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateFrom ? formatDateDetail(dateFrom) : "Dari"}
-                  </Button>
-                </PopoverTrigger>
-
-                <PopoverContent className="w-auto p-0" align="start">
-                  <div className="flex">
-                    <CalendarComponent
-                      mode="single"
-                      selected={tempDateFrom}
-                      onSelect={setTempDateFrom}
-                      initialFocus
-                    />
-                    <div className="border-l flex flex-col p-3 w-[152px] gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Waktu (24j)
-                        </span>
-                      </div>
-                      <div className="flex justify-center">
-                        <TimeInput value={timeFrom} onChange={setTimeFrom} />
-                      </div>
-                      <div className="flex-1" />
-                      <div className="flex gap-1.5">
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setDateFrom(undefined);
-                            setTempDateFrom(undefined);
-                            setIsFromOpen(false);
-                          }}
-                        >
-                          Batal
-                        </Button>
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          onClick={() => {
-                            setDateFrom(
-                              combineDateTime(tempDateFrom, timeFrom),
-                            );
-                            setIsFromOpen(false);
-                          }}
-                        >
-                          Pilih
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Popover open={isToOpen} onOpenChange={setIsToOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="min-w-[180px]">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateTo ? formatDateDetail(dateTo) : "Sampai"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <div className="flex">
-                    <CalendarComponent
-                      mode="single"
-                      selected={tempDateTo}
-                      onSelect={setTempDateTo}
-                      initialFocus
-                    />
-                    <div className="border-l flex flex-col p-3 w-[152px] gap-3">
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          Waktu (24j)
-                        </span>
-                      </div>
-                      <div className="flex justify-center">
-                        <TimeInput value={timeTo} onChange={setTimeTo} />
-                      </div>
-                      <div className="flex-1" />
-                      <div className="flex gap-1.5">
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setDateTo(undefined);
-                            setTempDateTo(undefined);
-                            setIsToOpen(false);
-                          }}
-                        >
-                          Batal
-                        </Button>
-                        <Button
-                          className="w-full"
-                          size="sm"
-                          onClick={() => {
-                            setDateTo(combineDateTime(tempDateTo, timeTo));
-                            setIsToOpen(false);
-                          }}
-                        >
-                          Pilih
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-muted-foreground">
-              Keterangan & Penanggungjawab
-            </h4>
-            <div className="space-y-1">
-              <Label>Keterangan</Label>
-              <Textarea
-                placeholder="Catatan tambahan (opsional)"
-                value={keterangan}
-                onChange={(e) => setKeterangan(e.target.value)}
-                rows={2}
-              />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>
-                  Nama Penanggungjawab
-                  <RequiredInputIdentifier />
-                </Label>
-                <Input
-                  placeholder="Nama penanggungjawab"
-                  value={penanggungjawab}
-                  onChange={(e) => setPenanggungjawab(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>
-                  Jabatan
-                  <RequiredInputIdentifier />
-                </Label>
-                <Input
-                  placeholder="Jabatan"
-                  value={jabatan}
-                  onChange={(e) => setJabatan(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label>No. Rekening</Label>
-              <Input
-                placeholder="Nama Bank - 1234567890 a.n. Pemilik (opsional)"
-                value={bankAccount}
-                onChange={(e) => setBankAccount(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {errMsg && (
-            <p className="text-sm text-destructive text-center">{errMsg}</p>
-          )}
-        </div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="outline"
-            onClick={() => {
-              resetForm();
-              setOpen(false);
-            }}
-            disabled={generateInvoice.isPending}
-          >
-            Batal
-          </Button>
-          <Button onClick={handleGenerate} disabled={generateInvoice.isPending}>
-            {generateInvoice.isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Mengunduh...
-              </>
-            ) : (
-              <>
-                <FileText className="w-4 h-4 mr-2" />
-                Unduh Invoice
-              </>
-            )}
-          </Button>
-        </DialogFooter>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Mengunduh...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Unduh Invoice
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

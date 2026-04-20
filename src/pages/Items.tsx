@@ -19,7 +19,7 @@ const Items = () => {
   const [activeTab, setActiveTab] = useState("data-bahan");
 
   const tabItems = [
-    { value: "data-bahan", label: "Data bahan", icon: Package },
+    { value: "data-bahan", label: "Data Bahan", icon: Package },
     { value: "bahan-masuk", label: "Bahan Masuk", icon: PackagePlus },
     { value: "bahan-keluar", label: "Bahan Keluar", icon: PackageMinus },
     { value: "stok-opname", label: "Stok Opname", icon: ClipboardCheck },
