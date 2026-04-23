@@ -28,18 +28,18 @@ import {
   useGetAllItemsStocks,
   useGetFullItems,
   useUpdateStockItem,
-} from "@/api/items";
+} from "@/features/items/api";
 import { formatCurrency, parseCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AxiosError } from "axios";
-import { StockTracking } from "@/types/item";
+import { StockTracking } from "@/features/items/types";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import {
   UpdateItemStockFormInputs,
   updateItemStockSchema,
-} from "@/schemas/item/update-item-stock";
+} from "@/features/items/schemas";
 import {
   Popover,
   PopoverContent,

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -33,17 +33,22 @@ const DataTablePagination = ({
 }: DataTablePaginationProps) => {
   const effectiveTotalPages = totalPages > 0 ? totalPages : 1;
 
+  const onPageChangeRef = useRef(onPageChange);
+  useEffect(() => {
+    onPageChangeRef.current = onPageChange;
+  });
+
   useEffect(() => {
     if (totalItems === 0) {
-      if (currentPage !== 1) onPageChange(1);
+      if (currentPage !== 1) onPageChangeRef.current(1);
       return;
     }
     if (currentPage > effectiveTotalPages) {
-      onPageChange(effectiveTotalPages);
+      onPageChangeRef.current(effectiveTotalPages);
     } else if (currentPage < 1) {
-      onPageChange(1);
+      onPageChangeRef.current(1);
     }
-  }, [currentPage, effectiveTotalPages, totalItems, onPageChange]);
+  }, [currentPage, effectiveTotalPages, totalItems]);
 
   const isFirst = currentPage <= 1;
   const isLast = currentPage >= effectiveTotalPages;

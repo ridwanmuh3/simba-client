@@ -6,7 +6,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, ImageOff } from "lucide-react";
 
 interface ImageViewerProps {
   src?: string;
@@ -14,6 +14,7 @@ interface ImageViewerProps {
 
 export default function ImageViewer({ src }: ImageViewerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   if (!src) {
     return (
@@ -34,11 +35,19 @@ export default function ImageViewer({ src }: ImageViewerProps) {
         <DialogContent className="max-w-4xl">
           <DialogTitle>Bukti Foto</DialogTitle>
           <div className="w-full max-h-[80vh] flex items-center justify-center bg-muted rounded-lg overflow-auto">
-            <img
-              src={src}
-              alt="Bukti Transaksi"
-              className="max-w-full max-h-[80vh] object-contain"
-            />
+            {hasError ? (
+              <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+                <ImageOff className="w-12 h-12 opacity-50" />
+                <p className="text-sm">Gambar tidak tersedia</p>
+              </div>
+            ) : (
+              <img
+                src={src}
+                alt="Bukti Transaksi"
+                className="max-w-full max-h-[80vh] object-contain"
+                onError={() => setHasError(true)}
+              />
+            )}
           </div>
         </DialogContent>
       </Dialog>

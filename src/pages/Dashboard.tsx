@@ -1,12 +1,12 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Package, Wallet, PackagePlus, PackageMinus } from "lucide-react";
-import { useDashboardStats } from "@/api/dashboard";
+import { useDashboardStats } from "@/features/dashboard/api";
 import Spinner from "@/components/shared/Spinner";
 import { formatCurrency } from "@/lib/utils";
 import SystemActivity from "@/components/dashboard/SystemActivity";
 import MonthlyExpenseCharts from "@/components/dashboard/MonthlyCharts";
 import DashboardStatsCards from "@/components/dashboard/DashboardStatsCards";
-import { BudgetStats, StockStats } from "@/types/dashboard";
+import { BudgetStats, StockStats } from "@/features/dashboard/types";
 
 const Dashboard = () => {
   const { data: dashboard, isLoading, isError, error } = useDashboardStats();

@@ -53,7 +53,7 @@ import {
   useEditFinance,
   useGetAllFinances,
   useGetAllFinancesForReport,
-} from "@/api/finance";
+} from "@/features/finance/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Popover,
@@ -62,7 +62,7 @@ import {
 } from "@/components/ui/popover";
 import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { FinanceData } from "@/types/finance";
+import { FinanceData } from "@/features/finance/types";
 import { toast } from "@/hooks/use-toast";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -81,7 +81,7 @@ import { Textarea } from "@/components/ui/textarea";
 import DeleteDialog from "@/components/finance/DeleteDialog";
 import Spinner from "@/components/shared/Spinner";
 import DataTablePagination from "@/components/shared/DataTablePagination";
-import { axiosInstance } from "@/lib/axios";
+import { axiosInstance } from "@/core/http/axios";
 import { ApiResponse } from "@/types/response";
 import { exportFinanceToCSV } from "@/lib/csv-utils";
 

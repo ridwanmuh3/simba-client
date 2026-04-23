@@ -12,10 +12,10 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logoBgn from "@/assets/sppg.webp";
-import { AuthContextType } from "@/types/auth";
+import { AuthContextType } from "@/features/auth/types";
 import LogoutDialog from "../shared/LogoutDialog";
-import { useSidebarStore } from "@/stores/use-sidebar-store";
-import { UserRole } from "@/types/user";
+import { useSidebarStore } from "./use-sidebar-store";
+import { UserRole } from "@/features/users/types";
 
 interface SidebarProps {
   authContext: AuthContextType;

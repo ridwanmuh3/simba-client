@@ -2,8 +2,8 @@ import { ReactNode, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useSidebarStore } from "@/stores/use-sidebar-store";
-import { useAuth } from "@/hooks/use-auth";
+import { useSidebarStore } from "./use-sidebar-store";
+import { useAuth } from "@/features/auth/context";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface DashboardLayoutProps {

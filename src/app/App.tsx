@@ -3,13 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router";
-import { queryClient } from "@/lib/react-query";
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
-import { AuthProvider } from "@/components/shared/AuthProvider";
+import { queryClient } from "@/core/query/client";
+import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
+import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { lazy, Suspense } from "react";
 import Spinner from "@/components/shared/Spinner";
-import { UserRole } from "@/types/user";
-import PublicRoute from "@/components/shared/PublicRoute";
+import { UserRole } from "@/features/users/types";
+import PublicRoute from "@/features/auth/components/PublicRoute";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));

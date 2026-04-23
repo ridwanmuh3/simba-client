@@ -28,9 +28,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useGetAllUsers, useGetUsersStats } from "@/api/users";
+import { useGetAllUsers, useGetUsersStats } from "@/features/users/api";
 import { formatDateDetail, formatDateRelative } from "@/lib/date-utils";
-import { User } from "@/types/user";
+import { User } from "@/features/users/types";
 import StatsCard from "@/components/shared/StatsCard";
 import { downloadHandler, getInitialsIdentity } from "@/lib/utils";
 import AddUserForm from "@/components/users/CreateUserDialog";

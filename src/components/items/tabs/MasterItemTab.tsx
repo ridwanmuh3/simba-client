@@ -48,7 +48,7 @@ import { downloadCSV, exportToCSV } from "@/lib/csv-utils";
 import {
   MasterItemFormInputs,
   masterItemSchema,
-} from "@/schemas/item/master-item";
+} from "@/features/items/schemas";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,17 +62,17 @@ import {
   useEditItem,
   useGetAllItems,
   useImportItems,
-} from "@/api/items";
+} from "@/features/items/api";
 import { formatCurrency, parseCurrency, safeIncludes } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AxiosError } from "axios";
 import Spinner from "@/components/shared/Spinner";
-import { Item } from "@/types/item";
+import { Item } from "@/features/items/types";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
 import DataTablePagination from "@/components/shared/DataTablePagination";
-import { axiosInstance } from "@/lib/axios";
+import { axiosInstance } from "@/core/http/axios";
 import { ApiResponse } from "@/types/response";
 import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
 
@@ -101,7 +101,9 @@ const MasterItemTab = () => {
 
   const [savedCategories, setSavedCategories] = useState<string[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem("simba_custom_categories") ?? "[]");
+      return JSON.parse(
+        localStorage.getItem("simba_custom_categories") ?? "[]",
+      );
     } catch {
       return [];
     }
@@ -142,7 +144,7 @@ const MasterItemTab = () => {
   const importItem = useImportItems();
   const deleteItem = useDeleteItem();
 
-  const { data: itemsData, isLoading: isItemsLoading } = useGetAllItems(
+  const { data: itemsData, isLoading: isItemsLoading, isFetching } = useGetAllItems(
     searchQuery,
     page,
     limit,
@@ -219,7 +221,7 @@ const MasterItemTab = () => {
       form.setValue("measureUnit", item.measureUnit);
     }
 
-    form.setValue("stock", item.stock);
+    form.setValue("stock", item.initialStock ?? item.stock);
     form.setValue("initialStock", item.initialStock);
     form.setValue("pricePerUnit", item.unitPrice);
     form.setValue(
@@ -397,8 +399,25 @@ const MasterItemTab = () => {
     downloadCSV("template-bahan-mbg.csv", headers, rows);
   };
 
-  const defaultCategories = ["Karbohidrat", "Protein Hewani", "Protein Nabati", "Sayuran", "Buah Buahan", "Pendukung", "Lainnya"];
-  const defaultUnits = ["kg", "liter", "ikat", "buah", "botol", "dus", "bungkus", "lainnya"];
+  const defaultCategories = [
+    "Karbohidrat",
+    "Protein Hewani",
+    "Protein Nabati",
+    "Sayuran",
+    "Buah Buahan",
+    "Pendukung",
+    "Lainnya",
+  ];
+  const defaultUnits = [
+    "kg",
+    "liter",
+    "ikat",
+    "buah",
+    "botol",
+    "dus",
+    "bungkus",
+    "lainnya",
+  ];
 
   const foodOptions = [
     { value: "Karbohidrat", label: "Karbohidrat" },
@@ -569,19 +588,38 @@ const MasterItemTab = () => {
                   </p>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="stock">Stok Awal</Label>
-                <Input
-                  {...form.register("stock")}
-                  type="number"
-                  placeholder="0"
-                  min="0"
-                  step="any"
-                />
-                {form.formState.errors.stock && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.stock.message}
-                  </p>
+              <div
+                className={
+                  selectedItem ? "grid grid-cols-2 gap-4" : "space-y-2"
+                }
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="stock">Stok Awal</Label>
+                  <Input
+                    {...form.register("stock")}
+                    type="number"
+                    placeholder="0"
+                    min="0"
+                    step="any"
+                  />
+                  {form.formState.errors.stock && (
+                    <p className="text-sm text-destructive">
+                      {form.formState.errors.stock.message}
+                    </p>
+                  )}
+                </div>
+                {selectedItem && (
+                  <div className="space-y-2">
+                    <Label>Stok Saat Ini</Label>
+                    <Input
+                      value={`${selectedItem.stock} ${
+                        form.watch("measureUnit") === "lainnya"
+                          ? form.watch("customMeasureUnit") || ""
+                          : form.watch("measureUnit") || ""
+                      }`.trim()}
+                      disabled
+                    />
+                  </div>
                 )}
               </div>
               <div className="space-y-2">
@@ -690,7 +728,12 @@ const MasterItemTab = () => {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
-              <CardTitle className="text-lg">Daftar Bahan</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Daftar Bahan
+                {isFetching && !isItemsLoading && (
+                  <Spinner color="text-muted-foreground" />
+                )}
+              </CardTitle>
               <div className="flex gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -747,7 +790,8 @@ const MasterItemTab = () => {
                     <TableHead>Kode</TableHead>
                     <TableHead>Nama Bahan</TableHead>
                     <TableHead>Kategori</TableHead>
-                    <TableHead>Stok</TableHead>
+                    <TableHead>Stok Awal</TableHead>
+                    <TableHead>Stok Saat Ini</TableHead>
                     <TableHead>Harga Satuan</TableHead>
                     <TableHead>Total Harga</TableHead>
                   </TableRow>
@@ -810,6 +854,9 @@ const MasterItemTab = () => {
                           <Badge variant="secondary">{item.category}</Badge>
                         </TableCell>
                         <TableCell>
+                          {item.initialStock ?? 0} {item.measureUnit}
+                        </TableCell>
+                        <TableCell>
                           <span
                             className={
                               item.stock < 20
@@ -837,6 +884,12 @@ const MasterItemTab = () => {
                     </TableCell>
                     <TableCell className="font-bold">
                       {itemsData?.data?.reduce(
+                        (acc, curr) => acc + (curr.initialStock ?? 0),
+                        0,
+                      ) || 0}
+                    </TableCell>
+                    <TableCell className="font-bold">
+                      {itemsData?.data?.reduce(
                         (acc, curr) => acc + curr.stock,
                         0,
                       ) || 0}
@@ -845,7 +898,7 @@ const MasterItemTab = () => {
                     <TableCell className="font-bold">
                       {formatCurrency(
                         itemsData?.data?.reduce(
-                          (acc, curr) => acc + (curr.stock * curr.unitPrice),
+                          (acc, curr) => acc + curr.stock * curr.unitPrice,
                           0,
                         ) || 0,
                       )}

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
-import { SystemActivityData } from "@/types/dashboard";
+import { SystemActivityData } from "@/features/dashboard/types";
 import { ActivityIcon } from "lucide-react";
 import { formatDateRelative } from "@/lib/date-utils";
 

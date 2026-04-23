@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   useGetItemsStocksSummary,
   useGetStocksFinanceSummary,
-} from "@/api/items";
+} from "@/features/items/api";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -26,7 +26,6 @@ import DataTablePagination from "@/components/shared/DataTablePagination";
 import { TabsContent } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import Spinner from "@/components/shared/Spinner";
 
 const StockOpnameTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -265,7 +264,17 @@ const StockOpnameTab = () => {
           </CardContent>
         </Card>
         <Card className="sticky lg:col-span-1 h-fit">
-          {stocksBudgetSummary && !stocksSummary.isLoading ? (
+          {stocksSummary.isLoading ? (
+            <CardContent className="space-y-4 pt-6">
+              <Skeleton className="h-5 w-40 mb-2" />
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex justify-between items-center gap-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              ))}
+            </CardContent>
+          ) : stocksBudgetSummary ? (
             <>
               <CardHeader>
                 <CardTitle className="text-lg">Ringkasan Anggaran</CardTitle>
@@ -332,9 +341,7 @@ const StockOpnameTab = () => {
                 </div>
               </CardContent>
             </>
-          ) : (
-            <Spinner />
-          )}
+          ) : null}
         </Card>
       </div>
     </TabsContent>

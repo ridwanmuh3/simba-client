@@ -2,6 +2,7 @@ import imageCompression from "browser-image-compression";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { toast } from "@/hooks/use-toast";
+import { isAxiosError } from "axios";
 
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs));
@@ -118,6 +119,17 @@ const convertBlobToJpg = async (blob: Blob, quality: number): Promise<Blob> => {
 
 export const capitalizeFirstLetterString = (str: string) => {
   return str[0].toUpperCase() + str.slice(1).toLowerCase();
+};
+
+export const extractErrorMessage = (
+  error: unknown,
+  fallback = "Terjadi kesalahan. Coba lagi.",
+): string => {
+  if (isAxiosError(error)) {
+    const msg = error.response?.data?.error;
+    if (typeof msg === "string" && msg.trim()) return msg;
+  }
+  return fallback;
 };
 
 export const isPlainObject = (

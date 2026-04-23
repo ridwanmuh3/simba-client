@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useState } from "react";
-import { Item } from "@/types/item";
+import { Item } from "@/features/items/types";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 

@@ -24,7 +24,7 @@ import { Input } from "../ui/input";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAddFinance } from "@/api/finance";
+import { useAddFinance } from "@/features/finance/api";
 import { toast } from "@/hooks/use-toast";
 import { AxiosError } from "axios";
 import { compressImage, formatCurrency, parseCurrency } from "@/lib/utils";

@@ -14,8 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import logoBgn from "@/assets/sppg.webp";
-import { useAuth } from "@/hooks/use-auth";
-import { LoginFormInputs, loginSchema } from "@/schemas/auth/login-auth";
+import { useAuth } from "@/features/auth/context";
+import { LoginFormInputs, loginSchema } from "@/features/auth/schemas";
 import dayjs from "dayjs";
 
 const Login = () => {

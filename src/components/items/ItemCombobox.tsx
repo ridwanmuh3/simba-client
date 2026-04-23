@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Item } from "@/types/item";
+import { Item } from "@/features/items/types";
 
 interface ItemComboboxProps {
   items: Item[];

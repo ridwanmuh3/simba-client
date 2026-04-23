@@ -14,7 +14,7 @@ import {
   Line,
 } from "recharts";
 import { formatCurrency } from "@/lib/utils";
-import { ExpenseItem, MonthlyBudget } from "@/types/dashboard";
+import { ExpenseItem, MonthlyBudget } from "@/features/dashboard/types";
 
 interface ExpenseItemChart {
   name?: string;

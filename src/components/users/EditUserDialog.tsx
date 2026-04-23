@@ -20,11 +20,11 @@ import { Edit, Eye, EyeOff } from "lucide-react";
 import { Input } from "../ui/input";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { EditUserFormInputs, editUserSchema } from "@/schemas/user/edit-user";
+import { EditUserFormInputs, editUserSchema } from "@/features/users/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEditUser } from "@/api/users";
+import { useEditUser } from "@/features/users/api";
 import { toast } from "@/hooks/use-toast";
-import { User } from "@/types/user";
+import { User } from "@/features/users/types";
 import { DropdownMenuItem } from "../ui/dropdown-menu";
 import { AxiosError } from "axios";
 

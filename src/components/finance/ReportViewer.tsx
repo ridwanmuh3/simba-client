@@ -17,13 +17,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useFinanceReport } from "@/hooks/use-finance-report";
+import { useFinanceReport } from "@/features/finance/hooks";
 import type {
   FinanceCategoryPoint,
   FinanceData,
   FinanceSummary,
   FinanceTrendPoint,
-} from "@/types/finance";
+} from "@/features/finance/types";
 
 type ReportTab = "daily" | "tenDays" | "monthly";
 

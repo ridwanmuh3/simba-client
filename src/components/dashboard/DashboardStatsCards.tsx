@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { BudgetStats, StockStats } from "@/types/dashboard";
+import { BudgetStats, StockStats } from "@/features/dashboard/types";
 
 interface DashboardStatsCardsProps {
   stockStats: StockStats[];

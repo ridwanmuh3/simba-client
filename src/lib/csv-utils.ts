@@ -1,5 +1,5 @@
-import { FinanceData } from "@/types/finance";
-import { Item } from "@/types/item";
+import { FinanceData } from "@/features/finance/types";
+import { Item } from "@/features/items/types";
 import dayjs from "dayjs";
 import { formatDateDetail } from "./date-utils";
 

@@ -54,10 +54,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useDeleteInvoice, useDownloadInvoicePDF, useGetInvoiceHistory } from "@/api/items";
+import { useDeleteInvoice, useDownloadInvoicePDF, useGetInvoiceHistory } from "@/features/items/api";
 import { AxiosError } from "axios";
 import { toast } from "@/hooks/use-toast";
-import type { InvoiceHistoryData } from "@/types/invoice";
+import type { InvoiceHistoryData } from "@/features/items/types";
 
 const normalizeDocumentNumber = (value: string) => {
   if (!value) {

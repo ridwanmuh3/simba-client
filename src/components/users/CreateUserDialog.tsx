@@ -23,9 +23,9 @@ import { Controller, useForm } from "react-hook-form";
 import {
   CreateUserFormInputs,
   createUserSchema,
-} from "@/schemas/user/create-user";
+} from "@/features/users/schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateUser } from "@/api/users";
+import { useCreateUser } from "@/features/users/api";
 import { toast } from "@/hooks/use-toast";
 import { AxiosError } from "axios";
 

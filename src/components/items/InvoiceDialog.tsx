@@ -24,14 +24,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, Clock, FileText, Loader2, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Calendar,
+  FileText,
+  Loader2,
+  RefreshCw,
+  Search,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useGenerateInvoice, GenerateInvoiceRequest } from "@/api/items";
+import {
+  useGenerateInvoice,
+  GenerateInvoiceRequest,
+  useGetAllItemsStocks,
+} from "@/features/items/api";
 import { toast } from "@/hooks/use-toast";
-import { combineDateTime, formatDateDetail } from "@/lib/date-utils";
+import { formatDateDetail } from "@/lib/date-utils";
 import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
 import dayjs from "dayjs";
 import { AxiosError } from "axios";
@@ -39,86 +49,34 @@ import {
   useGetCompanyProfile,
   useGetNextDocumentNumbers,
   useUpdateCompanyProfile,
-} from "@/api/settings";
+} from "@/features/settings/api";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
-type TimeInputProps = { value: string; onChange: (v: string) => void };
-
-const TimeInput = ({ value, onChange }: TimeInputProps) => {
-  const parts = value.split(":").map((p) => parseInt(p, 10) || 0);
-  const [h, m, s] = parts;
-
-  const emit = (nh: number, nm: number, ns: number) => {
-    const clamp = (n: number, max: number) =>
-      Math.max(0, Math.min(max, isNaN(n) ? 0 : n));
-    const pad = (n: number) => String(n).padStart(2, "0");
-    onChange(
-      `${pad(clamp(nh, 23))}:${pad(clamp(nm, 59))}:${pad(clamp(ns, 59))}`,
-    );
-  };
-
-  const segClass =
-    "w-9 h-8 text-center text-sm font-semibold bg-muted rounded-md border-0 outline-none focus:bg-primary focus:text-primary-foreground transition-colors [appearance:textfield] [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden";
-
-  return (
-    <div className="flex items-center justify-center gap-1">
-      <input
-        type="number"
-        min={0}
-        max={23}
-        value={String(h).padStart(2, "0")}
-        onChange={(e) => emit(parseInt(e.target.value, 10), m, s)}
-        onFocus={(e) => e.target.select()}
-        className={segClass}
-      />
-      <span className="text-muted-foreground font-bold text-sm select-none">
-        :
-      </span>
-      <input
-        type="number"
-        min={0}
-        max={59}
-        value={String(m).padStart(2, "0")}
-        onChange={(e) => emit(h, parseInt(e.target.value, 10), s)}
-        onFocus={(e) => e.target.select()}
-        className={segClass}
-      />
-      <span className="text-muted-foreground font-bold text-sm select-none">
-        :
-      </span>
-      <input
-        type="number"
-        min={0}
-        max={59}
-        value={String(s).padStart(2, "0")}
-        onChange={(e) => emit(h, m, parseInt(e.target.value, 10))}
-        onFocus={(e) => e.target.select()}
-        className={segClass}
-      />
-    </div>
-  );
-};
-
-const invoiceSchema = z
-  .object({
-    companyName: z.string().min(1, "Nama perusahaan wajib diisi"),
-    companyAddress: z.string().min(1, "Alamat perusahaan wajib diisi"),
-    companyContact: z.string().min(1, "Nomor kontak wajib diisi"),
-    invoiceNo: z.string().min(1, "Nomor invoice wajib diisi"),
-    poNo: z.string().optional(),
-    quoNo: z.string().optional(),
-    receiverName: z.string().min(1, "Nama penerima wajib diisi"),
-    receiverAddress: z.string().min(1, "Alamat penerima wajib diisi"),
-    keterangan: z.string().optional(),
-    penanggungjawab: z.string().min(1, "Nama penanggungjawab wajib diisi"),
-    jabatan: z.string().min(1, "Jabatan wajib diisi"),
-    bankAccount: z.string().optional(),
-    dateFrom: z.date().optional(),
-    dateTo: z.date().optional(),
-  })
-  .refine((d) => !d.dateFrom || !d.dateTo || d.dateFrom <= d.dateTo, {
-    message: "Tanggal awal harus lebih kecil atau sama dengan tanggal akhir",
-    path: ["dateTo"],
-  });
+const invoiceSchema = z.object({
+  companyName: z.string().min(1, "Nama perusahaan wajib diisi"),
+  companyAddress: z.string().min(1, "Alamat perusahaan wajib diisi"),
+  companyContact: z.string().min(1, "Nomor kontak wajib diisi"),
+  invoiceNo: z.string().min(1, "Nomor invoice wajib diisi"),
+  poNo: z.string().optional(),
+  quoNo: z.string().optional(),
+  receiverName: z.string().min(1, "Nama penerima wajib diisi"),
+  receiverAddress: z.string().min(1, "Alamat penerima wajib diisi"),
+  keterangan: z.string().optional(),
+  penanggungjawab: z.string().min(1, "Nama penanggungjawab wajib diisi"),
+  jabatan: z.string().min(1, "Jabatan wajib diisi"),
+  bankAccount: z.string().optional(),
+  invoiceDate: z.date({ required_error: "Tanggal penerbitan wajib diisi" }),
+});
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
 
@@ -132,13 +90,44 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
 
   const [open, setOpen] = useState(false);
   const [serverErr, setServerErr] = useState("");
+  const [isInvoiceDateOpen, setIsInvoiceDateOpen] = useState(false);
 
-  const [isFromOpen, setIsFromOpen] = useState(false);
-  const [isToOpen, setIsToOpen] = useState(false);
-  const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
-  const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
-  const [timeFrom, setTimeFrom] = useState("00:00:00");
-  const [timeTo, setTimeTo] = useState("23:59:59");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [stockSearch, setStockSearch] = useState("");
+  const [stockPage, setStockPage] = useState(1);
+
+  const { data: stocksData, isLoading: isStocksLoading } = useGetAllItemsStocks(
+    stockSearch,
+    stockPage,
+    20,
+    undefined,
+    undefined,
+    stockType,
+    open,
+  );
+
+
+  const stockRows = useMemo(() => stocksData?.data ?? [], [stocksData]);
+
+  const toggleId = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    const allIds = stockRows.map((r) => r.id!).filter(Boolean);
+    const allSelected = allIds.every((id) => selectedIds.has(id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) allIds.forEach((id) => next.delete(id));
+      else allIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
 
   const generateInvoice = useGenerateInvoice();
   const updateCompanyProfile = useUpdateCompanyProfile();
@@ -162,13 +151,9 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       penanggungjawab: "",
       jabatan: "",
       bankAccount: "",
-      dateFrom: undefined,
-      dateTo: undefined,
+      invoiceDate: new Date(),
     },
   });
-
-  const dateFrom = form.watch("dateFrom");
-  const dateTo = form.watch("dateTo");
 
   useEffect(() => {
     if (open) {
@@ -187,14 +172,12 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         penanggungjawab: "",
         jabatan: "",
         bankAccount: profile?.bankAccount ?? "",
-        dateFrom: undefined,
-        dateTo: undefined,
+        invoiceDate: new Date(),
       });
-      setTempDateFrom(undefined);
-      setTempDateTo(undefined);
-      setTimeFrom("00:00:00");
-      setTimeTo("23:59:59");
       setServerErr("");
+      setSelectedIds(new Set());
+      setStockSearch("");
+      setStockPage(1);
     }
   }, [open, companyProfileData, documentSequenceData]);
 
@@ -210,19 +193,23 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
   const onSubmit = async (values: InvoiceFormValues) => {
     setServerErr("");
 
+    if (selectedIds.size === 0) {
+      setServerErr(`Pilih minimal satu data ${stockLabel} untuk dimasukkan ke invoice.`);
+      return;
+    }
+
     const request: GenerateInvoiceRequest = {
       companyName: values.companyName,
       companyAddress: values.companyAddress,
       companyContact: values.companyContact,
       invoiceNo: values.invoiceNo,
-      date: dayjs().locale("id").format("DD MMMM YYYY"),
+      date: dayjs(values.invoiceDate).locale("id").format("DD MMMM YYYY"),
       poNo: values.poNo ?? "",
       quoNo: values.quoNo ?? "",
       receiverName: values.receiverName,
       receiverAddress: values.receiverAddress,
       stockType,
-      dateFrom: values.dateFrom?.toISOString(),
-      dateTo: values.dateTo?.toISOString(),
+      stockIds: Array.from(selectedIds),
       keterangan: values.keterangan ?? "",
       penanggungjawab: values.penanggungjawab,
       jabatan: values.jabatan,
@@ -439,6 +426,48 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                   )}
                 />
               </div>
+              <FormField
+                control={form.control}
+                name="invoiceDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Tanggal Penerbitan <RequiredInputIdentifier />
+                    </FormLabel>
+                    <Popover
+                      open={isInvoiceDateOpen}
+                      onOpenChange={setIsInvoiceDateOpen}
+                    >
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full justify-start font-normal"
+                          >
+                            <Calendar className="w-4 h-4 mr-2" />
+                            {field.value
+                              ? formatDateDetail(field.value)
+                              : "Pilih tanggal"}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(d) => {
+                            if (d) field.onChange(d);
+                            setIsInvoiceDateOpen(false);
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Ditujukan Kepada */}
@@ -480,156 +509,136 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
               </div>
             </div>
 
-            {/* Rentang Tanggal */}
+            {/* Pilih Bahan */}
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-muted-foreground">
-                Rentang Tanggal {stockLabelTitle}
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                Kosongkan untuk mengambil semua data {stockLabel}.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {/* Date From */}
-                <Popover open={isFromOpen} onOpenChange={setIsFromOpen}>
-                  <PopoverTrigger asChild>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-muted-foreground">
+                  Pilih {stockLabelTitle}
+                </h4>
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {selectedIds.size} dipilih
+                    </Badge>
                     <Button
-                      variant="outline"
+                      type="button"
+                      variant="ghost"
                       size="sm"
-                      className="min-w-[180px]"
+                      className="h-6 px-2 text-xs text-muted-foreground"
+                      onClick={() => setSelectedIds(new Set())}
                     >
-                      <Calendar className="w-4 h-4 mr-1" />
-                      {dateFrom ? formatDateDetail(dateFrom) : "Dari"}
+                      Batal pilih
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <div className="flex">
-                      <CalendarComponent
-                        mode="single"
-                        selected={tempDateFrom}
-                        onSelect={setTempDateFrom}
-                        initialFocus
-                      />
-                      <div className="border-l flex flex-col p-3 w-[152px] gap-3">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          <span className="text-xs font-medium text-muted-foreground">
-                            Waktu (24j)
-                          </span>
-                        </div>
-                        <div className="flex justify-center">
-                          <TimeInput value={timeFrom} onChange={setTimeFrom} />
-                        </div>
-                        <div className="flex-1" />
-                        <div className="flex gap-1.5">
-                          <Button
-                            className="w-full"
-                            size="sm"
-                            variant="outline"
-                            type="button"
-                            onClick={() => {
-                              form.setValue("dateFrom", undefined, {
-                                shouldValidate: true,
-                              });
-                              setTempDateFrom(undefined);
-                              setIsFromOpen(false);
-                            }}
-                          >
-                            Batal
-                          </Button>
-                          <Button
-                            className="w-full"
-                            size="sm"
-                            type="button"
-                            onClick={() => {
-                              form.setValue(
-                                "dateFrom",
-                                combineDateTime(tempDateFrom, timeFrom),
-                                { shouldValidate: true },
-                              );
-                              setIsFromOpen(false);
-                            }}
-                          >
-                            Pilih
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Date To */}
-                <Popover open={isToOpen} onOpenChange={setIsToOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="min-w-[180px]"
-                    >
-                      <Calendar className="w-4 h-4 mr-1" />
-                      {dateTo ? formatDateDetail(dateTo) : "Sampai"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <div className="flex">
-                      <CalendarComponent
-                        mode="single"
-                        selected={tempDateTo}
-                        onSelect={setTempDateTo}
-                        initialFocus
-                      />
-                      <div className="border-l flex flex-col p-3 w-[152px] gap-3">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          <span className="text-xs font-medium text-muted-foreground">
-                            Waktu (24j)
-                          </span>
-                        </div>
-                        <div className="flex justify-center">
-                          <TimeInput value={timeTo} onChange={setTimeTo} />
-                        </div>
-                        <div className="flex-1" />
-                        <div className="flex gap-1.5">
-                          <Button
-                            className="w-full"
-                            size="sm"
-                            variant="outline"
-                            type="button"
-                            onClick={() => {
-                              form.setValue("dateTo", undefined, {
-                                shouldValidate: true,
-                              });
-                              setTempDateTo(undefined);
-                              setIsToOpen(false);
-                            }}
-                          >
-                            Batal
-                          </Button>
-                          <Button
-                            className="w-full"
-                            size="sm"
-                            type="button"
-                            onClick={() => {
-                              form.setValue(
-                                "dateTo",
-                                combineDateTime(tempDateTo, timeTo),
-                                { shouldValidate: true },
-                              );
-                              setIsToOpen(false);
-                            }}
-                          >
-                            Pilih
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  </div>
+                )}
               </div>
-              {form.formState.errors.dateTo && (
-                <p className="text-sm font-medium text-destructive">
-                  {form.formState.errors.dateTo.message}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                Centang baris yang ingin dimasukkan ke invoice. Minimal 1 baris harus dipilih.
+              </p>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  placeholder={`Cari ${stockLabel}...`}
+                  value={stockSearch}
+                  onChange={(e) => {
+                    setStockSearch(e.target.value);
+                    setStockPage(1);
+                  }}
+                  className="pl-9 h-8 text-sm"
+                />
+              </div>
+              <div className="border rounded-md overflow-hidden">
+                <div className="max-h-48 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background z-10">
+                      <TableRow>
+                        <TableHead className="w-8 py-2">
+                          <Checkbox
+                            checked={
+                              stockRows.length > 0 &&
+                              stockRows.every((r) => r.id && selectedIds.has(r.id))
+                            }
+                            onCheckedChange={toggleAll}
+                          />
+                        </TableHead>
+                        <TableHead className="py-2 text-xs">Tanggal</TableHead>
+                        <TableHead className="py-2 text-xs">Bahan</TableHead>
+                        <TableHead className="py-2 text-xs text-right">Jumlah</TableHead>
+                        <TableHead className="py-2 text-xs text-right">Total</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isStocksLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-4">
+                            Memuat data...
+                          </TableCell>
+                        </TableRow>
+                      ) : stockRows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-4">
+                            {stockSearch ? "Tidak ada hasil pencarian" : `Belum ada data ${stockLabel}`}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        stockRows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            className={`cursor-pointer text-xs ${row.id && selectedIds.has(row.id) ? "bg-muted" : "hover:bg-muted/50"}`}
+                            onClick={() => row.id && toggleId(row.id)}
+                          >
+                            <TableCell className="py-2" onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={!!(row.id && selectedIds.has(row.id))}
+                                onCheckedChange={() => row.id && toggleId(row.id)}
+                              />
+                            </TableCell>
+                            <TableCell className="py-2 text-nowrap">
+                              {row.createdAt ? formatDateDetail(new Date(row.createdAt)) : "-"}
+                            </TableCell>
+                            <TableCell className="py-2 font-medium">{row.item?.name ?? "-"}</TableCell>
+                            <TableCell className="py-2 text-right text-nowrap">
+                              {row.amount} {row.item?.measureUnit}
+                            </TableCell>
+                            <TableCell className="py-2 text-right text-nowrap">
+                              {formatCurrency(row.totalPrice ?? 0)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                {(stocksData?.paging?.totalPage ?? 1) > 1 && (
+                  <div className="flex items-center justify-between px-3 py-2 border-t text-xs text-muted-foreground">
+                    <span>
+                      Hal {stockPage} / {stocksData?.paging?.totalPage ?? 1}
+                    </span>
+                    <div className="flex gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        disabled={stockPage <= 1}
+                        onClick={() => setStockPage((p) => p - 1)}
+                      >
+                        ‹
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        disabled={stockPage >= (stocksData?.paging?.totalPage ?? 1)}
+                        onClick={() => setStockPage((p) => p + 1)}
+                      >
+                        ›
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Keterangan & Penanggungjawab */}
