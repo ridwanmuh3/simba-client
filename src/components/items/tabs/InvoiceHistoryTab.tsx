@@ -54,7 +54,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useDeleteInvoice, useDownloadInvoicePDF, useGetInvoiceHistory } from "@/features/items/api";
+import {
+  useDeleteInvoice,
+  useDownloadInvoicePDF,
+  useGetInvoiceHistory,
+} from "@/features/items/api";
 import { AxiosError } from "axios";
 import { toast } from "@/hooks/use-toast";
 import type { InvoiceHistoryData } from "@/features/items/types";
@@ -132,10 +136,6 @@ const InvoiceHistoryTab = () => {
     setDateTo(tempDateTo);
     setIsToOpen(false);
   };
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, dateFrom, dateTo]);
 
   const parseInvoiceError = async (e: unknown) => {
     const err = e as AxiosError<{ message?: string; error?: string }>;
@@ -452,13 +452,18 @@ const InvoiceHistoryTab = () => {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Hapus Invoice</AlertDialogTitle>
+                                  <AlertDialogTitle>
+                                    Hapus Invoice
+                                  </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Invoice{" "}
                                     <span className="font-semibold">
-                                      {normalizeDocumentNumber(invoice.invoiceNumber)}
+                                      {normalizeDocumentNumber(
+                                        invoice.invoiceNumber,
+                                      )}
                                     </span>{" "}
-                                    akan dihapus permanen dan tidak dapat dipulihkan.
+                                    akan dihapus permanen dan tidak dapat
+                                    dipulihkan.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

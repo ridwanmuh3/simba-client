@@ -50,10 +50,6 @@ const StockOpnameTab = () => {
     setPage(1);
   };
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
-
   return (
     <TabsContent value="stok-opname" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

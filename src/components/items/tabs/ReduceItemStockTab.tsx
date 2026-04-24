@@ -155,7 +155,10 @@ const ReduceItemStockTab = () => {
     form.setValue("itemName", stockTracking.item.name);
     form.setValue("amount", 0);
     form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
-    form.setValue("itemUnitPrice", stockTracking.unitPrice ?? stockTracking.item.unitPrice ?? 0);
+    form.setValue(
+      "itemUnitPrice",
+      stockTracking.unitPrice ?? stockTracking.item.unitPrice ?? 0,
+    );
   };
 
   const handleDeleteItemStock = async () => {
@@ -238,10 +241,6 @@ const ReduceItemStockTab = () => {
     setIsEditStock(false);
   };
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, dateFrom, dateTo]);
-
   return (
     <TabsContent value="bahan-keluar" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -281,7 +280,10 @@ const ReduceItemStockTab = () => {
                           setSelectedItemId(selectedItm.id);
                           form.setValue("itemName", selectedItm.name);
                           form.setValue("amount", 0);
-                          form.setValue("itemMeasureUnit", selectedItm.measureUnit);
+                          form.setValue(
+                            "itemMeasureUnit",
+                            selectedItm.measureUnit,
+                          );
                           form.setValue("itemUnitPrice", selectedItm.unitPrice);
                         }
                       }}
@@ -344,7 +346,8 @@ const ReduceItemStockTab = () => {
                 <Label>Total Harga</Label>
                 <Input
                   value={formatCurrency(
-                    (form.watch("itemUnitPrice") || 0) * (form.watch("amount") || 0),
+                    (form.watch("itemUnitPrice") || 0) *
+                      (form.watch("amount") || 0),
                   )}
                   disabled
                 />

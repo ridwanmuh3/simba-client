@@ -238,10 +238,6 @@ const AddItemStockTab = () => {
     setIsEditMode(false);
   };
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, dateFrom, dateTo]);
-
   return (
     <TabsContent value="bahan-masuk" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

@@ -375,10 +375,6 @@ const MasterItemTab = () => {
     setPage(1);
   };
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
-
   const handleFormType = (isEditMode: boolean) => {
     const formHandler = isEditMode ? handleEditMasterItem : handleAddMasterItem;
     return form.handleSubmit(formHandler);
@@ -864,14 +860,14 @@ const MasterItemTab = () => {
                                 : ""
                             }
                           >
-                            {item.stock} {item.measureUnit}
+                            {item.stock || 0} {item.measureUnit}
                           </span>
                         </TableCell>
                         <TableCell className="font-medium">
                           {formatCurrency(item.unitPrice)}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {formatCurrency(item.stock * item.unitPrice)}
+                          {formatCurrency(item.stock * item.unitPrice || 0)}
                         </TableCell>
                       </TableRow>
                     ))
