@@ -8,6 +8,7 @@ import {
   DeleteItemStockRequest,
   EditItemRequest,
   GenerateInvoiceRequest,
+  InvoiceDetailData,
   InvoiceHistoryData,
   UpdateInvoiceRequest,
   Item,
@@ -146,9 +147,8 @@ export const useGetItemCategories = () => {
   return useQuery({
     queryKey: ["item-categories"],
     queryFn: async () => {
-      const { data } = await axiosInstance.get<ApiResponse<string[]>>(
-        "/items/categories",
-      );
+      const { data } =
+        await axiosInstance.get<ApiResponse<string[]>>("/items/categories");
       return data.data ?? [];
     },
     staleTime: 1000 * 60 * 10,
@@ -202,9 +202,9 @@ export const useGetStocksFinanceSummary = () => {
   return useQuery({
     queryKey: queryKeys.items.financeSummary,
     queryFn: async () => {
-      const { data } = await axiosInstance.get<ApiResponse<StocksFinanceSummary>>(
-        "/items/stocks/summary",
-      );
+      const { data } = await axiosInstance.get<
+        ApiResponse<StocksFinanceSummary>
+      >("/items/stocks/summary");
       return data;
     },
     staleTime: 1000 * 60 * 5,
@@ -236,9 +236,9 @@ export const useGetItemsStocksSummary = (
       if (dateFrom) params.append("start_date", dateFrom.toISOString());
       if (dateTo) params.append("end_date", dateTo.toISOString());
 
-      const { data } = await axiosInstance.get<ApiResponse<ItemStocksSummary[]>>(
-        `/items/stocks/opname?${params.toString()}`,
-      );
+      const { data } = await axiosInstance.get<
+        ApiResponse<ItemStocksSummary[]>
+      >(`/items/stocks/opname?${params.toString()}`);
       return data;
     },
     staleTime: 1000 * 60 * 5,
@@ -251,7 +251,7 @@ export const useGenerateInvoice = () => {
   return useMutation({
     mutationFn: async (request: GenerateInvoiceRequest) => {
       const response = await axiosInstance.post<Blob>(
-        "/items/invoice",
+        "/items/invoices",
         request,
         { responseType: "blob" },
       );
@@ -319,14 +319,29 @@ export const useGetInvoiceHistory = (
       if (dateFrom) params.append("start_date", dateFrom.toISOString());
       if (dateTo) params.append("end_date", dateTo.toISOString());
 
-      const { data } = await axiosInstance.get<ApiResponse<InvoiceHistoryData[]>>(
-        `/items/invoices?${params.toString()}`,
-      );
+      const { data } = await axiosInstance.get<
+        ApiResponse<InvoiceHistoryData[]>
+      >(`/items/invoices?${params.toString()}`);
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
+  });
+};
+
+export const useGetInvoiceDetail = (id: number | null) => {
+  return useQuery({
+    queryKey: ["invoice-detail", id],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<ApiResponse<InvoiceDetailData>>(
+        `/items/invoices/${id}`,
+      );
+      return data.data!;
+    },
+    enabled: id !== null,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
   });
 };
 

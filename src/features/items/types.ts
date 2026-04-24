@@ -109,6 +109,24 @@ export interface UpdateInvoiceRequest {
   penanggungjawab?: string;
   jabatan?: string;
   bankAccount?: string;
+  stockIds?: number[];
+}
+
+export interface InvoiceItemData {
+  id: number;
+  itemName: string;
+  category: string;
+  measureUnit: string;
+  amount: number;
+  unitPrice: number;
+  totalPrice: number;
+  supplier: string;
+  stockType: string;
+}
+
+export interface InvoiceDetailData extends InvoiceHistoryData {
+  items: InvoiceItemData[];
+  grandTotal: number;
 }
 
 export interface GenerateInvoiceRequest {

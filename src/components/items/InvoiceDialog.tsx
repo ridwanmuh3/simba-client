@@ -24,7 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Calendar, FileText, Loader2, Search } from "lucide-react";
+import { Calendar, FileText, Info, Loader2, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -137,30 +137,6 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       }
       return next;
     });
-  };
-
-  const toggleAll = () => {
-    const allIds = stockRows.map((r) => r.id!).filter(Boolean);
-    const allSelected = allIds.every((id) => selectedIds.has(id));
-    if (allSelected) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        allIds.forEach((id) => next.delete(id));
-        return next;
-      });
-    } else {
-      const toAdd = allIds.filter((id) => !selectedIds.has(id));
-      const available = MAX_SELECTION - selectedIds.size;
-      if (toAdd.length > available) {
-        warnMaxExceeded();
-        return;
-      }
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        toAdd.forEach((id) => next.add(id));
-        return next;
-      });
-    }
   };
 
   const generateInvoice = useGenerateInvoice();
@@ -348,12 +324,32 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                 const last = lastInvoiceData?.data?.[0];
                 if (!last) return null;
                 return (
-                  <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground space-y-1">
-                    <p className="font-medium text-foreground/70">Nomor invoice sebelumnya:</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      <span>INV: <span className="font-mono">{last.invoiceNumber || "-"}</span></span>
-                      <span>QUO: <span className="font-mono">{last.quoNumber || "-"}</span></span>
-                      <span>PO: <span className="font-mono">{last.poNumber || "-"}</span></span>
+                  <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs text-primary/80">
+                    <div className="flex gap-2">
+                      <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />
+                      <div className="space-y-1">
+                        <p className="font-medium">Nomor invoice sebelumnya:</p>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          <span>
+                            INV:{" "}
+                            <span className="font-mono">
+                              {last.invoiceNumber || "-"}
+                            </span>
+                          </span>
+                          <span>
+                            QUO:{" "}
+                            <span className="font-mono">
+                              {last.quoNumber || "-"}
+                            </span>
+                          </span>
+                          <span>
+                            PO:{" "}
+                            <span className="font-mono">
+                              {last.poNumber || "-"}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -611,21 +607,10 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                   <Table>
                     <TableHeader className="sticky top-0 bg-background z-10">
                       <TableRow>
-                        <TableHead className="w-8 py-2">
-                          <Checkbox
-                            checked={
-                              stockRows.length > 0 &&
-                              stockRows.every(
-                                (r) => r.id && selectedIds.has(r.id),
-                              )
-                            }
-                            onCheckedChange={toggleAll}
-                          />
-                        </TableHead>
+                        <TableHead className="w-8 py-2" />
                         <TableHead className="py-2 text-xs">Tanggal</TableHead>
                         <TableHead className="py-2 text-xs">Bahan</TableHead>
                         <TableHead className="py-2 text-xs">Kategori</TableHead>
-
                         <TableHead className="py-2 text-xs text-right">
                           Jumlah
                         </TableHead>

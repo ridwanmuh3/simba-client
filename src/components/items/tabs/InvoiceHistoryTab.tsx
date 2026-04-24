@@ -342,6 +342,7 @@ const InvoiceHistoryTab = () => {
             <Table className="relative w-full">
               <TableHeader className="sticky top-0 bg-background z-10 border-b">
                 <TableRow>
+                  <TableHead>No</TableHead>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>No. Invoice</TableHead>
                   <TableHead>Jenis</TableHead>
@@ -358,7 +359,7 @@ const InvoiceHistoryTab = () => {
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, rowIndex) => (
                     <TableRow key={rowIndex}>
-                      {Array.from({ length: 8 }).map((__, cellIndex) => (
+                      {Array.from({ length: 9 }).map((__, cellIndex) => (
                         <TableCell key={cellIndex}>
                           <Skeleton className="h-5 w-full rounded-md" />
                         </TableCell>
@@ -366,11 +367,12 @@ const InvoiceHistoryTab = () => {
                     </TableRow>
                   ))
                 ) : invoiceRows.length > 0 ? (
-                  invoiceRows.map((invoice) => (
+                  invoiceRows.map((invoice, index) => (
                     <TableRow
                       key={invoice.id}
                       className="group transition-colors hover:bg-muted/40"
                     >
+                      <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>
                         {formatDateTable(invoice.createdAt)}
                       </TableCell>
