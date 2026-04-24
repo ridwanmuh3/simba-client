@@ -48,11 +48,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     try {
       await logoutMutation.mutateAsync();
     } catch {
-      toast({
-        variant: "destructive",
-        title: "Gagal logout",
-        description: "Tidak dapat terhubung ke server untuk logout. Sesi Anda akan dibersihkan secara lokal.",
-      });
+      // Server logout failed (e.g. expired token), but finally always cleans up locally
     } finally {
       queryClient.removeQueries({ queryKey: queryKeys.auth.current });
       navigate("/", { replace: true });

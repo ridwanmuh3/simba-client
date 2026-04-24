@@ -67,7 +67,8 @@ axiosInstance.interceptors.response.use(
       originalRequest &&
       !originalRequest._retry &&
       originalRequest.url !== "/auth/login" &&
-      originalRequest.url !== "/auth/refresh"
+      originalRequest.url !== "/auth/refresh" &&
+      originalRequest.url !== "/auth/logout"
     ) {
       if (isRefreshing) {
         return new Promise<void>((resolve, reject) => {
