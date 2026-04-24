@@ -86,9 +86,29 @@ export interface InvoiceHistoryData {
   invoiceNumber: string;
   poNumber: string;
   quoNumber: string;
+  receiverName: string;
+  receiverAddress: string;
+  invoiceDate: string;
+  keterangan: string;
+  penanggungjawab: string;
+  jabatan: string;
+  bankAccount: string;
   hasItems: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UpdateInvoiceRequest {
+  companyName: string;
+  companyAddress: string;
+  companyContact: string;
+  receiverName?: string;
+  receiverAddress?: string;
+  invoiceDate?: string;
+  keterangan?: string;
+  penanggungjawab?: string;
+  jabatan?: string;
+  bankAccount?: string;
 }
 
 export interface GenerateInvoiceRequest {
@@ -101,8 +121,7 @@ export interface GenerateInvoiceRequest {
   quoNo?: string;
   receiverName: string;
   receiverAddress: string;
-  dateFrom?: string;
-  dateTo?: string;
+  stockIds?: number[];
   stockType?: "IN" | "OUT";
   keterangan?: string;
   penanggungjawab: string;

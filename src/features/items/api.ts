@@ -9,6 +9,7 @@ import {
   EditItemRequest,
   GenerateInvoiceRequest,
   InvoiceHistoryData,
+  UpdateInvoiceRequest,
   Item,
   ItemStocksSummary,
   StockTracking,
@@ -141,6 +142,20 @@ export const useGetFullItems = () => {
   });
 };
 
+export const useGetItemCategories = () => {
+  return useQuery({
+    queryKey: ["item-categories"],
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<ApiResponse<string[]>>(
+        "/items/categories",
+      );
+      return data.data ?? [];
+    },
+    staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useGetAllItemsStocks = (
   searchQuery: string,
   page: number,
@@ -148,6 +163,7 @@ export const useGetAllItemsStocks = (
   dateFrom?: Date,
   dateTo?: Date,
   transactionType = "ALL",
+  category = "",
 ) => {
   return useQuery({
     queryKey: queryKeys.items.listWithFilters(
@@ -157,6 +173,7 @@ export const useGetAllItemsStocks = (
       dateFrom,
       dateTo,
       transactionType,
+      category,
     ),
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -168,6 +185,7 @@ export const useGetAllItemsStocks = (
       if (dateTo) params.append("end_date", dateTo.toISOString());
       if (transactionType && transactionType !== "ALL")
         params.append("type", transactionType);
+      if (category) params.append("category", category);
 
       const { data } = await axiosInstance.get<ApiResponse<StockTracking[]>>(
         `/items/stocks?${params.toString()}`,
@@ -309,6 +327,27 @@ export const useGetInvoiceHistory = (
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
+  });
+};
+
+export const useUpdateInvoice = () => {
+  return useMutation({
+    mutationFn: async ({
+      id,
+      request,
+    }: {
+      id: number;
+      request: UpdateInvoiceRequest;
+    }) => {
+      const { data } = await axiosInstance.patch<ApiResponse<boolean>>(
+        `/items/invoices/${id}`,
+        request,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+    },
   });
 };
 

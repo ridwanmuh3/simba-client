@@ -7,6 +7,8 @@ export type CompanyProfile = {
   companyAddress: string;
   companyContact: string;
   bankAccount: string;
+  penanggungjawab?: string;
+  jabatan?: string;
 };
 
 export type DocumentSequence = {

@@ -7,12 +7,12 @@ dayjs.extend(relativeTime);
 
 export const formatDateTable = (dateString: string | Date) => {
   if (!dateString) return "-";
-  return dayjs(dateString).format("DD MMM YYYY");
+  return dayjs(dateString).format("DD MMMM YYYY");
 };
 
 export const formatDateDetail = (dateString: string | Date) => {
   if (!dateString) return "-";
-  return dayjs(dateString).format("DD MMM YYYY HH:mm:ss");
+  return dayjs(dateString).format("DD MMMM YYYY HH:mm:ss");
 };
 
 export const formatDateRelative = (dateString: string | Date) => {
@@ -24,7 +24,7 @@ export const combineDateTime = (date?: Date, time: string = "00:00:00") => {
   if (!date) return undefined;
 
   return dayjs(
-    `${dayjs(date).format("DD MMM YYYY")} ${time}`,
-    "DD MMM YYYY HH:mm:ss",
+    `${dayjs(date).format("DD MMMM YYYY")} ${time}`,
+    "DD MMMM YYYY HH:mm:ss",
   ).toDate();
 };

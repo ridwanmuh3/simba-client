@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+// Button kept for collapse toggle
 import logoBgn from "@/assets/sppg.webp";
 import { AuthContextType } from "@/features/auth/types";
 import LogoutDialog from "../shared/LogoutDialog";
@@ -143,8 +144,8 @@ const Sidebar = ({ authContext }: SidebarProps) => {
       <div className="border-t border-sidebar-border">
         <div
           className={cn(
-            "p-3 flex items-center gap-3",
-            collapsed ? "justify-center" : "",
+            "p-3 flex items-center",
+            collapsed ? "justify-center" : "gap-3",
           )}
         >
           <Avatar className="w-9 h-9 shrink-0">

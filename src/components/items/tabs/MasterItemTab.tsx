@@ -144,11 +144,11 @@ const MasterItemTab = () => {
   const importItem = useImportItems();
   const deleteItem = useDeleteItem();
 
-  const { data: itemsData, isLoading: isItemsLoading, isFetching } = useGetAllItems(
-    searchQuery,
-    page,
-    limit,
-  );
+  const {
+    data: itemsData,
+    isLoading: isItemsLoading,
+    isFetching,
+  } = useGetAllItems(searchQuery, page, limit);
 
   const handleAddMasterItem = async (values: MasterItemFormInputs) => {
     setErrMsg("");

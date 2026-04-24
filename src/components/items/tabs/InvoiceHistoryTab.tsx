@@ -25,6 +25,7 @@ import {
   Download,
   Eye,
   MoreHorizontal,
+  Pencil,
   Search,
   Trash2,
 } from "lucide-react";
@@ -62,6 +63,7 @@ import {
 import { AxiosError } from "axios";
 import { toast } from "@/hooks/use-toast";
 import type { InvoiceHistoryData } from "@/features/items/types";
+import EditInvoiceDialog from "../EditInvoiceDialog";
 
 const normalizeDocumentNumber = (value: string) => {
   if (!value) {
@@ -86,6 +88,10 @@ const InvoiceHistoryTab = () => {
   const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [editInvoice, setEditInvoice] = useState<InvoiceHistoryData | null>(
+    null,
+  );
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const { data: historyData, isLoading } = useGetInvoiceHistory(
     searchQuery,
@@ -417,6 +423,15 @@ const InvoiceHistoryTab = () => {
                             <DropdownMenuLabel>Aksi Nota</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
+                              onClick={() => {
+                                setEditInvoice(invoice);
+                                setIsEditOpen(true);
+                              }}
+                            >
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit invoice
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               disabled={!invoice.hasItems}
                               onClick={() => handleViewInvoice(invoice)}
                             >
@@ -507,6 +522,15 @@ const InvoiceHistoryTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      <EditInvoiceDialog
+        invoice={editInvoice}
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) setEditInvoice(null);
+        }}
+      />
     </TabsContent>
   );
 };

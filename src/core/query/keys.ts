@@ -16,7 +16,8 @@ export const queryKeys = {
       dateFrom?: Date,
       dateTo?: Date,
       type?: string,
-    ) => ["items-stock", search, page, limit, dateFrom, dateTo, type] as const,
+      category?: string,
+    ) => ["items-stock", search, page, limit, dateFrom, dateTo, type, category] as const,
     full: ["items-stock-mapping"] as const,
     stocksSummary: (
       search: string,
