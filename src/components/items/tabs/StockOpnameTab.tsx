@@ -36,10 +36,10 @@ const StockOpnameTab = () => {
     page,
     limit,
   );
-  const stocksSummary = useGetStocksFinanceSummary();
+  // const stocksSummary = useGetStocksFinanceSummary();
 
   const stocks = stocksData?.data ?? [];
-  const stocksBudgetSummary = stocksSummary.data;
+  // const stocksBudgetSummary = stocksSummary.data;
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -52,8 +52,9 @@ const StockOpnameTab = () => {
 
   return (
     <TabsContent value="stok-opname" className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2">
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-4"> */}
+      <div>
+        <Card>
           <CardHeader>
             <CardTitle className="text-lg">
               Stok Opname - Rekap Inventaris
@@ -259,7 +260,7 @@ const StockOpnameTab = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="sticky lg:col-span-1 h-fit">
+        {/* <Card className="sticky lg:col-span-1 h-fit">
           {stocksSummary.isLoading ? (
             <CardContent className="space-y-4 pt-6">
               <Skeleton className="h-5 w-40 mb-2" />
@@ -276,7 +277,6 @@ const StockOpnameTab = () => {
                 <CardTitle className="text-lg">Ringkasan Anggaran</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Aset */}
                 <div className="flex justify-between items-center gap-0.5">
                   <span className="text-sm font-semibold">
                     Nilai Stok (Aset)
@@ -288,7 +288,6 @@ const StockOpnameTab = () => {
                   </span>
                 </div>
 
-                {/* Modal */}
                 <div className="border-t pt-4 flex justify-between items-center gap-0.5">
                   <span className="text-sm font-semibold text-red-600">
                     Modal (Pembelian)
@@ -298,7 +297,6 @@ const StockOpnameTab = () => {
                   </span>
                 </div>
 
-                {/* Pendapatan */}
                 <div className="flex justify-between items-center gap-0.5">
                   <span className="text-sm font-semibold text-green-600">
                     Pendapatan (Penjualan)
@@ -308,7 +306,6 @@ const StockOpnameTab = () => {
                   </span>
                 </div>
 
-                {/* Laba */}
                 <div className="border-t pt-4 flex justify-between items-center gap-0.5">
                   <span className="text-sm font-semibold">Laba</span>
                   <span
@@ -324,7 +321,6 @@ const StockOpnameTab = () => {
                   </span>
                 </div>
 
-                {/* Total */}
                 <div className="border-t pt-4 flex justify-between items-center gap-0.5">
                   <span className="font-semibold text-sm">
                     Total Nilai Bersih
@@ -338,7 +334,7 @@ const StockOpnameTab = () => {
               </CardContent>
             </>
           ) : null}
-        </Card>
+        </Card> */}
       </div>
     </TabsContent>
   );

@@ -7,7 +7,6 @@ import {
   Wallet,
   ChevronLeft,
   ChevronRight,
-  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import { AuthContextType } from "@/features/auth/types";
 import LogoutDialog from "../shared/LogoutDialog";
 import { useSidebarStore } from "./use-sidebar-store";
 import { UserRole } from "@/features/users/types";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 
 interface SidebarProps {
   authContext: AuthContextType;
@@ -54,6 +54,7 @@ const Sidebar = ({ authContext }: SidebarProps) => {
   const filteredMenu = menuItems.filter((item) =>
     item.roles.includes(authContext.user.role),
   );
+
   return (
     <motion.aside
       initial={false}
@@ -139,28 +140,44 @@ const Sidebar = ({ authContext }: SidebarProps) => {
         })}
       </nav>
 
-      {/* User & Logout */}
-      <div className="p-3 border-t border-sidebar-border space-y-1">
-        {/* <Link
-          to="/settings"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+      <div className="border-t border-sidebar-border">
+        <div
+          className={cn(
+            "p-3 flex items-center gap-3",
+            collapsed ? "justify-center" : "",
+          )}
         >
-          <Settings className="w-5 h-5 shrink-0" />
-          <motion.span
+          <Avatar className="w-9 h-9 shrink-0">
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+              {authContext.user.fullname
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+          <motion.div
             initial={false}
             animate={{
               opacity: collapsed ? 0 : 1,
               width: collapsed ? 0 : "auto",
             }}
-            className="font-medium whitespace-nowrap overflow-hidden"
+            className="overflow-hidden min-w-0"
           >
-            Pengaturan
-          </motion.span>
-        </Link> */}
-        <LogoutDialog
-          collapsedSidebar={collapsed}
-          logoutHandler={authContext.logout}
-        />
+            <p className="font-semibold text-sm text-foreground whitespace-nowrap truncate leading-tight">
+              {authContext.user.fullname}
+            </p>
+            <p className="text-xs text-muted-foreground whitespace-nowrap truncate leading-tight">
+              {authContext.user.role}
+            </p>
+          </motion.div>
+        </div>
+        <div className="px-3 pb-3">
+          <LogoutDialog
+            collapsedSidebar={collapsed}
+            logoutHandler={authContext.logout}
+          />
+        </div>
       </div>
     </motion.aside>
   );

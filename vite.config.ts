@@ -4,6 +4,7 @@ import path from "path";
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === "development";
+  const backendTarget = "http://localhost:3000";
   return {
     plugins: [react()],
     resolve: {
@@ -18,11 +19,11 @@ export default defineConfig(({ mode }) => {
           cors: true,
           proxy: {
             "/api": {
-              target: "http://localhost:3000",
+              target: backendTarget,
               changeOrigin: true,
             },
             "/uploads": {
-              target: "http://localhost:3000",
+              target: backendTarget,
               changeOrigin: true,
             },
           },
@@ -34,11 +35,11 @@ export default defineConfig(({ mode }) => {
       port: 4173,
       proxy: {
         "/api": {
-          target: "http://localhost:3000",
+          target: backendTarget,
           changeOrigin: true,
         },
         "/uploads": {
-          target: "http://localhost:3000",
+          target: backendTarget,
           changeOrigin: true,
         },
       },
