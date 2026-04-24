@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import { Eye, EyeOff, Loader2, Lock, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,12 +41,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden"
-      >
+      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-primary/80" />
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-72 h-72 rounded-full bg-primary-foreground/20 blur-3xl" />
@@ -55,11 +49,7 @@ const Login = () => {
         </div>
 
         <div className="relative z-10 flex flex-col justify-center px-12 text-primary-foreground">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
+          <div>
             <div className="w-16 h-16 rounded-2xl bg-primary-foreground/20 backdrop-blur flex items-center justify-center mb-8">
               <img
                 src={logoBgn}
@@ -71,16 +61,11 @@ const Login = () => {
             <p className="text-xl text-primary-foreground/80 max-w-md">
               Sistem Informasi Manajemen Barang dan Anggaran
             </p>
-          </motion.div>
+          </div>
         </div>
-      </motion.div>
+      </div>
       <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
-        >
+        <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <img
               src={logoBgn}
@@ -183,7 +168,7 @@ const Login = () => {
           <p className="text-center text-sm text-muted-foreground mt-6">
             © {dayjs().year()} SIMBA. All rights reserved.
           </p>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

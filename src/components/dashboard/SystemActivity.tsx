@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { SystemActivityData } from "@/features/dashboard/types";
 import { ActivityIcon } from "lucide-react";
@@ -10,11 +9,7 @@ interface SystemActivityProps {
 
 const SystemActivity = ({ activities }: SystemActivityProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6 }}
-    >
+    <div>
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
@@ -71,7 +66,7 @@ const SystemActivity = ({ activities }: SystemActivityProps) => {
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 };
 

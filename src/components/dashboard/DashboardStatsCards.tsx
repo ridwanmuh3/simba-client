@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { BudgetStats, StockStats } from "@/features/dashboard/types";
@@ -15,11 +14,8 @@ const DashboardStatsCards = ({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
       {stockStats.map((stat, index) => (
-        <motion.div
+        <div
           key={stat.title}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
           className="h-full"
         >
           <Card className="hover-lift cursor-pointer h-full flex flex-col justify-between">
@@ -50,14 +46,11 @@ const DashboardStatsCards = ({
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       ))}
       {budgetStats.map((stat, index) => (
-        <motion.div
+        <div
           key={stat.title}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
           className="h-full"
         >
           <Card className="hover-lift cursor-pointer h-full flex flex-col justify-between">
@@ -101,7 +94,7 @@ const DashboardStatsCards = ({
               </div>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       ))}
     </div>
   );

@@ -1,5 +1,4 @@
 import { MouseEvent, useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import axios from "axios";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import {
@@ -446,11 +445,7 @@ export default function Finance() {
       subtitle="Catat pengeluaran dari nota pembelian bahan MBG"
     >
       {/* Tabs for Transactions & Reports */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
+      <div>
         <Tabs defaultValue="finance" className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <TabsList>
@@ -954,7 +949,7 @@ export default function Finance() {
             <ReportViewer transactions={reportTransactions} />
           </TabsContent>
         </Tabs>
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 }

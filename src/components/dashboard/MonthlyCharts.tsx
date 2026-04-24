@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChartIcon, PieChartIcon } from "lucide-react";
 import {
@@ -33,12 +32,7 @@ const MonthlyExpenseCharts = ({
 }: MonthlyExpenseChartsProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="lg:col-span-2"
-      >
+      <div className="lg:col-span-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-semibold">
@@ -119,12 +113,8 @@ const MonthlyExpenseCharts = ({
             </div>
           </CardContent>
         </Card>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
+      </div>
+      <div>
         <Card>
           <CardHeader>
             <CardTitle className="text-lg font-semibold">
@@ -194,7 +184,7 @@ const MonthlyExpenseCharts = ({
             )}
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   );
 };

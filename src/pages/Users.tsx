@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import {
   Search,
   MoreHorizontal,
@@ -114,12 +113,7 @@ const Users = () => {
     >
       <div className="grid grid-cols-1 min-[548px]:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {usersStatsData.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: (index + 1) * 0.1 }}
-          >
+          <div key={stat.title}>
             <StatsCard
               key={index}
               title={stat.title}
@@ -127,15 +121,10 @@ const Users = () => {
               icon={stat.icon}
               bgIcon={stat.bgIcon}
             />
-          </motion.div>
+          </div>
         ))}
       </div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="flex flex-col md:flex-row gap-6 mb-6 flex-wrap"
-      >
+      <div className="flex flex-col md:flex-row gap-6 mb-6 flex-wrap">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -160,12 +149,8 @@ const Users = () => {
             <AddUserForm />
           </div>
         </div>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-      >
+      </div>
+      <div>
         <Card>
           <CardContent className="p-0">
             <div className="relative border-y text-nowrap overflow-x-auto">
@@ -203,13 +188,7 @@ const Users = () => {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user: User, index: number) => (
-                    <motion.tr
-                      key={user.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="group"
-                    >
+                    <tr key={user.id} className="group">
                       <TableCell className="font-medium text-muted-foreground">
                         {(page - 1) * limit + index + 1}
                       </TableCell>
@@ -288,7 +267,7 @@ const Users = () => {
                           </DropdownMenu>
                         ) : null}
                       </TableCell>
-                    </motion.tr>
+                    </tr>
                   ))
                 )}
               </TableBody>
@@ -306,7 +285,7 @@ const Users = () => {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 };
