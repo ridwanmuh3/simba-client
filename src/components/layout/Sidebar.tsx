@@ -15,7 +15,11 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import logoBgn from "@/assets/sppg.webp";
 import { AuthContextType } from "@/features/auth/types";
 import type { AuthUser } from "@/features/auth/types";
@@ -100,7 +104,8 @@ const Sidebar = ({ authContext }: SidebarProps) => {
       navigate("/dashboard");
     } catch (e) {
       let msg = "Gagal mengganti dapur.";
-      if (isAxiosError(e) && e.response?.status === 403) msg = "Dapur tidak aktif.";
+      if (isAxiosError(e) && e.response?.status === 403)
+        msg = "Dapur tidak aktif.";
       toast({ title: "Gagal", description: msg, variant: "destructive" });
     } finally {
       setSwitching(null);
@@ -125,7 +130,9 @@ const Sidebar = ({ authContext }: SidebarProps) => {
           <ChefHat className="w-3.5 h-3.5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground leading-none mb-0.5">Dapur Aktif</p>
+          <p className="text-xs text-muted-foreground leading-none mb-0.5">
+            Dapur Aktif
+          </p>
           <p className="text-sm font-medium text-foreground truncate leading-tight">
             {currentDapur?.name ?? "—"}
           </p>
@@ -153,11 +160,20 @@ const Sidebar = ({ authContext }: SidebarProps) => {
       >
         <motion.div
           initial={false}
-          animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
+          animate={{
+            opacity: collapsed ? 0 : 1,
+            width: collapsed ? 0 : "auto",
+          }}
           className="flex items-center gap-3 overflow-hidden"
         >
-          <img src={logoBgn} alt="Logo BGN" className="w-10 h-10 rounded-xl object-contain" />
-          <span className="font-bold text-lg text-foreground whitespace-nowrap">SIMBA</span>
+          <img
+            src={logoBgn}
+            alt="Logo BGN"
+            className="w-10 h-10 rounded-xl object-contain"
+          />
+          <span className="font-bold text-lg text-foreground whitespace-nowrap">
+            SIMBA
+          </span>
         </motion.div>
         <Button
           variant="ghost"
@@ -165,7 +181,11 @@ const Sidebar = ({ authContext }: SidebarProps) => {
           onClick={toggleCollapse}
           className="shrink-0 hover:bg-sidebar-accent"
         >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          {collapsed ? (
+            <ChevronRight className="w-4 h-4" />
+          ) : (
+            <ChevronLeft className="w-4 h-4" />
+          )}
         </Button>
       </div>
 
@@ -178,9 +198,16 @@ const Sidebar = ({ authContext }: SidebarProps) => {
       >
         <Popover open={dapurOpen} onOpenChange={setDapurOpen}>
           {collapsed ? dapurTriggerCollapsed : dapurTriggerExpanded}
-          <PopoverContent className="w-52 p-1" side="right" align="start" sideOffset={8}>
+          <PopoverContent
+            className="w-52 p-1"
+            side="right"
+            align="start"
+            sideOffset={8}
+          >
             {activeDapurs.length === 0 ? (
-              <p className="text-xs text-muted-foreground px-3 py-2">Tidak ada dapur aktif</p>
+              <p className="text-xs text-muted-foreground px-3 py-2">
+                Tidak ada dapur aktif
+              </p>
             ) : (
               activeDapurs.map((d) => {
                 const isCurrent = d.id === authContext.user?.currentDapurId;
@@ -232,7 +259,10 @@ const Sidebar = ({ authContext }: SidebarProps) => {
                 <item.icon className="w-5 h-5 shrink-0" />
                 <motion.span
                   initial={false}
-                  animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
+                  animate={{
+                    opacity: collapsed ? 0 : 1,
+                    width: collapsed ? 0 : "auto",
+                  }}
                   className="font-medium whitespace-nowrap overflow-hidden"
                 >
                   {item.title}
@@ -261,7 +291,10 @@ const Sidebar = ({ authContext }: SidebarProps) => {
           </Avatar>
           <motion.div
             initial={false}
-            animate={{ opacity: collapsed ? 0 : 1, width: collapsed ? 0 : "auto" }}
+            animate={{
+              opacity: collapsed ? 0 : 1,
+              width: collapsed ? 0 : "auto",
+            }}
             className="overflow-hidden min-w-0"
           >
             <p className="font-semibold text-sm text-foreground whitespace-nowrap truncate leading-tight">
