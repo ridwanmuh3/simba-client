@@ -220,7 +220,7 @@ const InvoiceHistoryTab = () => {
   const handleViewInvoice = async (invoice: InvoiceHistoryData) => {
     if (downloadInvoice.isPending) return;
     try {
-      const { blob } = await downloadInvoice.mutateAsync({
+      const { blob, filename } = await downloadInvoice.mutateAsync({
         id: invoice.id,
         mode: "view",
       });
@@ -230,6 +230,7 @@ const InvoiceHistoryTab = () => {
       a.href = url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -433,13 +434,13 @@ const InvoiceHistoryTab = () => {
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit invoice
                             </DropdownMenuItem>
-                            <DropdownMenuItem
+                            {/* <DropdownMenuItem
                               disabled={!invoice.hasItems}
                               onClick={() => handleViewInvoice(invoice)}
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               Lihat nota
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuItem
                               disabled={!invoice.hasItems}
                               onClick={() => handleDownloadInvoice(invoice)}
