@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       try {
         await loginMutation.mutateAsync(request);
         toast({ title: "Login berhasil!", description: "Selamat datang kembali." });
-        navigate("/dashboard", { replace: true });
+        navigate("/select-dapur", { replace: true });
       } catch (e) {
         let msg = "Login gagal. Periksa koneksi internet Anda dan coba lagi.";
         if (isAxiosError(e)) {
@@ -60,6 +60,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       user: user ?? null,
       isLoading,
       isAuthenticated: !!user,
+      hasDapur: !!(user?.current_dapur_id),
       login,
       logout,
     }),

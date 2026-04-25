@@ -11,12 +11,14 @@ export interface AuthUser {
   fullname: string;
   role: UserRole;
   avatar?: string;
+  current_dapur_id?: number | null;
 }
 
 export interface AuthContextType {
   user: AuthUser | undefined | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasDapur: boolean;
   login: (req: UserLoginRequest, onError?: (msg: string) => void) => Promise<void>;
   logout: () => Promise<void>;
 }

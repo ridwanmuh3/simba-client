@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { queryClient } from "@/core/query/client";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
+import AuthOnlyRoute from "@/features/auth/components/AuthOnlyRoute";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { lazy, Suspense } from "react";
 import Spinner from "@/components/shared/Spinner";
@@ -12,6 +13,7 @@ import { UserRole } from "@/features/users/types";
 import PublicRoute from "@/features/auth/components/PublicRoute";
 
 const Login = lazy(() => import("@/pages/Login"));
+const SelectDapur = lazy(() => import("@/pages/SelectDapur"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Items = lazy(() => import("@/pages/Items"));
 const Users = lazy(() => import("@/pages/Users"));
@@ -29,6 +31,9 @@ const App = () => (
             <Routes>
               <Route element={<PublicRoute />}>
                 <Route path="/" element={<Login />} />
+              </Route>
+              <Route element={<AuthOnlyRoute />}>
+                <Route path="/select-dapur" element={<SelectDapur />} />
               </Route>
               <Route
                 element={

@@ -67,4 +67,7 @@ export const queryKeys = {
     list: (page: number, limit: number) => ["users", page, limit] as const,
     stats: ["users_stats"] as const,
   },
+  dapur: {
+    list: ["dapurs"] as const,
+  },
 } as const;

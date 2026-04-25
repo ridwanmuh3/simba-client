@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard,
@@ -7,16 +7,18 @@ import {
   Wallet,
   ChevronLeft,
   ChevronRight,
+  ChefHat,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-// Button kept for collapse toggle
 import logoBgn from "@/assets/sppg.webp";
 import { AuthContextType } from "@/features/auth/types";
 import LogoutDialog from "../shared/LogoutDialog";
 import { useSidebarStore } from "./use-sidebar-store";
 import { UserRole } from "@/features/users/types";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { useGetDapurs } from "@/features/dapur/api";
 
 interface SidebarProps {
   authContext: AuthContextType;
@@ -52,8 +54,15 @@ const menuItems = [
 const Sidebar = ({ authContext }: SidebarProps) => {
   const { collapsed, toggleCollapse } = useSidebarStore();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { data: dapurs } = useGetDapurs();
+
   const filteredMenu = menuItems.filter((item) =>
     item.roles.includes(authContext.user.role),
+  );
+
+  const currentDapur = dapurs?.find(
+    (d) => d.id === authContext.user?.current_dapur_id,
   );
 
   return (
@@ -106,6 +115,43 @@ const Sidebar = ({ authContext }: SidebarProps) => {
             <ChevronLeft className="w-4 h-4" />
           )}
         </Button>
+      </div>
+
+      {/* Current Dapur */}
+      <div
+        className={cn(
+          "px-3 py-2 border-b border-sidebar-border",
+          collapsed ? "flex justify-center" : "",
+        )}
+      >
+        {collapsed ? (
+          <button
+            onClick={() => navigate("/select-dapur")}
+            title={currentDapur?.name ?? "Pilih Dapur"}
+            className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors"
+          >
+            <ChefHat className="w-4 h-4 text-primary" />
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <ChefHat className="w-3.5 h-3.5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground leading-none mb-0.5">Dapur Aktif</p>
+              <p className="text-sm font-medium text-foreground truncate leading-tight">
+                {currentDapur?.name ?? "—"}
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/select-dapur")}
+              title="Ganti dapur"
+              className="flex-shrink-0 p-1 rounded hover:bg-sidebar-accent text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
