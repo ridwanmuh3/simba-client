@@ -2,10 +2,15 @@ export interface Dapur {
   id: number;
   name: string;
   description: string;
-  is_active: boolean;
-  created_at: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface SelectDapurRequest {
   dapur_id: number;
+}
+
+export interface CreateDapurRequest {
+  name: string;
+  description?: string;
 }

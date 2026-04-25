@@ -90,7 +90,6 @@ const MasterItemTab = () => {
       dateAdded: new Date(),
     },
   });
-  const [isEditForm, setIsEditForm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -202,7 +201,6 @@ const MasterItemTab = () => {
 
   const handleSelectItem = (item: Item) => {
     setSelectedItem(item);
-    setIsEditForm(true);
     form.setValue("name", item.name);
 
     if (!foodOptions.some((option) => option.value === item.category)) {
@@ -279,7 +277,6 @@ const MasterItemTab = () => {
           break;
       }
     } finally {
-      setIsEditForm(false);
       form.reset();
     }
   };
@@ -317,14 +314,12 @@ const MasterItemTab = () => {
       }
     } finally {
       form.reset();
-      setIsEditForm(false);
     }
   };
 
   const handleCancelEditItem = (e: MouseEvent) => {
     e.preventDefault();
     setSelectedItem(null);
-    setIsEditForm(false);
     setErrMsg("");
     form.reset();
   };
@@ -375,8 +370,8 @@ const MasterItemTab = () => {
     setPage(1);
   };
 
-  const handleFormType = (isEditMode: boolean) => {
-    const formHandler = isEditMode ? handleEditMasterItem : handleAddMasterItem;
+  const handleFormType = () => {
+    const formHandler = selectedItem ? handleEditMasterItem : handleAddMasterItem;
     return form.handleSubmit(formHandler);
   };
 
@@ -456,7 +451,7 @@ const MasterItemTab = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4" onSubmit={handleFormType(isEditForm)}>
+            <form className="space-y-4" onSubmit={handleFormType()}>
               <div className="space-y-2">
                 <Label htmlFor="name">
                   Nama Bahan <RequiredInputIdentifier />

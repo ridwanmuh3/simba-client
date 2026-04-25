@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       user: user ?? null,
       isLoading,
       isAuthenticated: !!user,
-      hasDapur: !!(user?.current_dapur_id),
+      hasDapur: !!(user?.currentDapurId),
       login,
       logout,
     }),

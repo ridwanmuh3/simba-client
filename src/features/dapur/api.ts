@@ -3,7 +3,7 @@ import { queryClient } from "@/core/query/client";
 import { queryKeys } from "@/core/query/keys";
 import { ApiResponse } from "@/types/response";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Dapur, SelectDapurRequest } from "./types";
+import { CreateDapurRequest, Dapur, SelectDapurRequest } from "./types";
 
 export const useGetDapurs = () => {
   return useQuery<Dapur[]>({
@@ -23,6 +23,18 @@ export const useSelectDapurMutation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.current });
+    },
+  });
+};
+
+export const useCreateDapurMutation = () => {
+  return useMutation<Dapur, Error, CreateDapurRequest>({
+    mutationFn: async (request) => {
+      const { data } = await axiosInstance.post<ApiResponse<Dapur>>("/dapurs", request);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dapur.list });
     },
   });
 };

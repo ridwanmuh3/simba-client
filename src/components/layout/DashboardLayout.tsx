@@ -32,7 +32,7 @@ const DashboardLayout = ({
       <Sidebar authContext={auth} />
       <div className={collapsed ? "pl-[70px]" : "pl-[280px]"}>
         <main className="p-6">
-          <div>
+          <div key={auth.user?.currentDapurId}>
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-foreground">{title}</h1>
               {subtitle && (

@@ -11,7 +11,7 @@ export interface AuthUser {
   fullname: string;
   role: UserRole;
   avatar?: string;
-  current_dapur_id?: number | null;
+  currentDapurId?: number | null;
 }
 
 export interface AuthContextType {

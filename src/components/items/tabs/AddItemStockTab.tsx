@@ -62,18 +62,13 @@ const AddItemStockTab = () => {
       supplier: "",
     },
   });
-  const [isEditMode, setIsEditMode] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState("");
-  const [selectedStock, setSelectedStock] = useState<StockTracking | null>(
-    null,
-  );
+  const [selectedStock, setSelectedStock] = useState<StockTracking | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [isFromOpen, setIsFromOpen] = useState(false);
-  const [isToOpen, setIsToOpen] = useState(false);
-  const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
-  const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
+  const [openPopover, setOpenPopover] = useState<"from" | "to" | null>(null);
+  const [tempDates, setTempDates] = useState<{ from?: Date; to?: Date }>({});
   const [errMsg, setErrMsg] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -122,7 +117,6 @@ const AddItemStockTab = () => {
       form.reset();
       setSelectedStock(null);
       setSelectedItemId("");
-      setIsEditMode(false);
     } catch (e) {
       const err = e as AxiosError;
       switch (err.status) {
@@ -172,7 +166,6 @@ const AddItemStockTab = () => {
         title: "Berhasil menghapus data bahan",
         description: `Anda berhasil menghapus data bahan`,
       });
-      setIsEditMode(false);
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
@@ -206,27 +199,23 @@ const AddItemStockTab = () => {
   };
 
   const handleOpenFromChange = (open: boolean) => {
-    if (open) {
-      setTempDateFrom(dateFrom);
-    }
-    setIsFromOpen(open);
+    if (open) setTempDates((d) => ({ ...d, from: dateFrom }));
+    setOpenPopover(open ? "from" : null);
   };
 
   const handleOpenToChange = (open: boolean) => {
-    if (open) {
-      setTempDateTo(dateTo);
-    }
-    setIsToOpen(open);
+    if (open) setTempDates((d) => ({ ...d, to: dateTo }));
+    setOpenPopover(open ? "to" : null);
   };
 
   const handleConfirmFrom = () => {
-    setDateFrom(tempDateFrom);
-    setIsFromOpen(false);
+    setDateFrom(tempDates.from);
+    setOpenPopover(null);
   };
 
   const handleConfirmTo = () => {
-    setDateTo(tempDateTo);
-    setIsToOpen(false);
+    setDateTo(tempDates.to);
+    setOpenPopover(null);
   };
 
   const handleCancelEditStock = (e: MouseEvent) => {
@@ -235,7 +224,6 @@ const AddItemStockTab = () => {
     setSelectedStock(null);
     form.reset();
     setErrMsg("");
-    setIsEditMode(false);
   };
 
   return (
@@ -266,7 +254,6 @@ const AddItemStockTab = () => {
                       items={itemsData?.data || []}
                       value={field.value}
                       onChange={(val) => {
-                        setIsEditMode(false);
                         setSelectedStock(null);
                         field.onChange(val);
                         const selectedItm = itemsData?.data?.find(
@@ -359,7 +346,7 @@ const AddItemStockTab = () => {
                 )}
               </div>
               <div className="flex gap-4 pt-2 flex-wrap-reverse">
-                {isEditMode && (
+                {!!selectedStock && (
                   <>
                     <Button
                       type="button"
@@ -410,7 +397,7 @@ const AddItemStockTab = () => {
                   className="pl-9"
                 />
               </div>
-              <Popover open={isFromOpen} onOpenChange={handleOpenFromChange}>
+              <Popover open={openPopover === "from"} onOpenChange={handleOpenFromChange}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Calendar className="w-4 h-4 mr-1" />
@@ -420,8 +407,8 @@ const AddItemStockTab = () => {
                 <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
                   <CalendarComponent
                     mode="single"
-                    selected={tempDateFrom}
-                    onSelect={setTempDateFrom}
+                    selected={tempDates.from}
+                    onSelect={(d) => setTempDates((prev) => ({ ...prev, from: d }))}
                     disabled={(date) => date > new Date()}
                     initialFocus
                   />
@@ -431,7 +418,7 @@ const AddItemStockTab = () => {
                       variant="outline"
                       onClick={() => {
                         setDateFrom(undefined);
-                        setIsFromOpen(false);
+                        setOpenPopover(null);
                       }}
                     >
                       Batal
@@ -442,7 +429,7 @@ const AddItemStockTab = () => {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Popover open={isToOpen} onOpenChange={handleOpenToChange}>
+              <Popover open={openPopover === "to"} onOpenChange={handleOpenToChange}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Calendar className="w-4 h-4 mr-1" />
@@ -452,8 +439,8 @@ const AddItemStockTab = () => {
                 <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
                   <CalendarComponent
                     mode="single"
-                    selected={tempDateTo}
-                    onSelect={setTempDateTo}
+                    selected={tempDates.to}
+                    onSelect={(d) => setTempDates((prev) => ({ ...prev, to: d }))}
                     disabled={(date) => date > new Date()}
                     initialFocus
                   />
@@ -463,7 +450,7 @@ const AddItemStockTab = () => {
                       variant="outline"
                       onClick={() => {
                         setDateTo(undefined);
-                        setIsToOpen(false);
+                        setOpenPopover(null);
                       }}
                     >
                       Batal
@@ -534,10 +521,7 @@ const AddItemStockTab = () => {
                             ? "bg-muted"
                             : "hover:bg-muted/50"
                         }`}
-                        onClick={() => {
-                          setIsEditMode(true);
-                          handleSelectStockTracking(t);
-                        }}
+                        onClick={() => handleSelectStockTracking(t)}
                       >
                         <TableCell className="font-medium text-muted-foreground">
                           {(page - 1) * limit + index + 1}

@@ -117,13 +117,10 @@ export default function Finance() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [isFromOpen, setIsFromOpen] = useState(false);
-  const [isToOpen, setIsToOpen] = useState(false);
-  const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
-  const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
+  const [openPopover, setOpenPopover] = useState<"from" | "to" | null>(null);
+  const [tempDates, setTempDates] = useState<{ from?: Date; to?: Date }>({});
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [isEditForm, setIsEditForm] = useState(false);
   const [selectedFinance, setSelectedFinance] = useState<FinanceData | null>(
     null,
   );
@@ -295,7 +292,6 @@ export default function Finance() {
         title: "Berhasil",
         description: `Data keuangan berhasil diubah`,
       });
-      setIsEditForm(false);
       form.reset();
     } catch (error: unknown) {
       const statusCode = getHttpStatusCode(error);
@@ -335,7 +331,6 @@ export default function Finance() {
         title: "Berhasil menghapus data keuangan",
         description: `Anda berhasil menghapus data keuangan`,
       });
-      setIsEditForm(false);
       form.reset();
     } catch (error: unknown) {
       const statusCode = getHttpStatusCode(error);
@@ -356,8 +351,6 @@ export default function Finance() {
 
   const handleSelectFinance = (finance: FinanceData) => {
     setSelectedFinance(finance);
-    setIsEditForm(true);
-
     form.setValue("type", finance.type);
     form.setValue("category", finance.category);
     form.setValue("description", finance.description);
@@ -369,7 +362,6 @@ export default function Finance() {
   const handleCancelEditFinance = (e: MouseEvent) => {
     e.preventDefault();
     setSelectedFinance(null);
-    setIsEditForm(false);
     setErrMsg("");
     form.reset();
   };
@@ -384,31 +376,27 @@ export default function Finance() {
   };
 
   const handleOpenFromChange = (open: boolean) => {
-    if (open) {
-      setTempDateFrom(dateFrom);
-    }
-    setIsFromOpen(open);
+    if (open) setTempDates((d) => ({ ...d, from: dateFrom }));
+    setOpenPopover(open ? "from" : null);
   };
 
   const handleOpenToChange = (open: boolean) => {
-    if (open) {
-      setTempDateTo(dateTo);
-    }
-    setIsToOpen(open);
+    if (open) setTempDates((d) => ({ ...d, to: dateTo }));
+    setOpenPopover(open ? "to" : null);
   };
 
   const handleConfirmFrom = () => {
-    setDateFrom(tempDateFrom);
-    setIsFromOpen(false);
+    setDateFrom(tempDates.from);
+    setOpenPopover(null);
   };
 
   const handleConfirmTo = () => {
-    setDateTo(tempDateTo);
-    setIsToOpen(false);
+    setDateTo(tempDates.to);
+    setOpenPopover(null);
   };
 
-  const handleFormType = (isEditMode: boolean) => {
-    const formHandler = isEditMode ? handleEditFinance : handleAddFinance;
+  const handleFormType = () => {
+    const formHandler = selectedFinance ? handleEditFinance : handleAddFinance;
     return form.handleSubmit(formHandler);
   };
 
@@ -484,7 +472,7 @@ export default function Finance() {
                 </CardHeader>
                 <CardContent>
                   <form
-                    onSubmit={handleFormType(isEditForm)}
+                    onSubmit={handleFormType()}
                     className="space-y-4"
                   >
                     {/* JENIS */}
@@ -737,7 +725,7 @@ export default function Finance() {
                       />
                     </div>
                     <Popover
-                      open={isFromOpen}
+                      open={openPopover === "from"}
                       onOpenChange={handleOpenFromChange}
                     >
                       <PopoverTrigger asChild>
@@ -752,8 +740,8 @@ export default function Finance() {
                       >
                         <CalendarComponent
                           mode="single"
-                          selected={tempDateFrom}
-                          onSelect={setTempDateFrom}
+                          selected={tempDates.from}
+                          onSelect={(d) => setTempDates((prev) => ({ ...prev, from: d }))}
                           disabled={(date) => date > new Date()}
                           initialFocus
                         />
@@ -763,7 +751,7 @@ export default function Finance() {
                             variant="outline"
                             onClick={() => {
                               setDateFrom(undefined);
-                              setIsFromOpen(false);
+                              setOpenPopover(null);
                             }}
                           >
                             Batal
@@ -777,7 +765,7 @@ export default function Finance() {
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <Popover open={isToOpen} onOpenChange={handleOpenToChange}>
+                    <Popover open={openPopover === "to"} onOpenChange={handleOpenToChange}>
                       <PopoverTrigger asChild>
                         <Button variant="outline" size="sm">
                           <Calendar className="w-4 h-4 mr-1" />
@@ -790,8 +778,8 @@ export default function Finance() {
                       >
                         <CalendarComponent
                           mode="single"
-                          selected={tempDateTo}
-                          onSelect={setTempDateTo}
+                          selected={tempDates.to}
+                          onSelect={(d) => setTempDates((prev) => ({ ...prev, to: d }))}
                           initialFocus
                           disabled={(date) => date > new Date()}
                         />
@@ -801,7 +789,7 @@ export default function Finance() {
                             variant="outline"
                             onClick={() => {
                               setDateTo(undefined);
-                              setIsToOpen(false);
+                              setOpenPopover(null);
                             }}
                           >
                             Batal
