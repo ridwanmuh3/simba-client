@@ -64,7 +64,7 @@ const StockOpnameTab = () => {
               <Input
                 placeholder="Cari bahan..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 className="pl-9 max-w-sm"
               />
             </CardDescription>

@@ -12,6 +12,23 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    build: {
+      target: "esnext",
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return undefined;
+            // Split only large/lazy-specific deps — no catch-all to avoid circular deps
+            if (id.includes("recharts") || id.includes("/d3-") || id.includes("/d3/")) {
+              return "vendor-charts";
+            }
+            if (id.includes("framer-motion") || id.includes("@motionone")) {
+              return "vendor-motion";
+            }
+          },
+        },
+      },
+    },
     server: isDev
       ? {
           host: "0.0.0.0",

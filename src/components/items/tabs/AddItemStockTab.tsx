@@ -210,11 +210,13 @@ const AddItemStockTab = () => {
 
   const handleConfirmFrom = () => {
     setDateFrom(tempDates.from);
+    setPage(1);
     setOpenPopover(null);
   };
 
   const handleConfirmTo = () => {
     setDateTo(tempDates.to);
+    setPage(1);
     setOpenPopover(null);
   };
 
@@ -393,7 +395,7 @@ const AddItemStockTab = () => {
                 <Input
                   placeholder="Cari..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                   className="pl-9"
                 />
               </div>
@@ -418,6 +420,7 @@ const AddItemStockTab = () => {
                       variant="outline"
                       onClick={() => {
                         setDateFrom(undefined);
+                        setPage(1);
                         setOpenPopover(null);
                       }}
                     >
@@ -450,6 +453,7 @@ const AddItemStockTab = () => {
                       variant="outline"
                       onClick={() => {
                         setDateTo(undefined);
+                        setPage(1);
                         setOpenPopover(null);
                       }}
                     >

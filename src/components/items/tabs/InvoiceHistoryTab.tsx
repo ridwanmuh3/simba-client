@@ -135,11 +135,13 @@ const InvoiceHistoryTab = () => {
 
   const handleConfirmFrom = () => {
     setDateFrom(tempDateFrom);
+    setPage(1);
     setIsFromOpen(false);
   };
 
   const handleConfirmTo = () => {
     setDateTo(tempDateTo);
+    setPage(1);
     setIsToOpen(false);
   };
 
@@ -267,7 +269,7 @@ const InvoiceHistoryTab = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                 placeholder="Cari nomor invoice, perusahaan, PO, atau QUO"
                 className="pl-9"
               />
@@ -293,6 +295,7 @@ const InvoiceHistoryTab = () => {
                     onClick={() => {
                       setTempDateFrom(undefined);
                       setDateFrom(undefined);
+                      setPage(1);
                       setIsFromOpen(false);
                     }}
                   >
@@ -325,6 +328,7 @@ const InvoiceHistoryTab = () => {
                     onClick={() => {
                       setTempDateTo(undefined);
                       setDateTo(undefined);
+                      setPage(1);
                       setIsToOpen(false);
                     }}
                   >

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Search,
   MoreHorizontal,
@@ -102,10 +102,6 @@ const Users = () => {
     },
   ];
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
-
   return (
     <DashboardLayout
       title="Kelola Pengguna"
@@ -130,7 +126,7 @@ const Users = () => {
           <Input
             placeholder="Cari pengguna..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
             className="pl-9 bg-card min-w-[200px]"
           />
         </div>

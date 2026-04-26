@@ -387,11 +387,13 @@ export default function Finance() {
 
   const handleConfirmFrom = () => {
     setDateFrom(tempDates.from);
+    setPage(1);
     setOpenPopover(null);
   };
 
   const handleConfirmTo = () => {
     setDateTo(tempDates.to);
+    setPage(1);
     setOpenPopover(null);
   };
 
@@ -422,10 +424,6 @@ export default function Finance() {
       });
     }
   };
-
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery, dateFrom, dateTo]);
 
   return (
     <DashboardLayout
@@ -720,7 +718,7 @@ export default function Finance() {
                       <Input
                         placeholder="Cari transaksi, nota, atau kategori..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                         className="pl-9"
                       />
                     </div>
@@ -751,6 +749,7 @@ export default function Finance() {
                             variant="outline"
                             onClick={() => {
                               setDateFrom(undefined);
+                              setPage(1);
                               setOpenPopover(null);
                             }}
                           >
@@ -789,6 +788,7 @@ export default function Finance() {
                             variant="outline"
                             onClick={() => {
                               setDateTo(undefined);
+                              setPage(1);
                               setOpenPopover(null);
                             }}
                           >

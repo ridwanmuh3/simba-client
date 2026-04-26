@@ -14,3 +14,14 @@ export interface CreateDapurRequest {
   name: string;
   description?: string;
 }
+
+export interface UpdateDapurRequest {
+  id: number;
+  name?: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface DeleteDapurRequest {
+  id: number;
+}

@@ -18,6 +18,7 @@ const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Items = lazy(() => import("@/pages/Items"));
 const Users = lazy(() => import("@/pages/Users"));
 const Finance = lazy(() => import("@/pages/Finance"));
+const DapurManagement = lazy(() => import("@/pages/DapurManagement"));
 const ErrorPage = lazy(() => import("@/pages/Error"));
 
 const App = () => (
@@ -53,6 +54,7 @@ const App = () => (
                 }
               >
                 <Route path="/users" element={<Users />} />
+                <Route path="/dapurs" element={<DapurManagement />} />
               </Route>
 
               <Route

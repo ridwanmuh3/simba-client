@@ -57,6 +57,12 @@ const menuItems = [
     roles: [UserRole.SUPER_ADMIN],
   },
   {
+    title: "Kelola Dapur",
+    icon: ChefHat,
+    path: "/dapurs",
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
     title: "Kelola Keuangan",
     icon: Wallet,
     path: "/finance",
@@ -169,6 +175,8 @@ const Sidebar = ({ authContext }: SidebarProps) => {
           <img
             src={logoBgn}
             alt="Logo BGN"
+            width={40}
+            height={40}
             className="w-10 h-10 rounded-xl object-contain"
           />
           <span className="font-bold text-lg text-foreground whitespace-nowrap">
