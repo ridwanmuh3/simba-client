@@ -18,12 +18,31 @@ export default defineConfig(({ mode }) => {
         output: {
           manualChunks(id) {
             if (!id.includes("node_modules")) return undefined;
-            // Split only large/lazy-specific deps — no catch-all to avoid circular deps
-            if (id.includes("recharts") || id.includes("/d3-") || id.includes("/d3/")) {
+            const pkg = id.split("node_modules/")[1]?.split("/")[0] ?? "";
+            const scopedPkg = pkg.startsWith("@") ? pkg + "/" + (id.split("node_modules/")[1]?.split("/")[1] ?? "") : pkg;
+            if (["recharts"].includes(pkg) || id.includes("/d3-") || scopedPkg.startsWith("d3")) {
               return "vendor-charts";
             }
-            if (id.includes("framer-motion") || id.includes("@motionone")) {
+            if (["framer-motion"].includes(pkg) || scopedPkg === "@motionone/animation" || scopedPkg.startsWith("@motionone/")) {
               return "vendor-motion";
+            }
+            if (["react", "react-dom", "react-router", "react-router-dom", "react-is", "scheduler"].includes(pkg)) {
+              return "vendor-react";
+            }
+            if (scopedPkg.startsWith("@radix-ui/") || ["cmdk", "vaul", "input-otp", "embla-carousel-react"].includes(pkg)) {
+              return "vendor-ui";
+            }
+            if (["lucide-react"].includes(pkg)) {
+              return "vendor-icons";
+            }
+            if (scopedPkg.startsWith("@tanstack/")) {
+              return "vendor-query";
+            }
+            if (["react-hook-form", "zod"].includes(pkg) || scopedPkg.startsWith("@hookform/")) {
+              return "vendor-forms";
+            }
+            if (["axios", "dayjs", "date-fns", "clsx", "tailwind-merge", "class-variance-authority", "camelcase-keys", "snakecase-keys", "zustand", "use-debounce", "sonner", "next-themes", "use-sync-external-store"].includes(pkg)) {
+              return "vendor-utils";
             }
           },
         },
