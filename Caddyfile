@@ -2,27 +2,6 @@
 	admin off
 }
 
-api.{$APP_DOMAIN:simbambg.my.id} {
-	tls /certs/fullchain.crt /certs/private.key
-
-	header {
-		-Server
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		Cross-Origin-Opener-Policy "same-origin"
-		Cross-Origin-Resource-Policy "cross-origin"
-	}
-
-	@bad_method {
-		not method GET HEAD POST PUT PATCH DELETE OPTIONS
-	}
-	respond @bad_method 405
-
-	reverse_proxy backend:3000
-}
-
 {$APP_DOMAIN:simbambg.my.id}, {$APP_WWW_DOMAIN:www.simbambg.my.id} {
 	tls /certs/fullchain.crt /certs/private.key
 	route {
