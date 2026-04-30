@@ -1,6 +1,6 @@
 import { useMemo, type PropsWithChildren, useCallback, startTransition } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useCurrentAuth, useLoginMutation, useLogoutMutation } from "../api";
+import { useCurrentAuth, useHeartbeat, useLoginMutation, useLogoutMutation } from "../api";
 import { UserLoginRequest } from "../types";
 import { isAxiosError } from "axios";
 import { AuthContext } from "../context";
@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const loginMutation = useLoginMutation();
   const logoutMutation = useLogoutMutation();
   const { data: user, isLoading } = useCurrentAuth(!isPublicRoute);
+  useHeartbeat(!!user);
 
   // Only block the tree on initial fetch when we have no data at all.
   // Prevents spinner flash when navigating after login (cache already warm).

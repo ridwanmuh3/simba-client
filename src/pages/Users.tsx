@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useGetAllUsers, useGetUsersStats } from "@/features/users/api";
-import { formatDateDetail, formatDateRelative } from "@/lib/date-utils";
+import { formatDateDetail, formatDateRelative, isRecentlyActive } from "@/lib/date-utils";
 import { User } from "@/features/users/types";
 import StatsCard from "@/components/shared/StatsCard";
 import { downloadHandler, getInitialsIdentity } from "@/lib/utils";
@@ -220,7 +220,7 @@ const Users = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {user.isActive ? (
+                        {isRecentlyActive(user.lastActive) ? (
                           <Badge className="bg-success/10 text-success hover:bg-success/20 border-0">
                             Aktif
                           </Badge>

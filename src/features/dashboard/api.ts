@@ -12,6 +12,8 @@ export const useDashboardStats = () => {
         await axiosInstance.get<ApiResponse<DashboardStats>>("/dashboard");
       return data.data!;
     },
-    staleTime: 1000 * 60 * 3,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 1000 * 30,
   });
 };

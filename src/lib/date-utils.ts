@@ -20,6 +20,11 @@ export const formatDateRelative = (dateString: string | Date) => {
   return dayjs(dateString).fromNow();
 };
 
+export const isRecentlyActive = (dateString: string | Date, minutesThreshold = 5): boolean => {
+  if (!dateString) return false;
+  return dayjs().diff(dayjs(dateString), "minute") < minutesThreshold;
+};
+
 export const combineDateTime = (date?: Date, time: string = "00:00:00") => {
   if (!date) return undefined;
 
