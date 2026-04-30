@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const DashboardSkeleton = () => (
   <>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
       {Array.from({ length: 6 }).map((_, i) => (
         <Card key={i}>
           <CardContent className="pt-6">
@@ -26,7 +26,7 @@ const DashboardSkeleton = () => (
         </Card>
       ))}
     </div>
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
       <Card className="lg:col-span-2">
         <CardHeader><Skeleton className="h-5 w-36" /></CardHeader>
         <CardContent><Skeleton className="h-[300px] w-full rounded-lg" /></CardContent>

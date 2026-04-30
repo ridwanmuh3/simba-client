@@ -81,7 +81,7 @@ const DapurManagement = () => {
       title="Kelola Dapur"
       subtitle="Kelola data dapur dalam sistem"
     >
-      <div className="grid grid-cols-1 min-[548px]:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
         {statsData.map((stat, index) => (
           <StatsCard
             key={index}

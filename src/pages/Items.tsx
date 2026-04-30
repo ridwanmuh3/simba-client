@@ -36,12 +36,12 @@ const Items = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto pb-1">
             <TabsList className="inline-flex w-max">
               {tabItems.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
+                <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5 text-xs sm:text-sm">
                   <tab.icon className="w-4 h-4 shrink-0" />
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span>{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>

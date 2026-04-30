@@ -389,8 +389,8 @@ const AddItemStockTab = () => {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Riwayat Bahan Masuk</CardTitle>
-            <div className="flex flex-wrap gap-2 mt-2 items-center">
-              <div className="relative flex-1 min-w-[200px]">
+            <div className="flex flex-col gap-2 mt-2">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Cari..."
@@ -399,6 +399,7 @@ const AddItemStockTab = () => {
                   className="pl-9"
                 />
               </div>
+              <div className="flex gap-2 flex-wrap">
               <Popover open={openPopover === "from"} onOpenChange={handleOpenFromChange}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -466,6 +467,7 @@ const AddItemStockTab = () => {
                 </PopoverContent>
               </Popover>
               <InvoiceDialog stockType="IN" />
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">

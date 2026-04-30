@@ -24,7 +24,7 @@ const invalidateItemQueries = () => {
   queryClient.invalidateQueries({ queryKey: queryKeys.items.full });
   queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.financeSummary });
-  queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
+  queryClient.invalidateQueries({ queryKey: queryKeys.items.stocksSummaryAll });
 };
 
 export const useAddItem = () => {
@@ -145,7 +145,7 @@ export const useGetFullItems = () => {
 
 export const useGetItemCategories = () => {
   return useQuery({
-    queryKey: ["item-categories"],
+    queryKey: queryKeys.items.categories,
     queryFn: async () => {
       const { data } =
         await axiosInstance.get<ApiResponse<string[]>>("/items/categories");
@@ -263,7 +263,7 @@ export const useGenerateInvoice = () => {
       return { blob: response.data, filename };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.items.invoiceHistoryAll });
     },
   });
 };
@@ -332,7 +332,7 @@ export const useGetInvoiceHistory = (
 
 export const useGetInvoiceDetail = (id: number | null) => {
   return useQuery({
-    queryKey: ["invoice-detail", id],
+    queryKey: queryKeys.items.invoiceDetail(id!),
     queryFn: async () => {
       const { data } = await axiosInstance.get<ApiResponse<InvoiceDetailData>>(
         `/items/invoices/${id}`,
@@ -340,7 +340,7 @@ export const useGetInvoiceDetail = (id: number | null) => {
       return data.data!;
     },
     enabled: id !== null,
-    staleTime: 0,
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: false,
   });
 };
@@ -361,7 +361,7 @@ export const useUpdateInvoice = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.items.invoiceHistoryAll });
     },
   });
 };
@@ -375,7 +375,7 @@ export const useDeleteInvoice = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.items.invoiceHistoryAll });
     },
   });
 };

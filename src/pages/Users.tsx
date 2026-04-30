@@ -107,7 +107,7 @@ const Users = () => {
       title="Kelola Pengguna"
       subtitle="Kelola data pengguna dan hak akses sistem"
     >
-      <div className="grid grid-cols-1 min-[548px]:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-6">
         {usersStatsData.map((stat, index) => (
           <div key={stat.title}>
             <StatsCard
@@ -120,7 +120,7 @@ const Users = () => {
           </div>
         ))}
       </div>
-      <div className="flex flex-col md:flex-row gap-6 mb-6 flex-wrap">
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-6 mb-4 sm:mb-6 flex-wrap">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -130,7 +130,7 @@ const Users = () => {
             className="pl-9 bg-card min-w-[200px]"
           />
         </div>
-        <div className="flex-1 flex flex-col md:flex-row gap-6 w-full">
+        <div className="flex-1 flex flex-col md:flex-row gap-3 w-full">
           <div className="flex flex-1 gap-2 w-full md:w-fit">
             <Button
               className="w-full bg-card"

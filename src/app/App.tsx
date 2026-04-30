@@ -1,5 +1,4 @@
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router";
@@ -9,6 +8,7 @@ import AuthOnlyRoute from "@/features/auth/components/AuthOnlyRoute";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { lazy, Suspense } from "react";
 import Spinner from "@/components/shared/Spinner";
+import ErrorBoundary from "@/components/shared/ErrorBoundary";
 import { UserRole } from "@/features/users/types";
 import PublicRoute from "@/features/auth/components/PublicRoute";
 
@@ -25,9 +25,9 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ErrorBoundary>
           <Suspense fallback={<Spinner />}>
             <Routes>
               <Route element={<PublicRoute />}>
@@ -74,6 +74,7 @@ const App = () => (
               />
             </Routes>
           </Suspense>
+          </ErrorBoundary>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
