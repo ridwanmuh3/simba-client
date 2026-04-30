@@ -63,7 +63,9 @@ const AddItemStockTab = () => {
     },
   });
   const [selectedItemId, setSelectedItemId] = useState("");
-  const [selectedStock, setSelectedStock] = useState<StockTracking | null>(null);
+  const [selectedStock, setSelectedStock] = useState<StockTracking | null>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -232,7 +234,7 @@ const AddItemStockTab = () => {
   return (
     <TabsContent value="bahan-masuk" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 h-fit">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Bahan Masuk</CardTitle>
             <CardDescription className="text-sm font-bold text-muted-foreground">
@@ -396,78 +398,97 @@ const AddItemStockTab = () => {
                 <Input
                   placeholder="Cari..."
                   value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
                   className="pl-9"
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
-              <Popover open={openPopover === "from"} onOpenChange={handleOpenFromChange}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateFrom ? formatDateTable(dateFrom) : "Dari"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={tempDates.from}
-                    onSelect={(d) => setTempDates((prev) => ({ ...prev, from: d }))}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                  />
-                  <div className="flex gap-2 mt-2 mb-2">
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        setDateFrom(undefined);
-                        setPage(1);
-                        setOpenPopover(null);
-                      }}
-                    >
-                      Batal
+                <Popover
+                  open={openPopover === "from"}
+                  onOpenChange={handleOpenFromChange}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateFrom ? formatDateTable(dateFrom) : "Dari"}
                     </Button>
-                    <Button className="w-full" onClick={handleConfirmFrom}>
-                      Pilih
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 px-4 py-2"
+                    align="start"
+                  >
+                    <CalendarComponent
+                      mode="single"
+                      selected={tempDates.from}
+                      onSelect={(d) =>
+                        setTempDates((prev) => ({ ...prev, from: d }))
+                      }
+                      disabled={(date) => date > new Date()}
+                      initialFocus
+                    />
+                    <div className="flex gap-2 mt-2 mb-2">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          setDateFrom(undefined);
+                          setPage(1);
+                          setOpenPopover(null);
+                        }}
+                      >
+                        Batal
+                      </Button>
+                      <Button className="w-full" onClick={handleConfirmFrom}>
+                        Pilih
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Popover
+                  open={openPopover === "to"}
+                  onOpenChange={handleOpenToChange}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateTo ? formatDateTable(dateTo) : "Sampai"}
                     </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Popover open={openPopover === "to"} onOpenChange={handleOpenToChange}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateTo ? formatDateTable(dateTo) : "Sampai"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={tempDates.to}
-                    onSelect={(d) => setTempDates((prev) => ({ ...prev, to: d }))}
-                    disabled={(date) => date > new Date()}
-                    initialFocus
-                  />
-                  <div className="flex gap-2 mt-2 mb-2">
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        setDateTo(undefined);
-                        setPage(1);
-                        setOpenPopover(null);
-                      }}
-                    >
-                      Batal
-                    </Button>
-                    <Button className="w-full" onClick={handleConfirmTo}>
-                      Pilih
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <InvoiceDialog stockType="IN" />
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 px-4 py-2"
+                    align="start"
+                  >
+                    <CalendarComponent
+                      mode="single"
+                      selected={tempDates.to}
+                      onSelect={(d) =>
+                        setTempDates((prev) => ({ ...prev, to: d }))
+                      }
+                      disabled={(date) => date > new Date()}
+                      initialFocus
+                    />
+                    <div className="flex gap-2 mt-2 mb-2">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          setDateTo(undefined);
+                          setPage(1);
+                          setOpenPopover(null);
+                        }}
+                      >
+                        Batal
+                      </Button>
+                      <Button className="w-full" onClick={handleConfirmTo}>
+                        Pilih
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <InvoiceDialog stockType="IN" />
               </div>
             </div>
           </CardHeader>

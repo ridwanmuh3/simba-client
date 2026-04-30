@@ -125,6 +125,19 @@ export interface InvoiceItemData {
   stockType: string;
 }
 
+export interface InvoiceItemFlat {
+  date: string;
+  invoiceNumber: string;
+  itemName: string;
+  measureUnit: string;
+  amount: number;
+  stockType: string;
+  buyPrice: number;
+  sellPrice: number;
+  totalBuyPrice: number;
+  totalSellPrice: number;
+}
+
 export interface InvoiceDetailData extends InvoiceHistoryData {
   items: InvoiceItemData[];
   grandTotal: number;

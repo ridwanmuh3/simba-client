@@ -325,7 +325,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                 if (!last) return null;
                 return (
                   <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs text-primary/80">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />
                       <div className="space-y-1">
                         <p className="font-medium">Nomor invoice sebelumnya:</p>
@@ -337,15 +337,15 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                             </span>
                           </span>
                           <span>
-                            QUO:{" "}
-                            <span className="font-mono">
-                              {last.quoNumber || "-"}
-                            </span>
-                          </span>
-                          <span>
                             PO:{" "}
                             <span className="font-mono">
                               {last.poNumber || "-"}
+                            </span>
+                          </span>
+                          <span>
+                            QUO:{" "}
+                            <span className="font-mono">
+                              {last.quoNumber || "-"}
                             </span>
                           </span>
                         </div>
@@ -603,7 +603,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                 </Select>
               </div>
               <div className="border rounded-md overflow-hidden">
-                <div className="max-h-48 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background z-10">
                       <TableRow>

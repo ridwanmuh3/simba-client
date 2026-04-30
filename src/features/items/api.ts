@@ -10,6 +10,7 @@ import {
   GenerateInvoiceRequest,
   InvoiceDetailData,
   InvoiceHistoryData,
+  InvoiceItemFlat,
   UpdateInvoiceRequest,
   Item,
   ItemStocksSummary,
@@ -240,6 +241,43 @@ export const useGetItemsStocksSummary = (
         ApiResponse<ItemStocksSummary[]>
       >(`/items/stocks/opname?${params.toString()}`);
       return data;
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useGetInvoiceItemsFlat = (
+  searchQuery: string,
+  page: number,
+  limit: number,
+  stockType?: string,
+  dateFrom?: Date,
+  dateTo?: Date,
+) => {
+  return useQuery({
+    queryKey: queryKeys.items.invoiceItemsFlat(
+      searchQuery,
+      page,
+      limit,
+      dateFrom,
+      dateTo,
+    ),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(limit),
+      });
+      if (searchQuery) params.append("search_query", searchQuery);
+      if (stockType) params.append("stock_type", stockType);
+      if (dateFrom) params.append("start_date", dateFrom.toISOString());
+      if (dateTo) params.append("end_date", dateTo.toISOString());
+
+      const { data } = await axiosInstance.get<ApiResponse<InvoiceItemFlat[]>>(
+        `/items/invoices/items-flat?${params.toString()}`,
+      );
+      return { data: data.data ?? [], paging: data.paging ?? null };
     },
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

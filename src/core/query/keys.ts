@@ -54,6 +54,21 @@ export const queryKeys = {
         dateTo?.toISOString(),
       ] as const,
     invoiceDetail: (id: number) => ["invoice-detail", id] as const,
+    invoiceItemsFlat: (
+      search: string,
+      page: number,
+      limit: number,
+      dateFrom?: Date,
+      dateTo?: Date,
+    ) =>
+      [
+        "invoice-items-flat",
+        search,
+        page,
+        limit,
+        dateFrom?.toISOString(),
+        dateTo?.toISOString(),
+      ] as const,
   },
   finance: {
     all: ["finances"] as const,
