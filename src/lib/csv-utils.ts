@@ -1,5 +1,5 @@
 import { FinanceData } from "@/features/finance/types";
-import { Item } from "@/features/items/types";
+import { Item, ItemStocksSummary } from "@/features/items/types";
 import dayjs from "dayjs";
 import { formatDateDetail } from "./date-utils";
 
@@ -218,5 +218,85 @@ export const downloadCSV = (
   link.click();
   document.body.removeChild(link);
 
+  URL.revokeObjectURL(url);
+};
+
+const escOpname = (v: string | number | null | undefined) => {
+  const s = String(v ?? "");
+  return `"${s.replace(/"/g, '""')}"`;
+};
+
+export const exportOpnameToCSV = (
+  items: ItemStocksSummary[],
+  date: string,
+  filename = "stok-opname",
+) => {
+  const headers = [
+    "TANGGAL",
+    "NO",
+    "NO INVOICE",
+    "NAMA BARANG",
+    "QTY",
+    "SATUAN",
+    "HARGA BELI",
+    "HARGA JUAL",
+    "TOTAL HARGA BELI",
+    "TOTAL HARGA JUAL",
+  ];
+
+  let totalBeli = 0;
+  let totalJual = 0;
+
+  const rows = items.map((s, i) => {
+    const qty = s.currentStock ?? 0;
+    const totalHargaBeli = s.stockValue ?? 0;
+    const totalHargaJual = (s.sellPrice ?? 0) * qty;
+
+    totalBeli += totalHargaBeli;
+    totalJual += totalHargaJual;
+
+    return [
+      escOpname(date),
+      escOpname(i + 1),
+      escOpname(s.itemId),
+      escOpname(s.name),
+      escOpname(qty),
+      escOpname(s.measureUnit),
+      escOpname(s.buyPrice ?? 0),
+      escOpname(s.sellPrice ?? 0),
+      escOpname(totalHargaBeli),
+      escOpname(totalHargaJual),
+    ].join(",");
+  });
+
+  const footerRow = [
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname("TOTAL"),
+    escOpname(totalBeli),
+    escOpname(totalJual),
+  ].join(",");
+
+  const csvContent = [
+    headers.map(escOpname).join(","),
+    ...rows,
+    footerRow,
+  ].join("\n");
+
+  const blob = new Blob(["﻿" + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${filename}-${dayjs().format("DD-MM-YYYY-HH-mm-ss")}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };

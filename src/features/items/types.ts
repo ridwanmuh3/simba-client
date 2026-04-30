@@ -44,6 +44,7 @@ export interface StockTracking {
   id?: number;
   type?: "IN" | "OUT";
   supplier?: string;
+  modifiedBy?: string;
   previousStock?: number;
   newStock?: number;
   amount?: number;

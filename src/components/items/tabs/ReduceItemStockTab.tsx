@@ -143,6 +143,7 @@ const ReduceItemStockTab = () => {
   };
 
   const handleSelectStockTracking = (stockTracking: StockTracking) => {
+    if (!stockTracking.item) return;
     setSelectedStock(stockTracking);
     setSelectedItemId(stockTracking.item.id);
     form.setValue("itemId", stockTracking.item.id);
@@ -205,11 +206,13 @@ const ReduceItemStockTab = () => {
   const handleConfirmFrom = () => {
     setDateFrom(tempDates.from);
     setOpenPopover(null);
+    setPage(1);
   };
 
   const handleConfirmTo = () => {
     setDateTo(tempDates.to);
     setOpenPopover(null);
+    setPage(1);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -401,7 +404,7 @@ const ReduceItemStockTab = () => {
                 <Input
                   placeholder="Cari..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
                   className="pl-9"
                 />
               </div>

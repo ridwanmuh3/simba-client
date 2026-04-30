@@ -139,6 +139,7 @@ const AddItemStockTab = () => {
   };
 
   const handleSelectStockTracking = (stockTracking: StockTracking) => {
+    if (!stockTracking.item) return;
     setSelectedStock(stockTracking);
     setSelectedItemId(stockTracking.item.id);
 
@@ -546,7 +547,7 @@ const AddItemStockTab = () => {
                           </span>
                         </TableCell>
                         <TableCell className="font-semibold tabular-nums">
-                          {t.newStock} {t.item?.measureUnit}
+                          {t.newStock ?? 0} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell>{t.supplier}</TableCell>
                         <TableCell className="font-medium">
