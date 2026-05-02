@@ -27,6 +27,7 @@ import {
   useDeleteStockItem,
   useGetAllItemsStocks,
   useGetFullItems,
+  useGetLastStockPrice,
   useUpdateStockItem,
 } from "@/features/items/api";
 import { formatCurrency, parseCurrency } from "@/lib/utils";
@@ -85,7 +86,15 @@ const AddItemStockTab = () => {
     "IN",
   );
   const { data: itemsData } = useGetFullItems();
+  const { data: lastPrice } = useGetLastStockPrice(selectedItemId, "IN");
   const filteredStocksTracking = stocksData?.data || [];
+
+  useEffect(() => {
+    if (!selectedItemId || selectedStock) return;
+    const item = itemsData?.data?.find((i) => i.id === selectedItemId);
+    if (!item) return;
+    form.setValue("itemUnitPrice", lastPrice || item.unitPrice);
+  }, [lastPrice]);
 
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
@@ -148,6 +157,7 @@ const AddItemStockTab = () => {
     form.setValue("itemId", stockTracking.item.id);
     form.setValue("itemName", stockTracking.item.name);
     form.setValue("amount", 0);
+    form.setValue("itemUnitPrice", stockTracking.unitPrice);
     form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
     form.setValue(
       "itemUnitPrice",

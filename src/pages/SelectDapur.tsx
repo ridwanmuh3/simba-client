@@ -60,9 +60,6 @@ const SelectDapur = () => {
     setSelecting(dapurId);
     try {
       await selectMutation.mutateAsync({ dapur_id: dapurId });
-      queryClient.setQueryData<AuthUser>(queryKeys.auth.current, (old) =>
-        old ? { ...old, currentDapurId: dapurId } : old,
-      );
       toast({ title: "Dapur dipilih", description: "Mengalihkan ke dashboard..." });
       navigate("/dashboard", { replace: true });
     } catch (e) {
@@ -79,7 +76,7 @@ const SelectDapur = () => {
   };
 
   const handleCreate = async () => {
-    if (!createName.trim()) return;
+    if (!isSuperAdmin || !createName.trim()) return;
     try {
       await createMutation.mutateAsync({
         name: createName.trim(),

@@ -199,6 +199,21 @@ export const useGetAllItemsStocks = (
   });
 };
 
+export const useGetLastStockPrice = (itemId: string, type: "IN" | "OUT") => {
+  return useQuery({
+    queryKey: queryKeys.items.lastStockPrice(itemId, type),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<ApiResponse<number>>(
+        `/items/${itemId}/stocks/last-price?type=${type}`,
+      );
+      return data.data ?? 0;
+    },
+    enabled: !!itemId,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+};
+
 export const useGetStocksFinanceSummary = () => {
   return useQuery({
     queryKey: queryKeys.items.financeSummary,

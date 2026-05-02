@@ -53,6 +53,7 @@ export const queryKeys = {
         dateFrom?.toISOString(),
         dateTo?.toISOString(),
       ] as const,
+    lastStockPrice: (itemId: string, type: string) => ["item-last-stock-price", itemId, type] as const,
     invoiceDetail: (id: number) => ["invoice-detail", id] as const,
     invoiceItemsFlat: (
       search: string,

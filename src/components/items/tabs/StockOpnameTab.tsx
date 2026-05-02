@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { useGetInvoiceItemsFlat } from "@/features/items/api";
+import { axiosInstance } from "@/core/http/axios";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -27,11 +29,13 @@ import {
 import {
   Search,
   Package,
-  Loader2,
   TrendingUp,
   ShoppingCart,
   DollarSign,
+  Download,
 } from "lucide-react";
+import type { InvoiceItemFlat } from "@/features/items/types";
+import type { ApiResponse } from "@/types/response";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import { TabsContent } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
@@ -60,11 +64,38 @@ const getDateRange = (range: TimeRange): { from?: Date; to?: Date } => {
   return { from, to };
 };
 
+const EXPORT_HEADERS = [
+  "NO",
+  "NO INVOICE",
+  "TANGGAL",
+  "NAMA BARANG",
+  "QTY",
+  "SATUAN",
+  "HARGA BELI",
+  "HARGA JUAL",
+  "TOTAL HARGA BELI",
+  "TOTAL HARGA JUAL",
+];
+
+const toCSVRow = (cells: (string | number)[]) =>
+  cells.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",");
+
+const downloadCSV = (rows: string[], filename: string) => {
+  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 const StockOpnameTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
+  const [exporting, setExporting] = useState(false);
 
   const { from: dateFrom, to: dateTo } = getDateRange(timeRange);
 
@@ -92,6 +123,65 @@ const StockOpnameTab = () => {
   const handleTimeRangeChange = (val: TimeRange) => {
     setTimeRange(val);
     setPage(1);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        page: "1",
+        size: "10000",
+        stock_type: "OUT",
+      });
+      if (searchQuery) params.append("search_query", searchQuery);
+      if (dateFrom) params.append("start_date", dateFrom.toISOString());
+      if (dateTo) params.append("end_date", dateTo.toISOString());
+
+      const { data } = await axiosInstance.get<ApiResponse<InvoiceItemFlat[]>>(
+        `/items/invoices/items-flat?${params.toString()}`,
+      );
+      const allItems = data.data ?? [];
+
+      const label =
+        TIME_RANGE_OPTIONS.find((o) => o.value === timeRange)?.label ??
+        timeRange;
+      const rows = [
+        toCSVRow(EXPORT_HEADERS),
+        ...allItems.map((item, i) =>
+          toCSVRow([
+            i + 1,
+            item.invoiceNumber,
+            item.date || "-",
+            item.itemName,
+            item.amount,
+            item.measureUnit,
+            item.buyPrice,
+            item.sellPrice,
+            item.totalBuyPrice,
+            item.totalSellPrice,
+          ]),
+        ),
+        toCSVRow([
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "TOTAL",
+          allItems.reduce((acc, s) => acc + s.totalBuyPrice, 0),
+          allItems.reduce((acc, s) => acc + s.totalSellPrice, 0),
+        ]),
+      ];
+
+      downloadCSV(
+        rows,
+        `stock-opname-${label}-${dayjs().format("YYYY-MM-DD")}.csv`,
+      );
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -189,6 +279,25 @@ const StockOpnameTab = () => {
                 </Select>
               </CardDescription>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={exporting}
+              className="shrink-0 self-start"
+            >
+              {exporting ? (
+                <span className="flex items-center gap-1.5">
+                  <Download className="w-4 h-4 animate-bounce" />
+                  Mengunduh...
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </span>
+              )}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
@@ -198,7 +307,7 @@ const StockOpnameTab = () => {
                 <TableRow>
                   <TableHead className="w-[50px]">No</TableHead>
                   <TableHead>No Invoice</TableHead>
-                  <TableHead>Tgl</TableHead>
+                  <TableHead>Tanggal</TableHead>
                   <TableHead>Nama Barang</TableHead>
                   <TableHead>Qty</TableHead>
                   <TableHead>Satuan</TableHead>

@@ -27,6 +27,7 @@ import {
   useDeleteStockItem,
   useGetAllItemsStocks,
   useGetFullItems,
+  useGetLastStockPrice,
   useUpdateStockItem,
 } from "@/features/items/api";
 import { formatCurrency, parseCurrency } from "@/lib/utils";
@@ -64,7 +65,9 @@ const ReduceItemStockTab = () => {
     },
   });
   const [selectedItemId, setSelectedItemId] = useState("");
-  const [selectedStock, setSelectedStock] = useState<StockTracking | null>(null);
+  const [selectedStock, setSelectedStock] = useState<StockTracking | null>(
+    null,
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -84,6 +87,15 @@ const ReduceItemStockTab = () => {
     "OUT",
   );
   const { data: itemsData } = useGetFullItems();
+  const { data: lastPrice } = useGetLastStockPrice(selectedItemId, "OUT");
+
+  useEffect(() => {
+    if (!selectedItemId || selectedStock) return;
+    const item = itemsData?.data?.find((i) => i.id === selectedItemId);
+    if (!item) return;
+    form.setValue("itemUnitPrice", lastPrice || item.unitPrice);
+  }, [lastPrice]);
+
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
 
@@ -149,6 +161,7 @@ const ReduceItemStockTab = () => {
     form.setValue("itemId", stockTracking.item.id);
     form.setValue("itemName", stockTracking.item.name);
     form.setValue("amount", 0);
+    form.setValue("itemUnitPrice", stockTracking.unitPrice);
     form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
     form.setValue(
       "itemUnitPrice",
@@ -404,74 +417,93 @@ const ReduceItemStockTab = () => {
                 <Input
                   placeholder="Cari..."
                   value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
                   className="pl-9"
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
-              <Popover open={openPopover === "from"} onOpenChange={handleOpenFromChange}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateFrom ? formatDateTable(dateFrom) : "Dari"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={tempDates.from}
-                    onSelect={(d) => setTempDates((prev) => ({ ...prev, from: d }))}
-                    initialFocus
-                  />
-                  <div className="flex gap-2 mt-2 mb-2">
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        setDateFrom(undefined);
-                        setOpenPopover(null);
-                      }}
-                    >
-                      Batal
+                <Popover
+                  open={openPopover === "from"}
+                  onOpenChange={handleOpenFromChange}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateFrom ? formatDateTable(dateFrom) : "Dari"}
                     </Button>
-                    <Button className="w-full" onClick={handleConfirmFrom}>
-                      Pilih
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 px-4 py-2"
+                    align="start"
+                  >
+                    <CalendarComponent
+                      mode="single"
+                      selected={tempDates.from}
+                      onSelect={(d) =>
+                        setTempDates((prev) => ({ ...prev, from: d }))
+                      }
+                      initialFocus
+                    />
+                    <div className="flex gap-2 mt-2 mb-2">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          setDateFrom(undefined);
+                          setOpenPopover(null);
+                        }}
+                      >
+                        Batal
+                      </Button>
+                      <Button className="w-full" onClick={handleConfirmFrom}>
+                        Pilih
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Popover
+                  open={openPopover === "to"}
+                  onOpenChange={handleOpenToChange}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateTo ? formatDateTable(dateTo) : "Sampai"}
                     </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Popover open={openPopover === "to"} onOpenChange={handleOpenToChange}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateTo ? formatDateTable(dateTo) : "Sampai"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={tempDates.to}
-                    onSelect={(d) => setTempDates((prev) => ({ ...prev, to: d }))}
-                    initialFocus
-                  />
-                  <div className="flex gap-2 mt-2 mb-2">
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        setDateTo(undefined);
-                        setOpenPopover(null);
-                      }}
-                    >
-                      Batal
-                    </Button>
-                    <Button className="w-full" onClick={handleConfirmTo}>
-                      Pilih
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <InvoiceDialog stockType="OUT" />
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 px-4 py-2"
+                    align="start"
+                  >
+                    <CalendarComponent
+                      mode="single"
+                      selected={tempDates.to}
+                      onSelect={(d) =>
+                        setTempDates((prev) => ({ ...prev, to: d }))
+                      }
+                      initialFocus
+                    />
+                    <div className="flex gap-2 mt-2 mb-2">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          setDateTo(undefined);
+                          setOpenPopover(null);
+                        }}
+                      >
+                        Batal
+                      </Button>
+                      <Button className="w-full" onClick={handleConfirmTo}>
+                        Pilih
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <InvoiceDialog stockType="OUT" />
               </div>
             </div>
           </CardHeader>
