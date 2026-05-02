@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+# Use this when dist/ is already built locally via `bun run build`
+# Staging: auto-HTTPS via Caddy ACME, no manual certs required
+
+FROM caddy:2-alpine
+
+RUN apk add --no-cache wget
+
+COPY dist /usr/share/caddy
+COPY Caddyfile.staging /etc/caddy/Caddyfile
+
+EXPOSE 80 443
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 \
+  CMD wget --server-response --spider --max-redirect=0 --header='Host: poc-ridwanmuh3.my.id' http://127.0.0.1/ 2>&1 | grep -q ' 308 '
