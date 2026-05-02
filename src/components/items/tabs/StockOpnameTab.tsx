@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useGetInvoiceItemsFlat } from "@/features/items/api";
+import { useGetInvoiceItemsFlat, useGetItemsStocksSummary } from "@/features/items/api";
 import { axiosInstance } from "@/core/http/axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import {
   DollarSign,
   Download,
 } from "lucide-react";
-import type { InvoiceItemFlat } from "@/features/items/types";
+import type { InvoiceItemFlat, ItemStocksSummary } from "@/features/items/types";
 import type { ApiResponse } from "@/types/response";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import { TabsContent } from "@/components/ui/tabs";
@@ -97,6 +97,10 @@ const StockOpnameTab = () => {
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [exporting, setExporting] = useState(false);
 
+  const [rekapSearch, setRekapSearch] = useState("");
+  const [rekapPage, setRekapPage] = useState(1);
+  const [rekapLimit, setRekapLimit] = useState(10);
+
   const { from: dateFrom, to: dateTo } = getDateRange(timeRange);
 
   const { data: invoiceItemsData, isLoading } = useGetInvoiceItemsFlat(
@@ -110,6 +114,14 @@ const StockOpnameTab = () => {
 
   const { data: summaryData, isLoading: summaryLoading } =
     useGetInvoiceItemsFlat("", 1, 100, "OUT", dateFrom, dateTo);
+
+  const { data: rekapData, isLoading: rekapLoading } = useGetItemsStocksSummary(
+    rekapSearch,
+    rekapPage,
+    rekapLimit,
+    dateFrom,
+    dateTo,
+  );
 
   const items = invoiceItemsData?.data ?? [];
 
@@ -399,6 +411,160 @@ const StockOpnameTab = () => {
               onPageSizeChange={(n) => {
                 setLimit(n);
                 setPage(1);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
+      {/* Rekap Inventaris */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-2 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg">Stok Opname - Rekap Inventaris</CardTitle>
+              <CardDescription className="mt-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari bahan..."
+                    value={rekapSearch}
+                    onChange={(e) => {
+                      setRekapSearch(e.target.value);
+                      setRekapPage(1);
+                    }}
+                    className="pl-9 w-48"
+                  />
+                </div>
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <div className="relative border-y text-nowrap h-full w-full">
+            <Table className="relative w-full">
+              <TableHeader className="sticky top-0 bg-background z-10 border-b">
+                <TableRow>
+                  <TableHead className="w-[50px]">No</TableHead>
+                  <TableHead>Kode</TableHead>
+                  <TableHead>Nama Bahan</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Stok Awal</TableHead>
+                  <TableHead>Total Masuk</TableHead>
+                  <TableHead>Total Keluar</TableHead>
+                  <TableHead>Stok Saat Ini</TableHead>
+                  <TableHead>Nilai Harga Beli</TableHead>
+                  <TableHead>Nilai Harga Jual</TableHead>
+                  <TableHead>Selisih Harga</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rekapLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 11 }).map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-4 w-full rounded-md" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : !rekapData?.data?.length ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="p-0">
+                      <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
+                        <Package className="h-12 w-12 mb-3 opacity-50" />
+                        <p className="text-sm font-medium">
+                          {rekapSearch ? "Tidak ada hasil pencarian" : "Data masih kosong"}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rekapData.data.map((item: ItemStocksSummary, index: number) => {
+                    const selisih = (item.sellPrice ?? 0) - (item.buyPrice ?? 0);
+                    return (
+                      <TableRow key={`${item.itemId}-${index}`}>
+                        <TableCell className="font-medium text-muted-foreground">
+                          {(rekapPage - 1) * rekapLimit + index + 1}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm font-medium">
+                          {item.itemId}
+                        </TableCell>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            {item.category}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {item.initialStock} {item.measureUnit}
+                        </TableCell>
+                        <TableCell className="text-green-600 font-medium">
+                          +{item.totalIn ?? 0}
+                        </TableCell>
+                        <TableCell className="text-red-500 font-medium">
+                          -{item.totalOut ?? 0}
+                        </TableCell>
+                        <TableCell
+                          className={`font-medium ${(item.currentStock ?? 0) <= 0 ? "text-red-500" : ""}`}
+                        >
+                          {item.currentStock} {item.measureUnit}
+                        </TableCell>
+                        <TableCell>{formatCurrency(item.buyPrice ?? 0)}</TableCell>
+                        <TableCell>{formatCurrency(item.sellPrice ?? 0)}</TableCell>
+                        <TableCell
+                          className={`font-medium ${selisih > 0 ? "text-green-600" : selisih < 0 ? "text-red-500" : ""}`}
+                        >
+                          {selisih > 0 ? "+" : ""}
+                          {formatCurrency(selisih)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={4} className="font-bold text-right">
+                    Total Harga Halaman Ini
+                  </TableCell>
+                  <TableCell className="font-bold">
+                    {rekapData?.data?.reduce((acc, s) => acc + (s.initialStock ?? 0), 0) ?? 0}
+                  </TableCell>
+                  <TableCell className="font-bold text-green-600">
+                    +{rekapData?.data?.reduce((acc, s) => acc + (s.totalIn ?? 0), 0) ?? 0}
+                  </TableCell>
+                  <TableCell className="font-bold text-red-500">
+                    -{rekapData?.data?.reduce((acc, s) => acc + (s.totalOut ?? 0), 0) ?? 0}
+                  </TableCell>
+                  <TableCell className="font-bold">
+                    {rekapData?.data?.reduce((acc, s) => acc + (s.currentStock ?? 0), 0) ?? 0}
+                  </TableCell>
+                  <TableCell className="font-bold">
+                    {formatCurrency(rekapData?.data?.reduce((acc, s) => acc + (s.buyPrice ?? 0), 0) ?? 0)}
+                  </TableCell>
+                  <TableCell className="font-bold">
+                    {formatCurrency(rekapData?.data?.reduce((acc, s) => acc + (s.sellPrice ?? 0), 0) ?? 0)}
+                  </TableCell>
+                  <TableCell className="font-bold text-green-600">
+                    {formatCurrency(
+                      rekapData?.data?.reduce((acc, s) => acc + ((s.sellPrice ?? 0) - (s.buyPrice ?? 0)), 0) ?? 0,
+                    )}
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+          <div className="px-2 pb-2 pt-1">
+            <DataTablePagination
+              currentPage={rekapPage}
+              pageSize={rekapLimit}
+              totalPages={rekapData?.paging?.totalPage || 1}
+              totalItems={rekapData?.paging?.totalItem || 0}
+              onPageChange={setRekapPage}
+              onPageSizeChange={(n) => {
+                setRekapLimit(n);
+                setRekapPage(1);
               }}
             />
           </div>
