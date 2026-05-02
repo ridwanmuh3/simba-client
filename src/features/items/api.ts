@@ -26,6 +26,7 @@ const invalidateItemQueries = () => {
   queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.financeSummary });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.stocksSummaryAll });
+  queryClient.invalidateQueries({ queryKey: ["item-last-stock-price"] });
 };
 
 export const useAddItem = () => {

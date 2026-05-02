@@ -27,8 +27,8 @@ export const useSelectDapurMutation = () => {
     mutationFn: async (request) => {
       await axiosInstance.post("/auth/select-dapur", request);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.current });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: queryKeys.auth.current });
     },
   });
 };

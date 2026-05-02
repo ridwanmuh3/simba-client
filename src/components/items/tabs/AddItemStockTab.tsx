@@ -94,7 +94,7 @@ const AddItemStockTab = () => {
     const item = itemsData?.data?.find((i) => i.id === selectedItemId);
     if (!item) return;
     form.setValue("itemUnitPrice", lastPrice || item.unitPrice);
-  }, [lastPrice]);
+  }, [selectedItemId, lastPrice]);
 
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
