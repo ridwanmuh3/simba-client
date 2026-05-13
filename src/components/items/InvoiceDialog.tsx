@@ -70,7 +70,7 @@ const invoiceSchema = z.object({
   companyContact: z.string().min(1, "Nomor kontak wajib diisi"),
   invoiceNo: z.string().min(1, "Nomor invoice wajib diisi"),
   poNo: z.string().optional(),
-  quoNo: z.string().optional(),
+  kebutuhan: z.string().optional(),
   receiverName: z.string().min(1, "Nama penerima wajib diisi"),
   receiverAddress: z.string().min(1, "Alamat penerima wajib diisi"),
   keterangan: z.string().optional(),
@@ -153,7 +153,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       companyContact: "",
       invoiceNo: "",
       poNo: "",
-      quoNo: "",
+      kebutuhan: "",
       receiverName: "",
       receiverAddress: "",
       keterangan: "",
@@ -173,7 +173,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         companyContact: profile?.companyContact ?? "",
         invoiceNo: "",
         poNo: "",
-        quoNo: "",
+        kebutuhan: "",
         receiverName: "",
         receiverAddress: "",
         keterangan: "",
@@ -202,7 +202,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       invoiceNo: values.invoiceNo,
       date: dayjs(values.invoiceDate).locale("id").format("DD MMMM YYYY"),
       poNo: values.poNo ?? "",
-      quoNo: values.quoNo ?? "",
+      kebutuhan: values.kebutuhan ?? "",
       receiverName: values.receiverName,
       receiverAddress: values.receiverAddress,
       stockType,
@@ -337,12 +337,6 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                             </span>
                           </span>
                           <span>
-                            QUO:{" "}
-                            <span className="font-mono">
-                              {last.quoNumber || "-"}
-                            </span>
-                          </span>
-                          <span>
                             PO:{" "}
                             <span className="font-mono">
                               {last.poNumber || "-"}
@@ -387,12 +381,12 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                 />
                 <FormField
                   control={form.control}
-                  name="quoNo"
+                  name="kebutuhan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>No. Quo</FormLabel>
+                      <FormLabel>Kebutuhan</FormLabel>
                       <FormControl>
-                        <Input placeholder="QUO-001" {...field} />
+                        <Input placeholder="Kebutuhan" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

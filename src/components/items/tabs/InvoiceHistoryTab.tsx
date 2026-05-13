@@ -70,7 +70,7 @@ const normalizeDocumentNumber = (value: string) => {
     return "-";
   }
 
-  const matched = value.match(/^(INV|PO|QUO)-\d{4}-(\d+)$/i);
+  const matched = value.match(/^(INV|PO|Kebutuhan)-\d{4}-(\d+)$/i);
   if (!matched) {
     return value;
   }
@@ -267,7 +267,7 @@ const InvoiceHistoryTab = () => {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari nomor invoice, perusahaan, PO, atau QUO"
+                placeholder="Cari nomor invoice, perusahaan, PO, atau Kebutuhan"
                 className="pl-9"
               />
             </div>
@@ -349,7 +349,7 @@ const InvoiceHistoryTab = () => {
                   <TableHead>Perusahaan</TableHead>
                   <TableHead className="hidden xl:table-cell">Kontak</TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    PO / QUO
+                    PO / Kebutuhan
                   </TableHead>
                   <TableHead className="hidden md:table-cell">Dibuat</TableHead>
                   <TableHead className="w-12 text-right">Aksi</TableHead>
@@ -404,7 +404,7 @@ const InvoiceHistoryTab = () => {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
                         {normalizeDocumentNumber(invoice.poNumber)} /{" "}
-                        {normalizeDocumentNumber(invoice.quoNumber)}
+                        {normalizeDocumentNumber(invoice.kebutuhan)}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
                         {formatDateDetail(invoice.createdAt)}

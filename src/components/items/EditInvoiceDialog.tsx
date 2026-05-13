@@ -208,7 +208,7 @@ const EditInvoiceDialog = ({
         <DialogHeader>
           <DialogTitle>Edit Invoice</DialogTitle>
           <DialogDescription>
-            Perbaiki data invoice. Nomor invoice, PO, dan QUO tidak dapat
+            Perbaiki data invoice. Nomor invoice, PO, dan Kebutuhan tidak dapat
             diubah.
           </DialogDescription>
         </DialogHeader>
@@ -222,7 +222,7 @@ const EditInvoiceDialog = ({
               {[
                 { label: "No. Invoice", value: invoice.invoiceNumber },
                 { label: "PO No.", value: invoice.poNumber },
-                { label: "Quo No.", value: invoice.quoNumber },
+                { label: "Kebutuhan", value: invoice.kebutuhan },
               ].map(({ label, value }) => (
                 <div key={label} className="space-y-2">
                   <p className="text-sm font-medium leading-none">{label}</p>

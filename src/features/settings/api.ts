@@ -13,7 +13,7 @@ export type CompanyProfile = {
 
 export type DocumentSequence = {
   nextInvoiceNo: string;
-  nextQuotationNo: string;
+  nextPoNumber: string;
 };
 
 export const useGetCompanyProfile = () => {
