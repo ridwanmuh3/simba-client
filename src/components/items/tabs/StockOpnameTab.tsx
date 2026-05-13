@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
-import { useGetInvoiceItemsFlat, useGetItemsStocksSummary } from "@/features/items/api";
+import {
+  useGetInvoiceItemsFlat,
+  useGetItemsStocksSummary,
+} from "@/features/items/api";
 import { axiosInstance } from "@/core/http/axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,7 +37,10 @@ import {
   DollarSign,
   Download,
 } from "lucide-react";
-import type { InvoiceItemFlat, ItemStocksSummary } from "@/features/items/types";
+import type {
+  InvoiceItemFlat,
+  ItemStocksSummary,
+} from "@/features/items/types";
 import type { ApiResponse } from "@/types/response";
 import DataTablePagination from "@/components/shared/DataTablePagination";
 import { TabsContent } from "@/components/ui/tabs";
@@ -421,7 +427,7 @@ const StockOpnameTab = () => {
         <CardHeader>
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg">Stok Opname - Rekap Inventaris</CardTitle>
+              <CardTitle className="text-lg">Rekap Stok</CardTitle>
               <CardDescription className="mt-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -474,53 +480,64 @@ const StockOpnameTab = () => {
                       <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                         <Package className="h-12 w-12 mb-3 opacity-50" />
                         <p className="text-sm font-medium">
-                          {rekapSearch ? "Tidak ada hasil pencarian" : "Data masih kosong"}
+                          {rekapSearch
+                            ? "Tidak ada hasil pencarian"
+                            : "Data masih kosong"}
                         </p>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  rekapData.data.map((item: ItemStocksSummary, index: number) => {
-                    const selisih = (item.sellPrice ?? 0) - (item.buyPrice ?? 0);
-                    return (
-                      <TableRow key={`${item.itemId}-${index}`}>
-                        <TableCell className="font-medium text-muted-foreground">
-                          {(rekapPage - 1) * rekapLimit + index + 1}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm font-medium">
-                          {item.itemId}
-                        </TableCell>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                            {item.category}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          {item.initialStock} {item.measureUnit}
-                        </TableCell>
-                        <TableCell className="text-green-600 font-medium">
-                          +{item.totalIn ?? 0}
-                        </TableCell>
-                        <TableCell className="text-red-500 font-medium">
-                          -{item.totalOut ?? 0}
-                        </TableCell>
-                        <TableCell
-                          className={`font-medium ${(item.currentStock ?? 0) <= 0 ? "text-red-500" : ""}`}
-                        >
-                          {item.currentStock} {item.measureUnit}
-                        </TableCell>
-                        <TableCell>{formatCurrency(item.buyPrice ?? 0)}</TableCell>
-                        <TableCell>{formatCurrency(item.sellPrice ?? 0)}</TableCell>
-                        <TableCell
-                          className={`font-medium ${selisih > 0 ? "text-green-600" : selisih < 0 ? "text-red-500" : ""}`}
-                        >
-                          {selisih > 0 ? "+" : ""}
-                          {formatCurrency(selisih)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
+                  rekapData.data.map(
+                    (item: ItemStocksSummary, index: number) => {
+                      const selisih =
+                        (item.sellPrice ?? 0) - (item.buyPrice ?? 0);
+                      return (
+                        <TableRow key={`${item.itemId}-${index}`}>
+                          <TableCell className="font-medium text-muted-foreground">
+                            {(rekapPage - 1) * rekapLimit + index + 1}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm font-medium">
+                            {item.itemId}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
+                          <TableCell>
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                              {item.category}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {item.initialStock} {item.measureUnit}
+                          </TableCell>
+                          <TableCell className="text-green-600 font-medium">
+                            +{item.totalIn ?? 0}
+                          </TableCell>
+                          <TableCell className="text-red-500 font-medium">
+                            -{item.totalOut ?? 0}
+                          </TableCell>
+                          <TableCell
+                            className={`font-medium ${(item.currentStock ?? 0) <= 0 ? "text-red-500" : ""}`}
+                          >
+                            {item.currentStock} {item.measureUnit}
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(item.buyPrice ?? 0)}
+                          </TableCell>
+                          <TableCell>
+                            {formatCurrency(item.sellPrice ?? 0)}
+                          </TableCell>
+                          <TableCell
+                            className={`font-medium ${selisih > 0 ? "text-green-600" : selisih < 0 ? "text-red-500" : ""}`}
+                          >
+                            {selisih > 0 ? "+" : ""}
+                            {formatCurrency(selisih)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    },
+                  )
                 )}
               </TableBody>
               <TableFooter>
@@ -529,26 +546,54 @@ const StockOpnameTab = () => {
                     Total Harga Halaman Ini
                   </TableCell>
                   <TableCell className="font-bold">
-                    {rekapData?.data?.reduce((acc, s) => acc + (s.initialStock ?? 0), 0) ?? 0}
+                    {rekapData?.data?.reduce(
+                      (acc, s) => acc + (s.initialStock ?? 0),
+                      0,
+                    ) ?? 0}
                   </TableCell>
                   <TableCell className="font-bold text-green-600">
-                    +{rekapData?.data?.reduce((acc, s) => acc + (s.totalIn ?? 0), 0) ?? 0}
+                    +
+                    {rekapData?.data?.reduce(
+                      (acc, s) => acc + (s.totalIn ?? 0),
+                      0,
+                    ) ?? 0}
                   </TableCell>
                   <TableCell className="font-bold text-red-500">
-                    -{rekapData?.data?.reduce((acc, s) => acc + (s.totalOut ?? 0), 0) ?? 0}
+                    -
+                    {rekapData?.data?.reduce(
+                      (acc, s) => acc + (s.totalOut ?? 0),
+                      0,
+                    ) ?? 0}
                   </TableCell>
                   <TableCell className="font-bold">
-                    {rekapData?.data?.reduce((acc, s) => acc + (s.currentStock ?? 0), 0) ?? 0}
+                    {rekapData?.data?.reduce(
+                      (acc, s) => acc + (s.currentStock ?? 0),
+                      0,
+                    ) ?? 0}
                   </TableCell>
                   <TableCell className="font-bold">
-                    {formatCurrency(rekapData?.data?.reduce((acc, s) => acc + (s.buyPrice ?? 0), 0) ?? 0)}
+                    {formatCurrency(
+                      rekapData?.data?.reduce(
+                        (acc, s) => acc + (s.buyPrice ?? 0),
+                        0,
+                      ) ?? 0,
+                    )}
                   </TableCell>
                   <TableCell className="font-bold">
-                    {formatCurrency(rekapData?.data?.reduce((acc, s) => acc + (s.sellPrice ?? 0), 0) ?? 0)}
+                    {formatCurrency(
+                      rekapData?.data?.reduce(
+                        (acc, s) => acc + (s.sellPrice ?? 0),
+                        0,
+                      ) ?? 0,
+                    )}
                   </TableCell>
                   <TableCell className="font-bold text-green-600">
                     {formatCurrency(
-                      rekapData?.data?.reduce((acc, s) => acc + ((s.sellPrice ?? 0) - (s.buyPrice ?? 0)), 0) ?? 0,
+                      rekapData?.data?.reduce(
+                        (acc, s) =>
+                          acc + ((s.sellPrice ?? 0) - (s.buyPrice ?? 0)),
+                        0,
+                      ) ?? 0,
                     )}
                   </TableCell>
                 </TableRow>

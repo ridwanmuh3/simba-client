@@ -17,6 +17,8 @@ import { useAuth } from "@/features/auth/context";
 import { LoginFormInputs, loginSchema } from "@/features/auth/schemas";
 import dayjs from "dayjs";
 
+const APP_VERSION = import.meta.env.VITE_APP_VERSION;
+
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -166,7 +168,7 @@ const Login = () => {
           </Card>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            © {dayjs().year()} SIMBA. All rights reserved.
+            © {dayjs().year()} SIMBA {APP_VERSION}. All rights reserved.
           </p>
         </div>
       </div>

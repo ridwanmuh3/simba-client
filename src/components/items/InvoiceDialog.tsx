@@ -164,16 +164,23 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
     },
   });
 
+  const nextID = (str: string) => {
+    return str.replace(/\d+$/, (m) =>
+      (parseInt(m, 10) + 1).toString().padStart(m.length, "0"),
+    );
+  };
+
   useEffect(() => {
+    const last = lastInvoiceData?.data?.[0];
     if (open) {
       const profile = companyProfileData?.data;
       form.reset({
         companyName: profile?.companyName ?? "",
         companyAddress: profile?.companyAddress ?? "",
         companyContact: profile?.companyContact ?? "",
-        invoiceNo: "",
-        poNo: "",
-        quoNo: "",
+        invoiceNo: nextID(last.invoiceNumber) ?? "",
+        poNo: nextID(last.poNumber) ?? "",
+        quoNo: nextID(last.quoNumber) ?? "",
         receiverName: "",
         receiverAddress: "",
         keterangan: "",
