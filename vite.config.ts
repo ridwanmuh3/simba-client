@@ -1,12 +1,24 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === "development";
   const backendTarget = "http://localhost:3000";
+  const rootEnv = loadEnv(mode, path.resolve(__dirname, ".."), "");
+  const clientEnv = loadEnv(mode, __dirname, "");
+  const appVersion =
+    process.env.TAG ||
+    rootEnv.TAG ||
+    clientEnv.VITE_APP_VERSION ||
+    rootEnv.APP_VERSION ||
+    "dev";
+
   return {
     plugins: [react()],
+    define: {
+      "import.meta.env.VITE_APP_VERSION": JSON.stringify(appVersion),
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
