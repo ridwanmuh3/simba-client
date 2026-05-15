@@ -87,7 +87,9 @@ const toCSVRow = (cells: (string | number)[]) =>
   cells.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",");
 
 const downloadCSV = (rows: string[], filename: string) => {
-  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([`\ufeffsep=,\r\n${rows.join("\r\n")}`], {
+    type: "text/csv;charset=utf-8;",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

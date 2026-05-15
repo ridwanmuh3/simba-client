@@ -23,6 +23,8 @@ const financeHeaders = [
   "Tanggal Ditambahkan",
 ];
 
+const CSV_PREAMBLE = "\ufeffsep=,\r\n";
+
 export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
   const csvContent = [
     itemHeaders.join(","),
@@ -36,9 +38,9 @@ export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
         formatDateDetail(item.createdAt),
       ].join(","),
     ),
-  ].join("\n");
+  ].join("\r\n");
 
-  const blob = new Blob(["\ufeff" + csvContent], {
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
   const link = document.createElement("a");
@@ -79,9 +81,9 @@ export const exportFinanceToCSV = (
         escapeCSV(formatDateDetail(item.createdAt)),
       ].join(","),
     ),
-  ].join("\n");
+  ].join("\r\n");
 
-  const blob = new Blob(["\ufeff" + csvContent], {
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
 
@@ -104,7 +106,13 @@ export const exportFinanceToCSV = (
 };
 
 export const parseCSV = (csvText: string): Item[] => {
-  const lines = csvText.split("\n").filter((line) => line.trim());
+  const lines = csvText
+    .split(/\r?\n/)
+    .filter((line) => line.trim())
+    .filter((line, index) => {
+      if (index !== 0) return true;
+      return !line.trim().toLowerCase().startsWith("sep=");
+    });
 
   if (lines.length < 2) {
     throw new Error(
@@ -147,7 +155,13 @@ export const parseCSV = (csvText: string): Item[] => {
 };
 
 export const parseFinanceCSV = (csvText: string): FinanceData[] => {
-  const lines = csvText.split("\n").filter((line) => line.trim());
+  const lines = csvText
+    .split(/\r?\n/)
+    .filter((line) => line.trim())
+    .filter((line, index) => {
+      if (index !== 0) return true;
+      return !line.trim().toLowerCase().startsWith("sep=");
+    });
 
   if (lines.length < 2) {
     throw new Error(
@@ -203,9 +217,9 @@ export const downloadCSV = (
 
   const csvContent = rows
     .map((row) => row.map((cell) => escapeCSV(String(cell))).join(","))
-    .join("\n");
+    .join("\r\n");
 
-  const blob = new Blob(["\ufeff" + csvContent], {
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
 
@@ -286,9 +300,9 @@ export const exportOpnameToCSV = (
     headers.map(escOpname).join(","),
     ...rows,
     footerRow,
-  ].join("\n");
+  ].join("\r\n");
 
-  const blob = new Blob(["﻿" + csvContent], {
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
   const url = URL.createObjectURL(blob);

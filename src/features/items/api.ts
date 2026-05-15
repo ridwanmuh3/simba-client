@@ -23,9 +23,13 @@ import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 const invalidateItemQueries = () => {
   queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.full });
+  queryClient.invalidateQueries({ queryKey: queryKeys.items.categories });
   queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.financeSummary });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.stocksSummaryAll });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.items.invoiceItemsFlatAll,
+  });
   queryClient.invalidateQueries({ queryKey: ["item-last-stock-price"] });
 };
 
@@ -126,8 +130,8 @@ export const useGetAllItems = (
       );
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -141,7 +145,7 @@ export const useGetFullItems = () => {
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
     staleTime: 0,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -153,8 +157,8 @@ export const useGetItemCategories = () => {
         await axiosInstance.get<ApiResponse<string[]>>("/items/categories");
       return data.data ?? [];
     },
-    staleTime: 1000 * 60 * 10,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -194,8 +198,8 @@ export const useGetAllItemsStocks = (
       );
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -210,8 +214,8 @@ export const useGetLastStockPrice = (itemId: string, type: "IN" | "OUT") => {
       return data.data ?? 0;
     },
     enabled: !!itemId,
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -224,8 +228,8 @@ export const useGetStocksFinanceSummary = () => {
       >("/items/stocks/summary");
       return data;
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -258,8 +262,8 @@ export const useGetItemsStocksSummary = (
       >(`/items/stocks/opname?${params.toString()}`);
       return data;
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -277,6 +281,7 @@ export const useGetInvoiceItemsFlat = (
       searchQuery,
       page,
       limit,
+      stockType,
       dateFrom,
       dateTo,
     ),
@@ -295,8 +300,8 @@ export const useGetInvoiceItemsFlat = (
       );
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -317,7 +322,12 @@ export const useGenerateInvoice = () => {
       return { blob: response.data, filename };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.items.invoiceHistoryAll });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceItemsFlatAll,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceHistoryAll,
+      });
     },
   });
 };
@@ -378,8 +388,8 @@ export const useGetInvoiceHistory = (
       >(`/items/invoices?${params.toString()}`);
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -415,7 +425,12 @@ export const useUpdateInvoice = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.items.invoiceHistoryAll });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceItemsFlatAll,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceHistoryAll,
+      });
     },
   });
 };
@@ -429,7 +444,12 @@ export const useDeleteInvoice = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.items.invoiceHistoryAll });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceItemsFlatAll,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceHistoryAll,
+      });
     },
   });
 };

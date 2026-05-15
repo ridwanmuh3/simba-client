@@ -21,6 +21,7 @@ export const queryKeys = {
     full: ["items-stock-mapping"] as const,
     categories: ["item-categories"] as const,
     stocksSummaryAll: ["items-stocks-summary"] as const,
+    invoiceItemsFlatAll: ["invoice-items-flat"] as const,
     stocksSummary: (
       search: string,
       page: number,
@@ -59,6 +60,7 @@ export const queryKeys = {
       search: string,
       page: number,
       limit: number,
+      stockType?: string,
       dateFrom?: Date,
       dateTo?: Date,
     ) =>
@@ -67,6 +69,7 @@ export const queryKeys = {
         search,
         page,
         limit,
+        stockType,
         dateFrom?.toISOString(),
         dateTo?.toISOString(),
       ] as const,
