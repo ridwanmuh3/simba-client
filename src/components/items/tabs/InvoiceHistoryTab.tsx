@@ -409,7 +409,7 @@ const InvoiceHistoryTab = () => {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
                         {normalizeDocumentNumber(invoice.poNumber)} /{" "}
-                        {normalizeDocumentNumber(invoice.quoNumber)}
+                        {normalizeDocumentNumber(invoice.kebutuhan)}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
                         {formatDateDetail(invoice.createdAt)}

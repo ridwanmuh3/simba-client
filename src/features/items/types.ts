@@ -86,7 +86,7 @@ export interface InvoiceHistoryData {
   companyAddress: string;
   invoiceNumber: string;
   poNumber: string;
-  quoNumber: string;
+  kebutuhan: string;
   receiverName: string;
   receiverAddress: string;
   invoiceDate: string;
@@ -150,7 +150,7 @@ export interface GenerateInvoiceRequest {
   invoiceNo: string;
   date: string;
   poNo?: string;
-  quoNo?: string;
+  kebutuhan?: string;
   receiverName: string;
   receiverAddress: string;
   stockIds?: number[];

@@ -70,7 +70,7 @@ const invoiceSchema = z.object({
   companyContact: z.string().min(1, "Nomor kontak wajib diisi"),
   invoiceNo: z.string().min(1, "Nomor invoice wajib diisi"),
   poNo: z.string().optional(),
-  quoNo: z.string().optional(),
+  kebutuhan: z.string().optional(),
   receiverName: z.string().min(1, "Nama penerima wajib diisi"),
   receiverAddress: z.string().min(1, "Alamat penerima wajib diisi"),
   keterangan: z.string().optional(),
@@ -153,7 +153,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       companyContact: "",
       invoiceNo: "",
       poNo: "",
-      quoNo: "",
+      kebutuhan: "",
       receiverName: "",
       receiverAddress: "",
       keterangan: "",
@@ -164,7 +164,9 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
     },
   });
 
-  const nextID = (str: string) => {
+  const nextID = (str?: string | null) => {
+    if (!str) return "";
+
     return str.replace(/\d+$/, (m) =>
       (parseInt(m, 10) + 1).toString().padStart(m.length, "0"),
     );
@@ -178,9 +180,9 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         companyName: profile?.companyName ?? "",
         companyAddress: profile?.companyAddress ?? "",
         companyContact: profile?.companyContact ?? "",
-        invoiceNo: nextID(last.invoiceNumber) ?? "",
-        poNo: nextID(last.poNumber) ?? "",
-        quoNo: nextID(last.quoNumber) ?? "",
+        invoiceNo: nextID(last?.invoiceNumber),
+        poNo: nextID(last?.poNumber),
+        kebutuhan: last?.kebutuhan ?? "",
         receiverName: "",
         receiverAddress: "",
         keterangan: "",
@@ -190,7 +192,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         invoiceDate: new Date(),
       });
     }
-  }, [open, companyProfileData]);
+  }, [open, companyProfileData, lastInvoiceData, form]);
 
   const onSubmit = async (values: InvoiceFormValues) => {
     setServerErr("");
@@ -209,7 +211,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
       invoiceNo: values.invoiceNo,
       date: dayjs(values.invoiceDate).locale("id").format("DD MMMM YYYY"),
       poNo: values.poNo ?? "",
-      quoNo: values.quoNo ?? "",
+      kebutuhan: values.kebutuhan ?? "",
       receiverName: values.receiverName,
       receiverAddress: values.receiverAddress,
       stockType,
@@ -349,12 +351,12 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                               {last.poNumber || "-"}
                             </span>
                           </span>
-                          <span>
-                            QUO:{" "}
+                          {/* <span>
+                            Kebutuhan:{" "}
                             <span className="font-mono">
-                              {last.quoNumber || "-"}
+                              {last.kebutuhan || "-"}
                             </span>
-                          </span>
+                          </span> */}
                         </div>
                       </div>
                     </div>
@@ -394,12 +396,12 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                 />
                 <FormField
                   control={form.control}
-                  name="quoNo"
+                  name="kebutuhan"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>No. Quo</FormLabel>
+                      <FormLabel>Kebutuhan</FormLabel>
                       <FormControl>
-                        <Input placeholder="QUO-001" {...field} />
+                        <Input placeholder="Contoh kebutuhan" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
