@@ -3,6 +3,8 @@ import {
   useGetInvoiceItemsFlat,
   useGetItemsStocksSummary,
 } from "@/features/items/api";
+import { useGetDapurs } from "@/features/dapur/api";
+import { useAuth } from "@/features/auth/context";
 import { axiosInstance } from "@/core/http/axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import dayjs from "dayjs";
+import { downloadXlsx, type XlsxRow, type XlsxSheet } from "@/lib/xlsx-utils";
 
 type TimeRange = "1d" | "1w" | "1m" | "all";
 
@@ -71,9 +74,9 @@ const getDateRange = (range: TimeRange): { from?: Date; to?: Date } => {
 };
 
 const EXPORT_HEADERS = [
+  "TANGGAL",
   "NO",
   "NO INVOICE",
-  "TANGGAL",
   "NAMA BARANG",
   "QTY",
   "SATUAN",
@@ -83,22 +86,135 @@ const EXPORT_HEADERS = [
   "TOTAL HARGA JUAL",
 ];
 
-const toCSVRow = (cells: (string | number)[]) =>
-  cells.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",");
+const formatNumberID = (value: number) =>
+  new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 }).format(value);
 
-const downloadCSV = (rows: string[], filename: string) => {
-  const blob = new Blob([`\ufeffsep=,\r\n${rows.join("\r\n")}`], {
-    type: "text/csv;charset=utf-8;",
+const formatRupiahPlain = (value: number) => `Rp${formatNumberID(value)}`;
+
+const normalizeExportDate = (value: string) => {
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format("DD/MM") : value || "-";
+};
+
+const groupByDate = (items: InvoiceItemFlat[]) =>
+  items.reduce<Record<string, InvoiceItemFlat[]>>((acc, item) => {
+    const key = item.date || "-";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+    return acc;
+  }, {});
+
+const cells = (values: (string | number)[], style = 0): XlsxRow["cells"] =>
+  values.map((value) => ({ value, style }));
+
+const buildStockOpnameSheet = (
+  items: InvoiceItemFlat[],
+  dapurName: string,
+): XlsxSheet => {
+  const title = `PO MINGGUAN ${dapurName.toUpperCase()}`;
+  const rows: XlsxRow[] = [
+    {
+      height: 24,
+      cells: [
+        { value: title, style: 1 },
+        ...Array.from({ length: 9 }, () => ({ value: "", style: 1 })),
+      ],
+    },
+    { height: 6, cells: cells(Array.from({ length: 10 }, () => ""), 0) },
+    {
+      height: 20,
+      cells: EXPORT_HEADERS.map((header, index) => ({
+        value: header,
+        style: index === 0 ? 4 : index >= 8 ? 3 : 2,
+      })),
+    },
+  ];
+
+  let grandTotalBuy = 0;
+  let grandTotalSell = 0;
+  const grouped = groupByDate(items);
+
+  Object.entries(grouped).forEach(([date, group]) => {
+    let totalBuy = 0;
+    let totalSell = 0;
+
+    group.forEach((item, index) => {
+      totalBuy += item.totalBuyPrice;
+      totalSell += item.totalSellPrice;
+      rows.push({
+        cells: [
+          { value: index === 0 ? normalizeExportDate(date) : "", style: index === 0 ? 4 : 6 },
+          { value: index + 1, style: 6 },
+          { value: item.invoiceNumber, style: 6 },
+          { value: item.itemName, style: 7 },
+          { value: formatNumberID(item.amount), style: 6 },
+          { value: item.measureUnit, style: 6 },
+          { value: formatNumberID(item.buyPrice), style: 6 },
+          { value: formatNumberID(item.sellPrice), style: 6 },
+          { value: formatRupiahPlain(item.totalBuyPrice), style: 6 },
+          { value: formatRupiahPlain(item.totalSellPrice), style: 6 },
+        ],
+      });
+    });
+
+    grandTotalBuy += totalBuy;
+    grandTotalSell += totalSell;
+    rows.push({
+      cells: [
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "TOTAL", style: 5 },
+        { value: formatRupiahPlain(totalBuy), style: 5 },
+        { value: formatRupiahPlain(totalSell), style: 5 },
+      ],
+    });
   });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+
+  if (Object.keys(grouped).length > 1) {
+    rows.push({
+      height: 20,
+      cells: [
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "", style: 5 },
+        { value: "TOTAL MINGGUAN", style: 5 },
+        { value: formatRupiahPlain(grandTotalBuy), style: 5 },
+        { value: formatRupiahPlain(grandTotalSell), style: 5 },
+      ],
+    });
+  }
+
+  return {
+    name: dapurName,
+    rows,
+    columns: [
+      { width: 11 },
+      { width: 6 },
+      { width: 14 },
+      { width: 28 },
+      { width: 10 },
+      { width: 11 },
+      { width: 14 },
+      { width: 14 },
+      { width: 18 },
+      { width: 18 },
+    ],
+    merges: [{ from: "A1", to: "J1" }],
+    freezePane: "A4",
+  };
 };
 
 const StockOpnameTab = () => {
+  const auth = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -130,8 +246,12 @@ const StockOpnameTab = () => {
     dateFrom,
     dateTo,
   );
+  const { data: dapurs } = useGetDapurs();
 
   const items = invoiceItemsData?.data ?? [];
+  const currentDapurName =
+    dapurs?.find((dapur) => dapur.id === auth.user?.currentDapurId)?.name ??
+    "SPPG";
 
   const summary = useMemo(() => {
     const all = summaryData?.data ?? [];
@@ -165,39 +285,9 @@ const StockOpnameTab = () => {
       const label =
         TIME_RANGE_OPTIONS.find((o) => o.value === timeRange)?.label ??
         timeRange;
-      const rows = [
-        toCSVRow(EXPORT_HEADERS),
-        ...allItems.map((item, i) =>
-          toCSVRow([
-            i + 1,
-            item.invoiceNumber,
-            item.date || "-",
-            item.itemName,
-            item.amount,
-            item.measureUnit,
-            item.buyPrice,
-            item.sellPrice,
-            item.totalBuyPrice,
-            item.totalSellPrice,
-          ]),
-        ),
-        toCSVRow([
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "",
-          "TOTAL",
-          allItems.reduce((acc, s) => acc + s.totalBuyPrice, 0),
-          allItems.reduce((acc, s) => acc + s.totalSellPrice, 0),
-        ]),
-      ];
-
-      downloadCSV(
-        rows,
-        `stock-opname-${label}-${dayjs().format("YYYY-MM-DD")}.csv`,
+      downloadXlsx(
+        `stock-opname-${label}-${dayjs().format("YYYY-MM-DD")}.xlsx`,
+        [buildStockOpnameSheet(allItems, currentDapurName)],
       );
     } finally {
       setExporting(false);
@@ -314,7 +404,7 @@ const StockOpnameTab = () => {
               ) : (
                 <span className="flex items-center gap-1.5">
                   <Download className="w-4 h-4" />
-                  Export CSV
+                  Export Excel
                 </span>
               )}
             </Button>
