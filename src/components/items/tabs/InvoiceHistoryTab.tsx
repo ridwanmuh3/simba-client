@@ -135,11 +135,13 @@ const InvoiceHistoryTab = () => {
 
   const handleConfirmFrom = () => {
     setDateFrom(tempDateFrom);
+    setPage(1);
     setIsFromOpen(false);
   };
 
   const handleConfirmTo = () => {
     setDateTo(tempDateTo);
+    setPage(1);
     setIsToOpen(false);
   };
 
@@ -220,7 +222,7 @@ const InvoiceHistoryTab = () => {
   const handleViewInvoice = async (invoice: InvoiceHistoryData) => {
     if (downloadInvoice.isPending) return;
     try {
-      const { blob } = await downloadInvoice.mutateAsync({
+      const { blob, filename } = await downloadInvoice.mutateAsync({
         id: invoice.id,
         mode: "view",
       });
@@ -230,6 +232,7 @@ const InvoiceHistoryTab = () => {
       a.href = url;
       a.target = "_blank";
       a.rel = "noopener noreferrer";
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -266,8 +269,13 @@ const InvoiceHistoryTab = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
+<<<<<<< HEAD
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari nomor invoice, perusahaan, PO, atau Kebutuhan"
+=======
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                placeholder="Cari nomor invoice, perusahaan, PO, atau QUO"
+>>>>>>> dapur-isolation
                 className="pl-9"
               />
             </div>
@@ -292,6 +300,7 @@ const InvoiceHistoryTab = () => {
                     onClick={() => {
                       setTempDateFrom(undefined);
                       setDateFrom(undefined);
+                      setPage(1);
                       setIsFromOpen(false);
                     }}
                   >
@@ -324,6 +333,7 @@ const InvoiceHistoryTab = () => {
                     onClick={() => {
                       setTempDateTo(undefined);
                       setDateTo(undefined);
+                      setPage(1);
                       setIsToOpen(false);
                     }}
                   >
@@ -433,13 +443,13 @@ const InvoiceHistoryTab = () => {
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit invoice
                             </DropdownMenuItem>
-                            <DropdownMenuItem
+                            {/* <DropdownMenuItem
                               disabled={!invoice.hasItems}
                               onClick={() => handleViewInvoice(invoice)}
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               Lihat nota
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuItem
                               disabled={!invoice.hasItems}
                               onClick={() => handleDownloadInvoice(invoice)}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Search,
   MoreHorizontal,
@@ -28,7 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useGetAllUsers, useGetUsersStats } from "@/features/users/api";
-import { formatDateDetail, formatDateRelative } from "@/lib/date-utils";
+import { formatDateDetail, formatDateRelative, isRecentlyActive } from "@/lib/date-utils";
 import { User } from "@/features/users/types";
 import StatsCard from "@/components/shared/StatsCard";
 import { downloadHandler, getInitialsIdentity } from "@/lib/utils";
@@ -102,16 +102,12 @@ const Users = () => {
     },
   ];
 
-  useEffect(() => {
-    setPage(1);
-  }, [searchQuery]);
-
   return (
     <DashboardLayout
       title="Kelola Pengguna"
       subtitle="Kelola data pengguna dan hak akses sistem"
     >
-      <div className="grid grid-cols-1 min-[548px]:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-4 sm:mb-6">
         {usersStatsData.map((stat, index) => (
           <div key={stat.title}>
             <StatsCard
@@ -124,17 +120,17 @@ const Users = () => {
           </div>
         ))}
       </div>
-      <div className="flex flex-col md:flex-row gap-6 mb-6 flex-wrap">
+      <div className="flex flex-col md:flex-row gap-3 sm:gap-6 mb-4 sm:mb-6 flex-wrap">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Cari pengguna..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
             className="pl-9 bg-card min-w-[200px]"
           />
         </div>
-        <div className="flex-1 flex flex-col md:flex-row gap-6 w-full">
+        <div className="flex-1 flex flex-col md:flex-row gap-3 w-full">
           <div className="flex flex-1 gap-2 w-full md:w-fit">
             <Button
               className="w-full bg-card"
@@ -224,7 +220,7 @@ const Users = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {user.isActive ? (
+                        {isRecentlyActive(user.lastActive) ? (
                           <Badge className="bg-success/10 text-success hover:bg-success/20 border-0">
                             Aktif
                           </Badge>

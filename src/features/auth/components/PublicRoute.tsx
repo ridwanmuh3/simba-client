@@ -2,10 +2,10 @@ import { Navigate, Outlet } from "react-router";
 import { useAuth } from "../context";
 
 const PublicRoute = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, hasDapur } = useAuth();
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={hasDapur ? "/dashboard" : "/select-dapur"} replace />;
   }
 
   return <Outlet />;

@@ -1,5 +1,5 @@
 import { FinanceData } from "@/features/finance/types";
-import { Item } from "@/features/items/types";
+import { Item, ItemStocksSummary } from "@/features/items/types";
 import dayjs from "dayjs";
 import { formatDateDetail } from "./date-utils";
 
@@ -23,6 +23,8 @@ const financeHeaders = [
   "Tanggal Ditambahkan",
 ];
 
+const CSV_PREAMBLE = "\ufeffsep=,\r\n";
+
 export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
   const csvContent = [
     itemHeaders.join(","),
@@ -36,9 +38,9 @@ export const exportToCSV = (items: Item[], filename: string = "bahan-mbg") => {
         formatDateDetail(item.createdAt),
       ].join(","),
     ),
-  ].join("\n");
+  ].join("\r\n");
 
-  const blob = new Blob(["\ufeff" + csvContent], {
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
   const link = document.createElement("a");
@@ -79,9 +81,9 @@ export const exportFinanceToCSV = (
         escapeCSV(formatDateDetail(item.createdAt)),
       ].join(","),
     ),
-  ].join("\n");
+  ].join("\r\n");
 
-  const blob = new Blob(["\ufeff" + csvContent], {
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
 
@@ -104,7 +106,13 @@ export const exportFinanceToCSV = (
 };
 
 export const parseCSV = (csvText: string): Item[] => {
-  const lines = csvText.split("\n").filter((line) => line.trim());
+  const lines = csvText
+    .split(/\r?\n/)
+    .filter((line) => line.trim())
+    .filter((line, index) => {
+      if (index !== 0) return true;
+      return !line.trim().toLowerCase().startsWith("sep=");
+    });
 
   if (lines.length < 2) {
     throw new Error(
@@ -147,7 +155,13 @@ export const parseCSV = (csvText: string): Item[] => {
 };
 
 export const parseFinanceCSV = (csvText: string): FinanceData[] => {
-  const lines = csvText.split("\n").filter((line) => line.trim());
+  const lines = csvText
+    .split(/\r?\n/)
+    .filter((line) => line.trim())
+    .filter((line, index) => {
+      if (index !== 0) return true;
+      return !line.trim().toLowerCase().startsWith("sep=");
+    });
 
   if (lines.length < 2) {
     throw new Error(
@@ -203,9 +217,9 @@ export const downloadCSV = (
 
   const csvContent = rows
     .map((row) => row.map((cell) => escapeCSV(String(cell))).join(","))
-    .join("\n");
+    .join("\r\n");
 
-  const blob = new Blob(["\ufeff" + csvContent], {
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
     type: "text/csv;charset=utf-8;",
   });
 
@@ -218,5 +232,85 @@ export const downloadCSV = (
   link.click();
   document.body.removeChild(link);
 
+  URL.revokeObjectURL(url);
+};
+
+const escOpname = (v: string | number | null | undefined) => {
+  const s = String(v ?? "");
+  return `"${s.replace(/"/g, '""')}"`;
+};
+
+export const exportOpnameToCSV = (
+  items: ItemStocksSummary[],
+  date: string,
+  filename = "stok-opname",
+) => {
+  const headers = [
+    "TANGGAL",
+    "NO",
+    "NO INVOICE",
+    "NAMA BARANG",
+    "QTY",
+    "SATUAN",
+    "HARGA BELI",
+    "HARGA JUAL",
+    "TOTAL HARGA BELI",
+    "TOTAL HARGA JUAL",
+  ];
+
+  let totalBeli = 0;
+  let totalJual = 0;
+
+  const rows = items.map((s, i) => {
+    const qty = s.currentStock ?? 0;
+    const totalHargaBeli = s.stockValue ?? 0;
+    const totalHargaJual = (s.sellPrice ?? 0) * qty;
+
+    totalBeli += totalHargaBeli;
+    totalJual += totalHargaJual;
+
+    return [
+      escOpname(date),
+      escOpname(i + 1),
+      escOpname(s.itemId),
+      escOpname(s.name),
+      escOpname(qty),
+      escOpname(s.measureUnit),
+      escOpname(s.buyPrice ?? 0),
+      escOpname(s.sellPrice ?? 0),
+      escOpname(totalHargaBeli),
+      escOpname(totalHargaJual),
+    ].join(",");
+  });
+
+  const footerRow = [
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname(""),
+    escOpname("TOTAL"),
+    escOpname(totalBeli),
+    escOpname(totalJual),
+  ].join(",");
+
+  const csvContent = [
+    headers.map(escOpname).join(","),
+    ...rows,
+    footerRow,
+  ].join("\r\n");
+
+  const blob = new Blob([CSV_PREAMBLE + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${filename}-${dayjs().format("DD-MM-YYYY-HH-mm-ss")}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };

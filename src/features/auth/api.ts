@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { axiosInstance } from "@/core/http/axios";
 import { queryClient } from "@/core/query/client";
 import { queryKeys } from "@/core/query/keys";
@@ -29,6 +30,16 @@ export const useLogoutMutation = () => {
       queryClient.clear();
     },
   });
+};
+
+export const useHeartbeat = (enabled: boolean) => {
+  useEffect(() => {
+    if (!enabled) return;
+    const ping = () => axiosInstance.patch("/auth/heartbeat").catch(() => {});
+    ping();
+    const id = setInterval(ping, 2 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [enabled]);
 };
 
 export const useCurrentAuth = (enabled: boolean) => {

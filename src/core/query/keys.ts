@@ -19,6 +19,9 @@ export const queryKeys = {
       category?: string,
     ) => ["items-stock", search, page, limit, dateFrom, dateTo, type, category] as const,
     full: ["items-stock-mapping"] as const,
+    categories: ["item-categories"] as const,
+    stocksSummaryAll: ["items-stocks-summary"] as const,
+    invoiceItemsFlatAll: ["invoice-items-flat"] as const,
     stocksSummary: (
       search: string,
       page: number,
@@ -35,6 +38,7 @@ export const queryKeys = {
         dateTo?.toISOString(),
       ] as const,
     financeSummary: ["stocks-finance-summary"] as const,
+    invoiceHistoryAll: ["invoice-history"] as const,
     invoiceHistory: (
       search: string,
       page: number,
@@ -47,6 +51,25 @@ export const queryKeys = {
         search,
         page,
         limit,
+        dateFrom?.toISOString(),
+        dateTo?.toISOString(),
+      ] as const,
+    lastStockPrice: (itemId: string, type: string) => ["item-last-stock-price", itemId, type] as const,
+    invoiceDetail: (id: number) => ["invoice-detail", id] as const,
+    invoiceItemsFlat: (
+      search: string,
+      page: number,
+      limit: number,
+      stockType?: string,
+      dateFrom?: Date,
+      dateTo?: Date,
+    ) =>
+      [
+        "invoice-items-flat",
+        search,
+        page,
+        limit,
+        stockType,
         dateFrom?.toISOString(),
         dateTo?.toISOString(),
       ] as const,
@@ -66,5 +89,8 @@ export const queryKeys = {
     all: ["users"] as const,
     list: (page: number, limit: number) => ["users", page, limit] as const,
     stats: ["users_stats"] as const,
+  },
+  dapur: {
+    list: ["dapurs"] as const,
   },
 } as const;

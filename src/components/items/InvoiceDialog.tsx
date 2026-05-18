@@ -164,16 +164,31 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
     },
   });
 
+  const nextID = (str?: string | null) => {
+    if (!str) return "";
+
+    return str.replace(/\d+$/, (m) =>
+      (parseInt(m, 10) + 1).toString().padStart(m.length, "0"),
+    );
+  };
+
   useEffect(() => {
+    const last = lastInvoiceData?.data?.[0];
     if (open) {
       const profile = companyProfileData?.data;
       form.reset({
         companyName: profile?.companyName ?? "",
         companyAddress: profile?.companyAddress ?? "",
         companyContact: profile?.companyContact ?? "",
+<<<<<<< HEAD
         invoiceNo: "",
         poNo: "",
         kebutuhan: "",
+=======
+        invoiceNo: nextID(last?.invoiceNumber),
+        poNo: nextID(last?.poNumber),
+        kebutuhan: last?.kebutuhan ?? "",
+>>>>>>> dapur-isolation
         receiverName: "",
         receiverAddress: "",
         keterangan: "",
@@ -183,7 +198,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         invoiceDate: new Date(),
       });
     }
-  }, [open, companyProfileData]);
+  }, [open, companyProfileData, lastInvoiceData, form]);
 
   const onSubmit = async (values: InvoiceFormValues) => {
     setServerErr("");
@@ -325,7 +340,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                 if (!last) return null;
                 return (
                   <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2.5 text-xs text-primary/80">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />
                       <div className="space-y-1">
                         <p className="font-medium">Nomor invoice sebelumnya:</p>
@@ -342,6 +357,12 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                               {last.poNumber || "-"}
                             </span>
                           </span>
+                          {/* <span>
+                            Kebutuhan:{" "}
+                            <span className="font-mono">
+                              {last.kebutuhan || "-"}
+                            </span>
+                          </span> */}
                         </div>
                       </div>
                     </div>
@@ -386,7 +407,11 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                     <FormItem>
                       <FormLabel>Kebutuhan</FormLabel>
                       <FormControl>
+<<<<<<< HEAD
                         <Input placeholder="Kebutuhan" {...field} />
+=======
+                        <Input placeholder="Contoh kebutuhan" {...field} />
+>>>>>>> dapur-isolation
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -597,7 +622,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                 </Select>
               </div>
               <div className="border rounded-md overflow-hidden">
-                <div className="max-h-48 overflow-y-auto">
+                <div className="max-h-64 overflow-y-auto">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background z-10">
                       <TableRow>

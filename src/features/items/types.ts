@@ -44,6 +44,7 @@ export interface StockTracking {
   id?: number;
   type?: "IN" | "OUT";
   supplier?: string;
+  modifiedBy?: string;
   previousStock?: number;
   newStock?: number;
   amount?: number;
@@ -122,6 +123,19 @@ export interface InvoiceItemData {
   totalPrice: number;
   supplier: string;
   stockType: string;
+}
+
+export interface InvoiceItemFlat {
+  date: string;
+  invoiceNumber: string;
+  itemName: string;
+  measureUnit: string;
+  amount: number;
+  stockType: string;
+  buyPrice: number;
+  sellPrice: number;
+  totalBuyPrice: number;
+  totalSellPrice: number;
 }
 
 export interface InvoiceDetailData extends InvoiceHistoryData {

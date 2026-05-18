@@ -1,6 +1,6 @@
-import { useMemo, type PropsWithChildren, useCallback } from "react";
+import { useMemo, type PropsWithChildren, useCallback, startTransition } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useCurrentAuth, useLoginMutation, useLogoutMutation } from "../api";
+import { useCurrentAuth, useHeartbeat, useLoginMutation, useLogoutMutation } from "../api";
 import { UserLoginRequest } from "../types";
 import { isAxiosError } from "axios";
 import { AuthContext } from "../context";
@@ -17,13 +17,20 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const loginMutation = useLoginMutation();
   const logoutMutation = useLogoutMutation();
   const { data: user, isLoading } = useCurrentAuth(!isPublicRoute);
+  useHeartbeat(!!user);
+
+  // Only block the tree on initial fetch when we have no data at all.
+  // Prevents spinner flash when navigating after login (cache already warm).
+  const showSpinner = isLoading && user === undefined;
 
   const login = useCallback(
     async (request: UserLoginRequest, onError?: (msg: string) => void) => {
       try {
         await loginMutation.mutateAsync(request);
         toast({ title: "Login berhasil!", description: "Selamat datang kembali." });
-        navigate("/dashboard", { replace: true });
+        startTransition(() => {
+          navigate("/select-dapur", { replace: true });
+        });
       } catch (e) {
         let msg = "Login gagal. Periksa koneksi internet Anda dan coba lagi.";
         if (isAxiosError(e)) {
@@ -60,13 +67,14 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       user: user ?? null,
       isLoading,
       isAuthenticated: !!user,
+      hasDapur: !!(user?.currentDapurId),
       login,
       logout,
     }),
     [user, isLoading, login, logout],
   );
 
-  if (isLoading) return <Spinner />;
+  if (showSpinner) return <Spinner />;
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

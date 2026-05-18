@@ -27,6 +27,7 @@ import {
   useDeleteStockItem,
   useGetAllItemsStocks,
   useGetFullItems,
+  useGetLastStockPrice,
   useUpdateStockItem,
 } from "@/features/items/api";
 import { formatCurrency, parseCurrency } from "@/lib/utils";
@@ -70,14 +71,11 @@ const ReduceItemStockTab = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
-  const [isFromOpen, setIsFromOpen] = useState(false);
-  const [isToOpen, setIsToOpen] = useState(false);
-  const [tempDateFrom, setTempDateFrom] = useState<Date | undefined>();
-  const [tempDateTo, setTempDateTo] = useState<Date | undefined>();
+  const [openPopover, setOpenPopover] = useState<"from" | "to" | null>(null);
+  const [tempDates, setTempDates] = useState<{ from?: Date; to?: Date }>({});
   const [errMsg, setErrMsg] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [isEditStock, setIsEditStock] = useState(false);
   const updateStockItem = useUpdateStockItem();
   const deleteStockItem = useDeleteStockItem();
   const { data: stocksData, isLoading: isStocksLoading } = useGetAllItemsStocks(
@@ -89,6 +87,15 @@ const ReduceItemStockTab = () => {
     "OUT",
   );
   const { data: itemsData } = useGetFullItems();
+  const { data: lastPrice } = useGetLastStockPrice(selectedItemId, "OUT");
+
+  useEffect(() => {
+    if (!selectedItemId || selectedStock) return;
+    const item = itemsData?.data?.find((i) => i.id === selectedItemId);
+    if (!item) return;
+    form.setValue("itemUnitPrice", lastPrice || item.unitPrice);
+  }, [selectedItemId, lastPrice]);
+
   const handleUpdateItemStock = async (values: UpdateItemStockFormInputs) => {
     setErrMsg("");
 
@@ -129,7 +136,6 @@ const ReduceItemStockTab = () => {
       form.reset();
       setSelectedStock(null);
       setSelectedItemId("");
-      setIsEditStock(false);
     } catch (e) {
       const err = e as AxiosError;
       if (err.status === 400) {
@@ -149,11 +155,13 @@ const ReduceItemStockTab = () => {
   };
 
   const handleSelectStockTracking = (stockTracking: StockTracking) => {
+    if (!stockTracking.item) return;
     setSelectedStock(stockTracking);
     setSelectedItemId(stockTracking.item.id);
     form.setValue("itemId", stockTracking.item.id);
     form.setValue("itemName", stockTracking.item.name);
     form.setValue("amount", 0);
+    form.setValue("itemUnitPrice", stockTracking.unitPrice);
     form.setValue("itemMeasureUnit", stockTracking.item.measureUnit);
     form.setValue(
       "itemUnitPrice",
@@ -175,7 +183,6 @@ const ReduceItemStockTab = () => {
         description: `Anda berhasil menghapus data bahan`,
       });
       form.reset();
-      setIsEditStock(false);
     } catch (e: unknown) {
       const err = e as AxiosError;
       switch (err.status) {
@@ -200,27 +207,25 @@ const ReduceItemStockTab = () => {
   };
 
   const handleOpenFromChange = (open: boolean) => {
-    if (open) {
-      setTempDateFrom(dateFrom);
-    }
-    setIsFromOpen(open);
+    if (open) setTempDates((d) => ({ ...d, from: dateFrom }));
+    setOpenPopover(open ? "from" : null);
   };
 
   const handleOpenToChange = (open: boolean) => {
-    if (open) {
-      setTempDateTo(dateTo);
-    }
-    setIsToOpen(open);
+    if (open) setTempDates((d) => ({ ...d, to: dateTo }));
+    setOpenPopover(open ? "to" : null);
   };
 
   const handleConfirmFrom = () => {
-    setDateFrom(tempDateFrom);
-    setIsFromOpen(false);
+    setDateFrom(tempDates.from);
+    setOpenPopover(null);
+    setPage(1);
   };
 
   const handleConfirmTo = () => {
-    setDateTo(tempDateTo);
-    setIsToOpen(false);
+    setDateTo(tempDates.to);
+    setOpenPopover(null);
+    setPage(1);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -238,7 +243,6 @@ const ReduceItemStockTab = () => {
     setSelectedStock(null);
     form.reset();
     setErrMsg("");
-    setIsEditStock(false);
   };
 
   return (
@@ -272,7 +276,6 @@ const ReduceItemStockTab = () => {
                       onChange={(val) => {
                         field.onChange(val);
                         setSelectedStock(null);
-                        setIsEditStock(false);
                         const selectedItm = itemsData?.data?.find(
                           (item) => item.id === val,
                         );
@@ -408,79 +411,100 @@ const ReduceItemStockTab = () => {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Riwayat Bahan Keluar</CardTitle>
-            <div className="flex flex-wrap gap-2 mt-2 items-center">
-              <div className="relative flex-1 min-w-[200px]">
+            <div className="flex flex-col gap-2 mt-2">
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Cari..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
                   className="pl-9"
                 />
               </div>
-              <Popover open={isFromOpen} onOpenChange={handleOpenFromChange}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateFrom ? formatDateTable(dateFrom) : "Dari"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={tempDateFrom}
-                    onSelect={setTempDateFrom}
-                    initialFocus
-                  />
-                  <div className="flex gap-2 mt-2 mb-2">
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        setDateFrom(undefined);
-                        setIsFromOpen(false);
-                      }}
-                    >
-                      Batal
+              <div className="flex gap-2 flex-wrap">
+                <Popover
+                  open={openPopover === "from"}
+                  onOpenChange={handleOpenFromChange}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateFrom ? formatDateTable(dateFrom) : "Dari"}
                     </Button>
-                    <Button className="w-full" onClick={handleConfirmFrom}>
-                      Pilih
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 px-4 py-2"
+                    align="start"
+                  >
+                    <CalendarComponent
+                      mode="single"
+                      selected={tempDates.from}
+                      onSelect={(d) =>
+                        setTempDates((prev) => ({ ...prev, from: d }))
+                      }
+                      initialFocus
+                    />
+                    <div className="flex gap-2 mt-2 mb-2">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          setDateFrom(undefined);
+                          setOpenPopover(null);
+                        }}
+                      >
+                        Batal
+                      </Button>
+                      <Button className="w-full" onClick={handleConfirmFrom}>
+                        Pilih
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Popover
+                  open={openPopover === "to"}
+                  onOpenChange={handleOpenToChange}
+                >
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {dateTo ? formatDateTable(dateTo) : "Sampai"}
                     </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Popover open={isToOpen} onOpenChange={handleOpenToChange}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {dateTo ? formatDateTable(dateTo) : "Sampai"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 px-4 py-2" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={tempDateTo}
-                    onSelect={setTempDateTo}
-                    initialFocus
-                  />
-                  <div className="flex gap-2 mt-2 mb-2">
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        setDateTo(undefined);
-                        setIsToOpen(false);
-                      }}
-                    >
-                      Batal
-                    </Button>
-                    <Button className="w-full" onClick={handleConfirmTo}>
-                      Pilih
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <InvoiceDialog stockType="OUT" />
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 px-4 py-2"
+                    align="start"
+                  >
+                    <CalendarComponent
+                      mode="single"
+                      selected={tempDates.to}
+                      onSelect={(d) =>
+                        setTempDates((prev) => ({ ...prev, to: d }))
+                      }
+                      initialFocus
+                    />
+                    <div className="flex gap-2 mt-2 mb-2">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          setDateTo(undefined);
+                          setOpenPopover(null);
+                        }}
+                      >
+                        Batal
+                      </Button>
+                      <Button className="w-full" onClick={handleConfirmTo}>
+                        Pilih
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <InvoiceDialog stockType="OUT" />
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -539,10 +563,7 @@ const ReduceItemStockTab = () => {
                             ? "bg-muted"
                             : "hover:bg-muted/50"
                         }`}
-                        onClick={() => {
-                          setIsEditStock(true);
-                          handleSelectStockTracking(t);
-                        }}
+                        onClick={() => handleSelectStockTracking(t)}
                       >
                         <TableCell className="font-medium text-muted-foreground">
                           {(page - 1) * limit + index + 1}

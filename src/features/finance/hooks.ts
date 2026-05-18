@@ -1,16 +1,5 @@
-import {
-  eachDayOfInterval,
-  endOfDay,
-  endOfMonth,
-  format,
-  getDate,
-  getHours,
-  isSameDay,
-  startOfDay,
-  startOfMonth,
-  subDays,
-} from "date-fns";
-import { id } from "date-fns/locale";
+import dayjs from "dayjs";
+import "dayjs/locale/id";
 import { useMemo } from "react";
 import {
   FinanceCategoryPoint,
@@ -30,6 +19,17 @@ interface FinanceReportData {
   tenDaysCategory: FinanceCategoryPoint[];
   monthlyCategory: FinanceCategoryPoint[];
 }
+
+const eachDayOfInterval = (start: Date, end: Date): Date[] => {
+  const days: Date[] = [];
+  let current = dayjs(start).startOf("day");
+  const endDay = dayjs(end).startOf("day");
+  while (!current.isAfter(endDay)) {
+    days.push(current.toDate());
+    current = current.add(1, "day");
+  }
+  return days;
+};
 
 const calculateSummary = (data: FinanceData[]): FinanceSummary => {
   const totalIn = data
@@ -56,13 +56,13 @@ export const useFinanceReport = (
   reportDate: Date,
 ): FinanceReportData => {
   return useMemo(() => {
-    const tenDaysStart = startOfDay(subDays(reportDate, 9));
-    const tenDaysEnd = endOfDay(reportDate);
-    const monthStart = startOfMonth(reportDate);
-    const monthEnd = endOfMonth(reportDate);
+    const tenDaysStart = dayjs(reportDate).subtract(9, "day").startOf("day").toDate();
+    const tenDaysEnd = dayjs(reportDate).endOf("day").toDate();
+    const monthStart = dayjs(reportDate).startOf("month").toDate();
+    const monthEnd = dayjs(reportDate).endOf("month").toDate();
 
     const dailyTransactions = transactions.filter((t) =>
-      isSameDay(new Date(t.createdAt), reportDate),
+      dayjs(t.createdAt).isSame(reportDate, "day"),
     );
     const tenDaysTransactions = transactions.filter((t) => {
       const d = new Date(t.createdAt);
@@ -77,7 +77,7 @@ export const useFinanceReport = (
       { length: 24 },
       (_, hour) => {
         const hourTx = dailyTransactions.filter(
-          (t) => getHours(new Date(t.createdAt)) === hour,
+          (t) => dayjs(t.createdAt).hour() === hour,
         );
         const masuk = hourTx
           .filter((t) => t.type === "PEMASUKAN")
@@ -89,12 +89,9 @@ export const useFinanceReport = (
       },
     );
 
-    const tenDaysTrend = eachDayOfInterval({
-      start: tenDaysStart,
-      end: tenDaysEnd,
-    }).map((day) => {
+    const tenDaysTrend = eachDayOfInterval(tenDaysStart, tenDaysEnd).map((day) => {
       const dayTx = tenDaysTransactions.filter((t) =>
-        isSameDay(new Date(t.createdAt), day),
+        dayjs(t.createdAt).isSame(day, "day"),
       );
       const masuk = dayTx
         .filter((t) => t.type === "PEMASUKAN")
@@ -102,14 +99,14 @@ export const useFinanceReport = (
       const keluar = dayTx
         .filter((t) => t.type === "PENGELUARAN")
         .reduce((sum, t) => sum + t.amount, 0);
-      return { label: format(day, "dd MMM", { locale: id }), masuk, keluar };
+      return { label: dayjs(day).locale("id").format("DD MMM"), masuk, keluar };
     });
 
     const monthlyTrend: FinanceTrendPoint[] = [1, 2, 3, 4].map((week) => {
       const weekStart = (week - 1) * 7 + 1;
       const weekEnd = week === 4 ? 31 : week * 7;
       const weekTx = monthlyTransactions.filter((t) => {
-        const day = getDate(new Date(t.createdAt));
+        const day = dayjs(t.createdAt).date();
         return day >= weekStart && day <= weekEnd;
       });
       const masuk = weekTx

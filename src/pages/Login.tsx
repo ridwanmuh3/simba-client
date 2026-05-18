@@ -17,7 +17,11 @@ import { useAuth } from "@/features/auth/context";
 import { LoginFormInputs, loginSchema } from "@/features/auth/schemas";
 import dayjs from "dayjs";
 
+<<<<<<< HEAD
 const APP_VERSION = import.meta.env.VITE_APP_VERSION!
+=======
+const APP_VERSION = import.meta.env.VITE_APP_VERSION;
+>>>>>>> dapur-isolation
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -66,7 +70,7 @@ const Login = () => {
           </div>
         </div>
       </div>
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <img

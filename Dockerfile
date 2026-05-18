@@ -11,7 +11,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY . .
 
 ARG VITE_API_BASE_URL=/api
+ARG TAG=dev
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV TAG=$TAG
 
 RUN bun run build
 

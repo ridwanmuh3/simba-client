@@ -1,12 +1,70 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Package, Wallet, PackagePlus, PackageMinus } from "lucide-react";
 import { useDashboardStats } from "@/features/dashboard/api";
-import Spinner from "@/components/shared/Spinner";
 import { formatCurrency } from "@/lib/utils";
 import SystemActivity from "@/components/dashboard/SystemActivity";
 import MonthlyExpenseCharts from "@/components/dashboard/MonthlyCharts";
 import DashboardStatsCards from "@/components/dashboard/DashboardStatsCards";
 import { BudgetStats, StockStats } from "@/features/dashboard/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+
+const DashboardSkeleton = () => (
+  <>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <Card key={i}>
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-8 w-20" />
+              </div>
+              <Skeleton className="w-12 h-12 rounded-xl" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
+      <Card className="lg:col-span-2">
+        <CardHeader><Skeleton className="h-5 w-36" /></CardHeader>
+        <CardContent><Skeleton className="h-[300px] w-full rounded-lg" /></CardContent>
+      </Card>
+      <Card>
+        <CardHeader><Skeleton className="h-5 w-44" /></CardHeader>
+        <CardContent>
+          <Skeleton className="h-[200px] w-full rounded-lg" />
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-3 w-10" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+    <Card>
+      <CardHeader><Skeleton className="h-5 w-36" /></CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 p-3 rounded-lg">
+              <Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 w-48" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+              <Skeleton className="h-3 w-16" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </>
+);
 
 const Dashboard = () => {
   const { data: dashboard, isLoading, isError, error } = useDashboardStats();
@@ -14,7 +72,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <DashboardLayout title="Dashboard">
-        <Spinner />
+        <DashboardSkeleton />
       </DashboardLayout>
     );
   }

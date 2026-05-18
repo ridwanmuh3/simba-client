@@ -10,6 +10,7 @@ import {
   GenerateInvoiceRequest,
   InvoiceDetailData,
   InvoiceHistoryData,
+  InvoiceItemFlat,
   UpdateInvoiceRequest,
   Item,
   ItemStocksSummary,
@@ -22,9 +23,14 @@ import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 const invalidateItemQueries = () => {
   queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.full });
+  queryClient.invalidateQueries({ queryKey: queryKeys.items.categories });
   queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.stats });
   queryClient.invalidateQueries({ queryKey: queryKeys.items.financeSummary });
-  queryClient.invalidateQueries({ queryKey: ["items-stocks-summary"] });
+  queryClient.invalidateQueries({ queryKey: queryKeys.items.stocksSummaryAll });
+  queryClient.invalidateQueries({
+    queryKey: queryKeys.items.invoiceItemsFlatAll,
+  });
+  queryClient.invalidateQueries({ queryKey: ["item-last-stock-price"] });
 };
 
 export const useAddItem = () => {
@@ -124,8 +130,8 @@ export const useGetAllItems = (
       );
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -139,20 +145,20 @@ export const useGetFullItems = () => {
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
     staleTime: 0,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 };
 
 export const useGetItemCategories = () => {
   return useQuery({
-    queryKey: ["item-categories"],
+    queryKey: queryKeys.items.categories,
     queryFn: async () => {
       const { data } =
         await axiosInstance.get<ApiResponse<string[]>>("/items/categories");
       return data.data ?? [];
     },
-    staleTime: 1000 * 60 * 10,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -192,9 +198,24 @@ export const useGetAllItemsStocks = (
       );
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
+  });
+};
+
+export const useGetLastStockPrice = (itemId: string, type: "IN" | "OUT") => {
+  return useQuery({
+    queryKey: queryKeys.items.lastStockPrice(itemId, type),
+    queryFn: async () => {
+      const { data } = await axiosInstance.get<ApiResponse<number>>(
+        `/items/${itemId}/stocks/last-price?type=${type}`,
+      );
+      return data.data ?? 0;
+    },
+    enabled: !!itemId,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -207,8 +228,8 @@ export const useGetStocksFinanceSummary = () => {
       >("/items/stocks/summary");
       return data;
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -241,8 +262,46 @@ export const useGetItemsStocksSummary = (
       >(`/items/stocks/opname?${params.toString()}`);
       return data;
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    placeholderData: keepPreviousData,
+  });
+};
+
+export const useGetInvoiceItemsFlat = (
+  searchQuery: string,
+  page: number,
+  limit: number,
+  stockType?: string,
+  dateFrom?: Date,
+  dateTo?: Date,
+) => {
+  return useQuery({
+    queryKey: queryKeys.items.invoiceItemsFlat(
+      searchQuery,
+      page,
+      limit,
+      stockType,
+      dateFrom,
+      dateTo,
+    ),
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(page),
+        size: String(limit),
+      });
+      if (searchQuery) params.append("search_query", searchQuery);
+      if (stockType) params.append("stock_type", stockType);
+      if (dateFrom) params.append("start_date", dateFrom.toISOString());
+      if (dateTo) params.append("end_date", dateTo.toISOString());
+
+      const { data } = await axiosInstance.get<ApiResponse<InvoiceItemFlat[]>>(
+        `/items/invoices/items-flat?${params.toString()}`,
+      );
+      return { data: data.data ?? [], paging: data.paging ?? null };
+    },
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
@@ -263,7 +322,12 @@ export const useGenerateInvoice = () => {
       return { blob: response.data, filename };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceItemsFlatAll,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceHistoryAll,
+      });
     },
   });
 };
@@ -324,15 +388,15 @@ export const useGetInvoiceHistory = (
       >(`/items/invoices?${params.toString()}`);
       return { data: data.data ?? [], paging: data.paging ?? null };
     },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
   });
 };
 
 export const useGetInvoiceDetail = (id: number | null) => {
   return useQuery({
-    queryKey: ["invoice-detail", id],
+    queryKey: queryKeys.items.invoiceDetail(id!),
     queryFn: async () => {
       const { data } = await axiosInstance.get<ApiResponse<InvoiceDetailData>>(
         `/items/invoices/${id}`,
@@ -340,7 +404,7 @@ export const useGetInvoiceDetail = (id: number | null) => {
       return data.data!;
     },
     enabled: id !== null,
-    staleTime: 0,
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: false,
   });
 };
@@ -361,7 +425,12 @@ export const useUpdateInvoice = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceItemsFlatAll,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceHistoryAll,
+      });
     },
   });
 };
@@ -375,7 +444,12 @@ export const useDeleteInvoice = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invoice-history"] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceItemsFlatAll,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.items.invoiceHistoryAll,
+      });
     },
   });
 };
