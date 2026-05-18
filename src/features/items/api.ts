@@ -328,6 +328,7 @@ export const useGenerateInvoice = () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.items.invoiceHistoryAll,
       });
+      queryClient.invalidateQueries({ queryKey: ["documentSequence"] });
     },
   });
 };

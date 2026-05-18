@@ -49,6 +49,7 @@ import dayjs from "dayjs";
 import { AxiosError } from "axios";
 import {
   useGetCompanyProfile,
+  useGetNextDocumentNumbers,
   useUpdateCompanyProfile,
 } from "@/features/settings/api";
 import {
@@ -143,6 +144,8 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
   const updateCompanyProfile = useUpdateCompanyProfile();
   const { data: companyProfileData, refetch: refetchProfile } =
     useGetCompanyProfile();
+  const { data: documentSequenceData, refetch: refetchDocumentSequence } =
+    useGetNextDocumentNumbers();
   const { data: lastInvoiceData } = useGetInvoiceHistory("", 1, 1);
 
   const form = useForm<InvoiceFormValues>({
@@ -164,24 +167,16 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
     },
   });
 
-  const nextID = (str?: string | null) => {
-    if (!str) return "";
-
-    return str.replace(/\d+$/, (m) =>
-      (parseInt(m, 10) + 1).toString().padStart(m.length, "0"),
-    );
-  };
-
   useEffect(() => {
-    const last = lastInvoiceData?.data?.[0];
     if (open) {
       const profile = companyProfileData?.data;
+      const documentSequence = documentSequenceData?.data;
       form.reset({
         companyName: profile?.companyName ?? "",
         companyAddress: profile?.companyAddress ?? "",
         companyContact: profile?.companyContact ?? "",
-        invoiceNo: "",
-        poNo: "",
+        invoiceNo: documentSequence?.nextInvoiceNo ?? "",
+        poNo: documentSequence?.nextPoNumber ?? "",
         kebutuhan: "",
         receiverName: "",
         receiverAddress: "",
@@ -192,7 +187,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         invoiceDate: new Date(),
       });
     }
-  }, [open, companyProfileData, lastInvoiceData, form]);
+  }, [open, companyProfileData, documentSequenceData, form]);
 
   const onSubmit = async (values: InvoiceFormValues) => {
     setServerErr("");
@@ -298,6 +293,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         setOpen(val);
         if (val) {
           refetchProfile();
+          refetchDocumentSequence();
           setServerErr("");
           setSelectedIds(new Set());
           setStockSearch("");
