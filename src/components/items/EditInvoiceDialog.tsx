@@ -208,11 +208,7 @@ const EditInvoiceDialog = ({
         <DialogHeader>
           <DialogTitle>Edit Invoice</DialogTitle>
           <DialogDescription>
-<<<<<<< HEAD
             Perbaiki data invoice. Nomor invoice, PO, dan Kebutuhan tidak dapat
-=======
-            Perbaiki data invoice. Nomor invoice, PO, dan kebutuhan tidak dapat
->>>>>>> dapur-isolation
             diubah.
           </DialogDescription>
         </DialogHeader>

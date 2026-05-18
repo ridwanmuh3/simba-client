@@ -13,11 +13,7 @@ export type CompanyProfile = {
 
 export type DocumentSequence = {
   nextInvoiceNo: string;
-<<<<<<< HEAD
   nextPoNumber: string;
-=======
-  nextPONumber: string;
->>>>>>> dapur-isolation
 };
 
 export const useGetCompanyProfile = () => {

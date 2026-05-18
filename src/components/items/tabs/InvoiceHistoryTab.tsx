@@ -269,13 +269,8 @@ const InvoiceHistoryTab = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
-<<<<<<< HEAD
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari nomor invoice, perusahaan, PO, atau Kebutuhan"
-=======
-                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                placeholder="Cari nomor invoice, perusahaan, PO, atau QUO"
->>>>>>> dapur-isolation
                 className="pl-9"
               />
             </div>

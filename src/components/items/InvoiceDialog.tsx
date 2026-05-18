@@ -180,15 +180,9 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         companyName: profile?.companyName ?? "",
         companyAddress: profile?.companyAddress ?? "",
         companyContact: profile?.companyContact ?? "",
-<<<<<<< HEAD
         invoiceNo: "",
         poNo: "",
         kebutuhan: "",
-=======
-        invoiceNo: nextID(last?.invoiceNumber),
-        poNo: nextID(last?.poNumber),
-        kebutuhan: last?.kebutuhan ?? "",
->>>>>>> dapur-isolation
         receiverName: "",
         receiverAddress: "",
         keterangan: "",
@@ -407,11 +401,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
                     <FormItem>
                       <FormLabel>Kebutuhan</FormLabel>
                       <FormControl>
-<<<<<<< HEAD
                         <Input placeholder="Kebutuhan" {...field} />
-=======
-                        <Input placeholder="Contoh kebutuhan" {...field} />
->>>>>>> dapur-isolation
                       </FormControl>
                       <FormMessage />
                     </FormItem>

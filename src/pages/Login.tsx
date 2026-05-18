@@ -17,11 +17,7 @@ import { useAuth } from "@/features/auth/context";
 import { LoginFormInputs, loginSchema } from "@/features/auth/schemas";
 import dayjs from "dayjs";
 
-<<<<<<< HEAD
 const APP_VERSION = import.meta.env.VITE_APP_VERSION!
-=======
-const APP_VERSION = import.meta.env.VITE_APP_VERSION;
->>>>>>> dapur-isolation
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
