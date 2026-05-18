@@ -123,9 +123,9 @@ const buildStockOpnameSheet = (
     { height: 6, cells: cells(Array.from({ length: 10 }, () => ""), 0) },
     {
       height: 20,
-      cells: EXPORT_HEADERS.map((header, index) => ({
+      cells: EXPORT_HEADERS.map((header) => ({
         value: header,
-        style: index === 0 ? 4 : index >= 8 ? 3 : 2,
+        style: 2,
       })),
     },
   ];
