@@ -115,7 +115,7 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
 
   const stockRows = useMemo(() => stocksData?.data ?? [], [stocksData]);
 
-  const MAX_SELECTION = 6;
+  const MAX_SELECTION = 33;
 
   const warnMaxExceeded = () =>
     toast({
