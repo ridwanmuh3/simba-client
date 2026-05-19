@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ChefHat, Loader2, LogOut, Plus } from "lucide-react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,16 +30,6 @@ import { queryKeys } from "@/core/query/keys";
 import logoBgn from "@/assets/sppg.webp";
 import dayjs from "dayjs";
 import { UserRole } from "@/features/users/types";
-
-const listVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.07 } },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" } },
-};
 
 const SelectDapur = () => {
   const navigate = useNavigate();
@@ -121,12 +110,7 @@ const SelectDapur = () => {
 
       {/* Right — content panel */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div
-          className="w-full max-w-md"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-        >
+        <div className="w-full max-w-md animate-fade-in">
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <img
               src={logoBgn}
@@ -147,70 +131,57 @@ const SelectDapur = () => {
             <CardContent>
               <div className="space-y-4">
                 {/* Dapur list */}
-                <AnimatePresence mode="wait">
-                  {isLoadingDapurs ? (
-                    <motion.div
-                      key="skeleton"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="space-y-2"
-                    >
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-3 p-4 rounded-lg border border-border">
-                          <Skeleton className="w-9 h-9 rounded-full flex-shrink-0" />
-                          <div className="flex-1 space-y-1.5">
-                            <Skeleton className="h-3.5 w-32" />
-                            <Skeleton className="h-3 w-48" />
-                          </div>
+                {isLoadingDapurs ? (
+                  <div className="space-y-2 animate-fade-in">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 p-4 rounded-lg border border-border"
+                      >
+                        <Skeleton className="w-9 h-9 rounded-full flex-shrink-0" />
+                        <div className="flex-1 space-y-1.5">
+                          <Skeleton className="h-3.5 w-32" />
+                          <Skeleton className="h-3 w-48" />
                         </div>
-                      ))}
-                    </motion.div>
-                  ) : activeDapurs.length === 0 ? (
-                    <motion.p
-                      key="empty"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-center text-sm text-muted-foreground py-4"
-                    >
-                      {isSuperAdmin
-                        ? "Belum ada dapur. Tambahkan dapur pertama."
-                        : "Tidak ada dapur aktif. Hubungi Super Admin."}
-                    </motion.p>
-                  ) : (
-                    <motion.div
-                      key="list"
-                      variants={listVariants}
-                      initial="hidden"
-                      animate="visible"
-                      className="space-y-2"
-                    >
-                      {activeDapurs.map((dapur) => (
-                        <motion.button
-                          key={dapur.id}
-                          variants={itemVariants}
-                          onClick={() => handleSelect(dapur.id)}
-                          disabled={selectMutation.isPending}
-                          className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                            <ChefHat className="w-4 h-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-foreground">{dapur.name}</p>
-                            {dapur.description && (
-                              <p className="text-xs text-muted-foreground truncate">{dapur.description}</p>
-                            )}
-                          </div>
-                          {selecting === dapur.id && (
-                            <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                ) : activeDapurs.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-4 animate-fade-in">
+                    {isSuperAdmin
+                      ? "Belum ada dapur. Tambahkan dapur pertama."
+                      : "Tidak ada dapur aktif. Hubungi Super Admin."}
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {activeDapurs.map((dapur, index) => (
+                      <button
+                        key={dapur.id}
+                        onClick={() => handleSelect(dapur.id)}
+                        disabled={selectMutation.isPending}
+                        className="w-full flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed animate-fade-in"
+                        style={{ animationDelay: `${index * 40}ms` }}
+                      >
+                        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                          <ChefHat className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm text-foreground">
+                            {dapur.name}
+                          </p>
+                          {dapur.description && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {dapur.description}
+                            </p>
                           )}
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                        </div>
+                        {selecting === dapur.id && (
+                          <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Actions */}
                 {isSuperAdmin && (
@@ -238,7 +209,7 @@ const SelectDapur = () => {
           <p className="text-center text-sm text-muted-foreground mt-6">
             © {dayjs().year()} SIMBA. All rights reserved.
           </p>
-        </motion.div>
+        </div>
       </div>
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>

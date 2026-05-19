@@ -35,9 +35,6 @@ export default defineConfig(({ mode }) => {
             if (["recharts"].includes(pkg) || id.includes("/d3-") || scopedPkg.startsWith("d3")) {
               return "vendor-charts";
             }
-            if (["framer-motion"].includes(pkg) || scopedPkg === "@motionone/animation" || scopedPkg.startsWith("@motionone/")) {
-              return "vendor-motion";
-            }
             if (["react", "react-dom", "react-router", "react-router-dom", "react-is", "scheduler"].includes(pkg)) {
               return "vendor-react";
             }
@@ -53,7 +50,7 @@ export default defineConfig(({ mode }) => {
             if (["react-hook-form", "zod"].includes(pkg) || scopedPkg.startsWith("@hookform/")) {
               return "vendor-forms";
             }
-            if (["axios", "dayjs", "date-fns", "clsx", "tailwind-merge", "class-variance-authority", "camelcase-keys", "snakecase-keys", "zustand", "use-debounce", "sonner", "next-themes", "use-sync-external-store"].includes(pkg)) {
+            if (["axios", "dayjs", "clsx", "tailwind-merge", "class-variance-authority", "camelcase-keys", "snakecase-keys", "zustand", "use-debounce", "use-sync-external-store"].includes(pkg)) {
               return "vendor-utils";
             }
           },

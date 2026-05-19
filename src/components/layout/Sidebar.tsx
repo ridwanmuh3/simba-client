@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Package,
@@ -255,17 +254,14 @@ const Sidebar = ({ authContext, isMobileDrawer = false, onNavClick }: SidebarPro
   if (isMobileDrawer) return sidebarContent;
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 70 : 280 }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
+    <aside
       className={cn(
         collapsed ? "w-[70px]" : "w-[280px]",
-        "fixed left-0 top-0 h-screen border-r border-sidebar-border z-50",
+        "fixed left-0 top-0 h-screen border-r border-sidebar-border z-50 transition-[width] duration-300 ease-in-out",
       )}
     >
       {sidebarContent}
-    </motion.aside>
+    </aside>
   );
 };
 
