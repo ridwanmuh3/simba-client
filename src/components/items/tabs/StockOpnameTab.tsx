@@ -20,7 +20,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -362,7 +361,7 @@ const StockOpnameTab = () => {
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg">Stock Opname</CardTitle>
-              <CardDescription className="mt-2 flex flex-wrap gap-2 items-center">
+              <div className="mt-2 flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -387,7 +386,7 @@ const StockOpnameTab = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </CardDescription>
+              </div>
             </div>
             <Button
               variant="outline"
@@ -520,7 +519,7 @@ const StockOpnameTab = () => {
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-lg">Rekap Stok</CardTitle>
-              <CardDescription className="mt-2">
+              <div className="mt-2 text-sm text-muted-foreground">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -533,7 +532,7 @@ const StockOpnameTab = () => {
                     className="pl-9 w-48"
                   />
                 </div>
-              </CardDescription>
+              </div>
             </div>
           </div>
         </CardHeader>

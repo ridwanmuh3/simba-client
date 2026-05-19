@@ -169,6 +169,8 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
 
   useEffect(() => {
     if (open) {
+      if (form.formState.isDirty) return;
+
       const profile = companyProfileData?.data;
       const documentSequence = documentSequenceData?.data;
       form.reset({
@@ -187,7 +189,13 @@ const InvoiceDialog = ({ stockType = "OUT" }: InvoiceDialogProps) => {
         invoiceDate: new Date(),
       });
     }
-  }, [open, companyProfileData, documentSequenceData, form]);
+  }, [
+    open,
+    companyProfileData,
+    documentSequenceData,
+    form,
+    form.formState.isDirty,
+  ]);
 
   const onSubmit = async (values: InvoiceFormValues) => {
     setServerErr("");

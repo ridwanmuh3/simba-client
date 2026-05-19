@@ -321,14 +321,16 @@ export const useGenerateInvoice = () => {
         : `invoice-${request.invoiceNo}.pdf`;
       return { blob: response.data, filename };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.items.invoiceItemsFlatAll,
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.items.invoiceHistoryAll,
-      });
-      queryClient.invalidateQueries({ queryKey: ["documentSequence"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.items.invoiceItemsFlatAll,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.items.invoiceHistoryAll,
+        }),
+        queryClient.invalidateQueries({ queryKey: ["documentSequence"] }),
+      ]);
     },
   });
 };
