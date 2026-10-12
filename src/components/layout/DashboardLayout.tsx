@@ -21,10 +21,18 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!isMobile) {
+    if (isMobile) return;
+
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
       setCollapsed(false);
       setMobileOpen(false);
-    }
+    });
+
+    return () => {
+      active = false;
+    };
   }, [isMobile, setCollapsed]);
 
   return (
@@ -35,7 +43,7 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
       {/* Mobile top bar */}
       {isMobile && (
         <header className="fixed top-0 left-0 right-0 h-14 border-b bg-background flex items-center px-3 gap-3 z-40">
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} aria-label="Buka menu navigasi">
             <Menu className="w-5 h-5" />
           </Button>
           <img src={logoBgn} alt="Logo BGN" className="w-7 h-7 rounded-lg object-contain" />

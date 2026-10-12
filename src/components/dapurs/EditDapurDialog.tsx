@@ -92,7 +92,7 @@ const EditDapurDialog = ({ dapur }: EditDapurDialogProps) => {
               disabled={updateDapur.isPending}
             />
             {form.formState.errors.name && (
-              <p className="text-xs text-red-500">{form.formState.errors.name.message}</p>
+              <p className="text-xs text-destructive">{form.formState.errors.name.message}</p>
             )}
           </div>
           <div className="space-y-2">
@@ -105,7 +105,7 @@ const EditDapurDialog = ({ dapur }: EditDapurDialogProps) => {
               rows={3}
             />
             {form.formState.errors.description && (
-              <p className="text-xs text-red-500">{form.formState.errors.description.message}</p>
+              <p className="text-xs text-destructive">{form.formState.errors.description.message}</p>
             )}
           </div>
           <div className="flex items-center gap-3">
@@ -132,7 +132,7 @@ const EditDapurDialog = ({ dapur }: EditDapurDialogProps) => {
             Simpan
           </Button>
         </DialogFooter>
-        {errorMsg && <p className="text-xs text-red-500 text-center">{errorMsg}</p>}
+        {errorMsg && <p className="text-xs text-destructive text-center">{errorMsg}</p>}
       </DialogContent>
     </Dialog>
   );

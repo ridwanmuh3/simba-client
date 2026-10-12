@@ -393,7 +393,7 @@ export default function FinanceForm({ selectedFinance, onClearSelection }: Finan
                 <DeleteDialog handleDelete={handleDeleteFinance} isPending={deleteFinance.isPending} />
                 <Button type="submit" className="w-full" disabled={editFinance.isPending}>
                   {editFinance.isPending ? (
-                    <Spinner color="text-background" />
+                    <Spinner color="text-background" inline />
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-0.5" />
@@ -405,7 +405,7 @@ export default function FinanceForm({ selectedFinance, onClearSelection }: Finan
             ) : (
               <Button type="submit" className="w-full" disabled={addFinance.isPending}>
                 {addFinance.isPending ? (
-                  <Spinner color="text-background" />
+                  <Spinner color="text-background" inline />
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-0.5" />

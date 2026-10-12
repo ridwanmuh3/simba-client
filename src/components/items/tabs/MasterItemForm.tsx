@@ -38,6 +38,7 @@ import { Item } from "@/features/items/types";
 import { toast } from "@/hooks/use-toast";
 import DeleteDialog from "../DeleteDialog";
 import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
+import { useNavigationGuard, NavigationGuardDialog } from "@/components/shared/NavigationGuard";
 
 const defaultCategories = [
   "Karbohidrat",
@@ -295,6 +296,8 @@ const MasterItemForm = ({ selectedItem, onChangeSelection }: MasterItemFormProps
     return form.handleSubmit(formHandler);
   };
 
+  const blocker = useNavigationGuard(form.formState.isDirty);
+
   return (
     <Card className="lg:col-span-1 h-fit">
       <CardHeader className="pb-4">
@@ -484,7 +487,7 @@ const MasterItemForm = ({ selectedItem, onChangeSelection }: MasterItemFormProps
                 <DeleteDialog handleDelete={handleDeleteMasterItem} isPending={deleteItem.isPending} />
                 <Button type="submit" className="w-full" disabled={editItem.isPending}>
                   {editItem.isPending ? (
-                    <Spinner color="text-background" />
+                    <Spinner color="text-background" inline />
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-0.5" />
@@ -496,7 +499,7 @@ const MasterItemForm = ({ selectedItem, onChangeSelection }: MasterItemFormProps
             ) : (
               <Button type="submit" className="w-full" disabled={addItem.isPending}>
                 {addItem.isPending ? (
-                  <Spinner color="text-background" />
+                  <Spinner color="text-background" inline />
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-0.5" />
@@ -510,6 +513,7 @@ const MasterItemForm = ({ selectedItem, onChangeSelection }: MasterItemFormProps
             <p className="text-sm text-destructive text-center">{errMsg}</p>
           )}
         </form>
+        <NavigationGuardDialog blocker={blocker} />
       </CardContent>
     </Card>
   );

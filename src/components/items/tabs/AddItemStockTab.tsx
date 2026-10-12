@@ -50,6 +50,7 @@ import { formatDateDetail, formatDateTable } from "@/lib/date-utils";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import Spinner from "@/components/shared/Spinner";
 import InvoiceDialog from "../InvoiceDialog";
+import { useNavigationGuard, NavigationGuardDialog } from "@/components/shared/NavigationGuard";
 
 const AddItemStockTab = () => {
   const form = useForm<UpdateItemStockFormInputs>({
@@ -241,6 +242,8 @@ const AddItemStockTab = () => {
     setErrMsg("");
   };
 
+  const blocker = useNavigationGuard(form.formState.isDirty);
+
   return (
     <TabsContent value="bahan-masuk" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -384,7 +387,7 @@ const AddItemStockTab = () => {
                   disabled={updateStockItem.isPending}
                 >
                   {updateStockItem.isPending ? (
-                    <Spinner color="text-background" />
+                    <Spinner color="text-background" inline />
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
@@ -397,6 +400,7 @@ const AddItemStockTab = () => {
                 <p className="text-sm text-destructive text-center">{errMsg}</p>
               )}
             </form>
+            <NavigationGuardDialog blocker={blocker} />
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">

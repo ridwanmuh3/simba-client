@@ -62,6 +62,7 @@ import {
 } from "@/features/items/api";
 import { AxiosError } from "axios";
 import { toast } from "@/hooks/use-toast";
+import { extractErrorMessage } from "@/lib/utils";
 import type { InvoiceHistoryData } from "@/features/items/types";
 import EditInvoiceDialog from "../EditInvoiceDialog";
 
@@ -210,10 +211,10 @@ const InvoiceHistoryTab = () => {
         title: "Berhasil",
         description: `Invoice ${normalizeDocumentNumber(invoice.invoiceNumber)} berhasil dihapus.`,
       });
-    } catch {
+    } catch (e) {
       toast({
         title: "Gagal hapus invoice",
-        description: "Terjadi kesalahan saat menghapus invoice.",
+        description: extractErrorMessage(e, "Gagal menghapus invoice. Periksa koneksi Anda dan coba lagi."),
         variant: "destructive",
       });
     }

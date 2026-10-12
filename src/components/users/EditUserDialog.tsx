@@ -63,7 +63,7 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
       switch (e.status) {
         case 400:
           errMsg =
-            "Data tidak valid. Pastikan nama lengkap terisi dan password minimal 6 karakter (atau kosongkan jika tidak ingin mengubah).";
+            "Data tidak valid. Pastikan nama lengkap terisi dan password memiliki minimal 8 karakter, 1 huruf besar, 1 angka, dan 1 simbol (atau kosongkan jika tidak ingin mengubah).";
           break;
         case 401:
         case 403:
@@ -113,7 +113,7 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
               autoComplete="false"
             />
             {form.formState.errors.fullname && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive">
                 {form.formState.errors.fullname.message}
               </p>
             )}
@@ -152,6 +152,8 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                aria-pressed={showPassword}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showPassword ? (
@@ -162,7 +164,7 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
               </button>
             </div>
             {form.formState.errors.password && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive">
                 {form.formState.errors.password.message}
               </p>
             )}
@@ -184,7 +186,7 @@ const EditUserDialog = ({ user }: EditUserDialogProps) => {
             Simpan
           </Button>
         </DialogFooter>
-        {errorMsg && <p className="text-xs text-red-500">{errorMsg}</p>}
+        {errorMsg && <p className="text-xs text-destructive">{errorMsg}</p>}
       </DialogContent>
     </Dialog>
   );

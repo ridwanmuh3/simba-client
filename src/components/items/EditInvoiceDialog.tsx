@@ -48,7 +48,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
 import type { InvoiceHistoryData } from "@/features/items/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, extractErrorMessage } from "@/lib/utils";
 import { formatDateDetail } from "@/lib/date-utils";
 
 const editSchema = z.object({
@@ -124,6 +124,8 @@ const EditInvoiceDialog = ({
   });
 
   useEffect(() => {
+    let active = true;
+
     if (open && invoice) {
       form.reset({
         companyName: invoice.companyName,
@@ -137,12 +139,19 @@ const EditInvoiceDialog = ({
         jabatan: invoice.jabatan ?? "",
         bankAccount: invoice.bankAccount ?? "",
       });
-      setSelectedIds(new Set());
-      setStockSearch("");
-      setStockPage(1);
-      setStockCategory("");
+      queueMicrotask(() => {
+        if (!active) return;
+        setSelectedIds(new Set());
+        setStockSearch("");
+        setStockPage(1);
+        setStockCategory("");
+      });
     }
-  }, [open, invoice]);
+
+    return () => {
+      active = false;
+    };
+  }, [open, invoice, form]);
 
   const warnMaxExceeded = () =>
     toast({
@@ -190,10 +199,10 @@ const EditInvoiceDialog = ({
 
       toast({ title: "Berhasil", description: "Invoice berhasil diperbarui" });
       onOpenChange(false);
-    } catch {
+    } catch (e) {
       toast({
         title: "Gagal memperbarui invoice",
-        description: "Terjadi kesalahan. Periksa koneksi dan coba lagi.",
+        description: extractErrorMessage(e, "Gagal memperbarui invoice. Periksa koneksi dan coba lagi."),
         variant: "destructive",
       });
     }

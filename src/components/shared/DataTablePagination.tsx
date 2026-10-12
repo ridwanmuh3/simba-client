@@ -90,38 +90,38 @@ const DataTablePagination = ({
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
+            className="hidden h-11 w-11 p-0 lg:flex"
             onClick={() => onPageChange(1)}
             disabled={isFirst}
           >
-            <span className="sr-only">Go to first page</span>
+            <span className="sr-only">Halaman pertama</span>
             <ChevronsLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
-            className="h-8 w-8 p-0"
+            className="h-11 w-11 p-0"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={isFirst}
           >
-            <span className="sr-only">Go to previous page</span>
+            <span className="sr-only">Halaman sebelumnya</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
-            className="h-8 w-8 p-0"
+            className="h-11 w-11 p-0"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={isLast}
           >
-            <span className="sr-only">Go to next page</span>
+            <span className="sr-only">Halaman berikutnya</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
-            className="hidden h-8 w-8 p-0 lg:flex"
+            className="hidden h-11 w-11 p-0 lg:flex"
             onClick={() => onPageChange(effectiveTotalPages)}
             disabled={isLast}
           >
-            <span className="sr-only">Go to last page</span>
+            <span className="sr-only">Halaman terakhir</span>
             <ChevronsRight className="h-4 w-4" />
           </Button>
         </div>

@@ -5,13 +5,7 @@ import { Eye, EyeOff, Loader2, Lock, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import logoBgn from "@/assets/sppg.webp";
 import { useAuth } from "@/features/auth/context";
 import { LoginFormInputs, loginSchema } from "@/features/auth/schemas";
@@ -53,11 +47,7 @@ const Login = () => {
         <div className="relative z-10 flex flex-col justify-center px-12 text-primary-foreground">
           <div>
             <div className="w-16 h-16 rounded-2xl bg-primary-foreground/20 backdrop-blur flex items-center justify-center mb-8">
-              <img
-                src={logoBgn}
-                alt="Logo BGN"
-                className="w-12 h-12 object-contain"
-              />
+              <img src={logoBgn} alt="Logo BGN" className="w-12 h-12 object-contain" />
             </div>
             <h1 className="text-4xl font-bold mb-4">SIMBA</h1>
             <p className="text-xl text-primary-foreground/80 max-w-md">
@@ -69,26 +59,17 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <img
-              src={logoBgn}
-              alt="Logo BGN"
-              className="w-12 h-12 rounded-xl object-contain"
-            />
+            <img src={logoBgn} alt="Logo BGN" className="w-12 h-12 rounded-xl object-contain" />
             <span className="text-2xl font-bold">SIMBA</span>
           </div>
 
           <Card className="border-0 shadow-lifted">
             <CardHeader className="space-y-1 pb-4 text-center">
               <CardTitle className="text-2xl font-bold">Login</CardTitle>
-              <CardDescription>
-                Selamat datang di aplikasi SIMBA
-              </CardDescription>
+              <CardDescription>Selamat datang di aplikasi SIMBA</CardDescription>
             </CardHeader>
             <CardContent>
-              <form
-                onSubmit={form.handleSubmit(handleSubmit)}
-                className="space-y-4"
-              >
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
                   <div className="relative">
@@ -96,14 +77,14 @@ const Login = () => {
                     <Input
                       {...form.register("username")}
                       id="username"
+                      type="text"
+                      autoComplete="username"
                       className="pl-9"
                       disabled={isLoading}
                     />
                   </div>
                   {form.formState.errors.username && (
-                    <p className="text-xs text-red-500">
-                      {form.formState.errors.username.message}
-                    </p>
+                    <p className="text-xs text-destructive">{form.formState.errors.username.message}</p>
                   )}
                 </div>
 
@@ -115,25 +96,22 @@ const Login = () => {
                       {...form.register("password")}
                       id="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
                       className="pl-9 pr-10"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                      aria-pressed={showPassword}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                   {form.formState.errors.password && (
-                    <p className="text-xs text-red-500">
-                      {form.formState.errors.password.message}
-                    </p>
+                    <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
                   )}
                 </div>
 
@@ -147,21 +125,11 @@ const Login = () => {
                     <span className="text-muted-foreground">Ingat saya</span>
                   </label>
                 </div>
-                <Button
-                  type="submit"
-                  className="w-full h-11 font-semibold"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin h-8 w-8" />
-                  ) : (
-                    "Login"
-                  )}
+                <Button type="submit" className="w-full h-11 font-semibold" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="animate-spin h-8 w-8" /> : "Login"}
                 </Button>
                 {errorMsg && (
-                  <p className="text-red-500 text-sm text-center mt-2 font-medium">
-                    {errorMsg}
-                  </p>
+                  <p className="text-destructive text-sm text-center mt-2 font-medium">{errorMsg}</p>
                 )}
               </form>
             </CardContent>

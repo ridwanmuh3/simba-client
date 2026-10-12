@@ -160,7 +160,7 @@ const Sidebar = ({ authContext, isMobileDrawer = false, onNavClick }: SidebarPro
           <span className="font-bold text-lg text-foreground whitespace-nowrap">SIMBA</span>
         </div>
         {!isMobileDrawer && (
-          <Button variant="ghost" size="icon" onClick={toggleCollapse} className="shrink-0 hover:bg-sidebar-accent">
+          <Button variant="ghost" size="icon" onClick={toggleCollapse} aria-label={collapsed ? "Perluas sidebar" : "Ciutkan sidebar"} className="shrink-0 hover:bg-sidebar-accent">
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </Button>
         )}
@@ -203,11 +203,11 @@ const Sidebar = ({ authContext, isMobileDrawer = false, onNavClick }: SidebarPro
       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
         {filteredMenu.map((item) => {
           const isActive = location.pathname === item.path;
-          return (
-            <Link
+          return (              <Link
               key={item.path}
               to={item.path}
               onClick={onNavClick}
+              aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex items-center px-3 py-2.5 rounded-lg transition-all duration-200",
                 isActive

@@ -184,7 +184,7 @@ const Users = () => {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user: User, index: number) => (
-                    <tr key={user.id} className="group">
+                    <TableRow key={user.id} className="group">
                       <TableCell className="font-medium text-muted-foreground">
                         {(page - 1) * limit + index + 1}
                       </TableCell>
@@ -248,7 +248,7 @@ const Users = () => {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="opacity-0 focus-visible:opacity-100 group-hover:opacity-100 transition-opacity"
                               >
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
@@ -263,7 +263,7 @@ const Users = () => {
                           </DropdownMenu>
                         ) : null}
                       </TableCell>
-                    </tr>
+                    </TableRow>
                   ))
                 )}
               </TableBody>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { Fragment, useState, useMemo } from "react";
 import {
   useGetInvoiceItemsFlat,
   useGetItemsStocksSummary,
@@ -33,9 +33,8 @@ import {
 import {
   Search,
   Package,
-  TrendingUp,
-  ShoppingCart,
-  DollarSign,
+  ChevronRight,
+  ChevronDown,
   Download,
 } from "lucide-react";
 import type {
@@ -219,49 +218,58 @@ const StockOpnameTab = () => {
   const [limit, setLimit] = useState(10);
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [exporting, setExporting] = useState(false);
-
-  const [rekapSearch, setRekapSearch] = useState("");
-  const [rekapPage, setRekapPage] = useState(1);
-  const [rekapLimit, setRekapLimit] = useState(10);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   const { from: dateFrom, to: dateTo } = getDateRange(timeRange);
 
-  const { data: invoiceItemsData, isLoading } = useGetInvoiceItemsFlat(
-    searchQuery,
-    page,
-    limit,
-    "OUT",
-    dateFrom,
-    dateTo,
-  );
-
   const { data: summaryData, isLoading: summaryLoading } =
-    useGetInvoiceItemsFlat("", 1, 100, "OUT", dateFrom, dateTo);
+    useGetItemsStocksSummary(searchQuery, page, limit, dateFrom, dateTo);
 
-  const { data: rekapData, isLoading: rekapLoading } = useGetItemsStocksSummary(
-    rekapSearch,
-    rekapPage,
-    rekapLimit,
-    dateFrom,
-    dateTo,
-  );
+  const { data: allInvoiceData } =
+    useGetInvoiceItemsFlat("", 1, 10000, "OUT", dateFrom, dateTo);
+
   const { data: dapurs } = useGetDapurs();
 
-  const items = invoiceItemsData?.data ?? [];
+  const allInvoices = allInvoiceData?.data ?? [];
   const currentDapurName =
     dapurs?.find((dapur) => dapur.id === auth.user?.currentDapurId)?.name ??
     "SPPG";
 
-  const summary = useMemo(() => {
-    const all = summaryData?.data ?? [];
-    const totalBuy = all.reduce((acc, s) => acc + s.totalBuyPrice, 0);
-    const totalSell = all.reduce((acc, s) => acc + s.totalSellPrice, 0);
+  // Group invoices by item name for expandable rows
+  const invoicesByItem = useMemo(() => {
+    const map = new Map<string, InvoiceItemFlat[]>();
+    for (const inv of allInvoices) {
+      const key = inv.itemName;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(inv);
+    }
+    return map;
+  }, [allInvoices]);
+
+  const items = summaryData?.data ?? [];
+
+  const totals = useMemo(() => {
+    let totalBuy = 0;
+    let totalSell = 0;
+    for (const item of items) {
+      totalBuy += (item.buyPrice ?? 0) * (item.currentStock ?? 0);
+      totalSell += (item.sellPrice ?? 0) * (item.currentStock ?? 0);
+    }
     return { totalBuy, totalSell, diff: totalSell - totalBuy };
-  }, [summaryData]);
+  }, [items]);
 
   const handleTimeRangeChange = (val: TimeRange) => {
     setTimeRange(val);
     setPage(1);
+  };
+
+  const toggleExpand = (itemId: string) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
   };
 
   const handleExport = async () => {
@@ -295,72 +303,35 @@ const StockOpnameTab = () => {
 
   return (
     <TabsContent value="stok-opname" className="space-y-4">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Harga Beli
-            </CardTitle>
-            <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {summaryLoading ? (
-              <Skeleton className="h-7 w-32" />
-            ) : (
-              <p className="text-2xl font-bold">
-                {formatCurrency(summary.totalBuy)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Harga Jual
-            </CardTitle>
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {summaryLoading ? (
-              <Skeleton className="h-7 w-32" />
-            ) : (
-              <p className="text-2xl font-bold">
-                {formatCurrency(summary.totalSell)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Selisih Harga
-            </CardTitle>
-            <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {summaryLoading ? (
-              <Skeleton className="h-7 w-32" />
-            ) : (
-              <p
-                className={`text-2xl font-bold ${summary.diff >= 0 ? "text-green-600" : "text-red-600"}`}
-              >
-                {summary.diff > 0 ? "+" : ""}
-                {formatCurrency(summary.diff)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+      {/* Summary bar */}
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border bg-card p-4">
+        <div>
+          <p className="text-xs text-muted-foreground">Total Nilai Beli</p>
+          <p className="text-sm font-bold tabular-nums">{formatCurrency(totals.totalBuy)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Total Nilai Jual</p>
+          <p className="text-sm font-bold tabular-nums">{formatCurrency(totals.totalSell)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground">Selisih</p>
+          <p className={`text-sm font-bold tabular-nums ${totals.diff >= 0 ? "text-success" : "text-destructive"}`}>
+            {totals.diff > 0 ? "+" : ""}{formatCurrency(totals.diff)}
+          </p>
+        </div>
+        <div className="ml-auto">
+          <p className="text-xs text-muted-foreground">Item</p>
+          <p className="text-sm font-bold tabular-nums">{summaryData?.paging?.totalItem ?? 0}</p>
+        </div>
       </div>
 
-      {/* Table */}
+      {/* Single table */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg">Stock Opname</CardTitle>
+              <CardTitle className="text-lg">Stok Opname</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">Klik baris untuk melihat detail invoice per bahan</p>
               <div className="mt-2 flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -414,23 +385,25 @@ const StockOpnameTab = () => {
             <Table className="relative w-full">
               <TableHeader className="sticky top-0 bg-background z-10 border-b">
                 <TableRow>
+                  <TableHead className="w-[40px]" />
                   <TableHead className="w-[50px]">No</TableHead>
-                  <TableHead>No Invoice</TableHead>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Nama Barang</TableHead>
-                  <TableHead>Qty</TableHead>
-                  <TableHead>Satuan</TableHead>
+                  <TableHead>Kode</TableHead>
+                  <TableHead>Nama Bahan</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Stok Awal</TableHead>
+                  <TableHead>Masuk</TableHead>
+                  <TableHead>Keluar</TableHead>
+                  <TableHead>Stok Saat Ini</TableHead>
                   <TableHead>Harga Beli</TableHead>
                   <TableHead>Harga Jual</TableHead>
-                  <TableHead>Total Harga Beli</TableHead>
-                  <TableHead>Total Harga Jual</TableHead>
+                  <TableHead>Selisih</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {summaryLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      {Array.from({ length: 10 }).map((_, j) => (
+                      {Array.from({ length: 12 }).map((_, j) => (
                         <TableCell key={j}>
                           <Skeleton className="h-4 w-full rounded-md" />
                         </TableCell>
@@ -439,7 +412,7 @@ const StockOpnameTab = () => {
                   ))
                 ) : items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="p-0">
+                    <TableCell colSpan={12} className="p-0">
                       <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
                         <Package className="h-12 w-12 mb-3 opacity-50" />
                         <p className="text-sm font-medium">
@@ -451,48 +424,156 @@ const StockOpnameTab = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  items.map((item, index) => (
-                    <TableRow key={`${item.invoiceNumber}-${index}`}>
-                      <TableCell className="font-medium text-muted-foreground">
-                        {(page - 1) * limit + index + 1}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm font-medium">
-                        {item.invoiceNumber}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {item.date || "-"}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.itemName}
-                      </TableCell>
-                      <TableCell>{item.amount}</TableCell>
-                      <TableCell>{item.measureUnit}</TableCell>
-                      <TableCell>{formatCurrency(item.buyPrice)}</TableCell>
-                      <TableCell>{formatCurrency(item.sellPrice)}</TableCell>
-                      <TableCell className="text-blue-600 font-medium">
-                        {formatCurrency(item.totalBuyPrice)}
-                      </TableCell>
-                      <TableCell className="text-green-600 font-medium">
-                        {formatCurrency(item.totalSellPrice)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  items.map((item: ItemStocksSummary, index: number) => {
+                    const itemId = item.itemId ?? `item-${index}`;
+                    const isExpanded = expandedItems.has(itemId);
+                    const itemInvoices = invoicesByItem.get(item.name ?? "") ?? [];
+                    const selisih = (item.sellPrice ?? 0) - (item.buyPrice ?? 0);                      return (
+                      <Fragment key={itemId}>
+                        {/* Summary row */}
+                        <TableRow
+                          key={`row-${itemId}`}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => toggleExpand(itemId)}
+                        >
+                          <TableCell className="w-[40px] px-2">
+                            {itemInvoices.length > 0 ? (
+                              isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                              )
+                            ) : null}
+                          </TableCell>
+                          <TableCell className="font-medium text-muted-foreground">
+                            {(page - 1) * limit + index + 1}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm font-medium">
+                            {item.itemId}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
+                          <TableCell>
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                              {item.category}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {item.initialStock} {item.measureUnit}
+                          </TableCell>
+                          <TableCell className="text-success font-medium">
+                            +{item.totalIn ?? 0}
+                          </TableCell>
+                          <TableCell className="text-destructive font-medium">
+                            -{item.totalOut ?? 0}
+                          </TableCell>
+                          <TableCell
+                            className={`font-medium ${(item.currentStock ?? 0) <= 0 ? "text-destructive" : ""}`}
+                          >
+                            {item.currentStock} {item.measureUnit}
+                          </TableCell>
+                          <TableCell>{formatCurrency(item.buyPrice ?? 0)}</TableCell>
+                          <TableCell>{formatCurrency(item.sellPrice ?? 0)}</TableCell>
+                          <TableCell
+                            className={`font-medium ${selisih > 0 ? "text-success" : selisih < 0 ? "text-destructive" : ""}`}
+                          >
+                            {selisih > 0 ? "+" : ""}
+                            {formatCurrency(selisih)}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Expanded invoice details */}
+                        {isExpanded && itemInvoices.length > 0 && (
+                          <TableRow key={`detail-header-${itemId}`} className="bg-muted/30">
+                            <TableCell colSpan={12} className="py-0">
+                              <div className="pl-10 pr-4 py-2">
+                                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                                  Detail Invoice ({itemInvoices.length} transaksi)
+                                </p>
+                                <div className="space-y-1">
+                                  {itemInvoices.map((inv, invIdx) => (
+                                    <div
+                                      key={`${inv.invoiceNumber}-${invIdx}`}
+                                      className="flex items-center gap-4 text-xs py-1.5 border-b border-border/50 last:border-0"
+                                    >
+                                      <span className="font-mono font-medium w-28 shrink-0">
+                                        {inv.invoiceNumber}
+                                      </span>
+                                      <span className="text-muted-foreground w-20 shrink-0">
+                                        {inv.date || "-"}
+                                      </span>
+                                      <span className="w-16 text-right shrink-0 tabular-nums">
+                                        {inv.amount} {inv.measureUnit}
+                                      </span>
+                                      <span className="text-muted-foreground w-24 text-right shrink-0 tabular-nums">
+                                        @{formatCurrency(inv.buyPrice)}
+                                      </span>
+                                      <span className="text-muted-foreground w-24 text-right shrink-0 tabular-nums">
+                                        @{formatCurrency(inv.sellPrice)}
+                                      </span>
+                                      <span className="font-medium text-primary w-28 text-right shrink-0 tabular-nums">
+                                        {formatCurrency(inv.totalBuyPrice)}
+                                      </span>
+                                      <span className="font-medium text-success w-28 text-right shrink-0 tabular-nums">
+                                        {formatCurrency(inv.totalSellPrice)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        {isExpanded && itemInvoices.length === 0 && (
+                          <TableRow key={`detail-empty-${itemId}`} className="bg-muted/30">
+                            <TableCell colSpan={12} className="py-2 pl-14">
+                              <p className="text-xs text-muted-foreground">Tidak ada invoice untuk bahan ini</p>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
+                    );
+                  })
                 )}
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={8} className="font-bold text-right">
-                    Total Halaman Ini
+                  <TableCell colSpan={9} className="font-bold text-right">
+                    Total Nilai Halaman Ini
                   </TableCell>
-                  <TableCell className="font-bold text-blue-600">
+                  <TableCell className="font-bold">
                     {formatCurrency(
-                      items.reduce((acc, s) => acc + s.totalBuyPrice, 0),
+                      items.reduce(
+                        (acc, s) => acc + (s.buyPrice ?? 0) * (s.currentStock ?? 0),
+                        0,
+                      ),
                     )}
                   </TableCell>
-                  <TableCell className="font-bold text-green-600">
+                  <TableCell className="font-bold">
                     {formatCurrency(
-                      items.reduce((acc, s) => acc + s.totalSellPrice, 0),
+                      items.reduce(
+                        (acc, s) => acc + (s.sellPrice ?? 0) * (s.currentStock ?? 0),
+                        0,
+                      ),
                     )}
+                  </TableCell>
+                  <TableCell className="font-bold">
+                    {(() => {
+                      const pageDiff = items.reduce(
+                        (acc, s) =>
+                          acc +
+                          ((s.sellPrice ?? 0) - (s.buyPrice ?? 0)) *
+                            (s.currentStock ?? 0),
+                        0,
+                      );
+                      return (
+                        <span className={pageDiff >= 0 ? "text-success" : "text-destructive"}>
+                          {pageDiff > 0 ? "+" : ""}
+                          {formatCurrency(pageDiff)}
+                        </span>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               </TableFooter>
@@ -502,205 +583,12 @@ const StockOpnameTab = () => {
             <DataTablePagination
               currentPage={page}
               pageSize={limit}
-              totalPages={invoiceItemsData?.paging?.totalPage || 1}
-              totalItems={invoiceItemsData?.paging?.totalItem || 0}
+              totalPages={summaryData?.paging?.totalPage || 1}
+              totalItems={summaryData?.paging?.totalItem || 0}
               onPageChange={setPage}
               onPageSizeChange={(n) => {
                 setLimit(n);
                 setPage(1);
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-      {/* Rekap Inventaris */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2 flex-wrap">
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg">Rekap Stok</CardTitle>
-              <div className="mt-2 text-sm text-muted-foreground">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari bahan..."
-                    value={rekapSearch}
-                    onChange={(e) => {
-                      setRekapSearch(e.target.value);
-                      setRekapPage(1);
-                    }}
-                    className="pl-9 w-48"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0 overflow-x-auto">
-          <div className="relative border-y text-nowrap h-full w-full">
-            <Table className="relative w-full">
-              <TableHeader className="sticky top-0 bg-background z-10 border-b">
-                <TableRow>
-                  <TableHead className="w-[50px]">No</TableHead>
-                  <TableHead>Kode</TableHead>
-                  <TableHead>Nama Bahan</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Stok Awal</TableHead>
-                  <TableHead>Total Masuk</TableHead>
-                  <TableHead>Total Keluar</TableHead>
-                  <TableHead>Stok Saat Ini</TableHead>
-                  <TableHead>Nilai Harga Beli</TableHead>
-                  <TableHead>Nilai Harga Jual</TableHead>
-                  <TableHead>Selisih Harga</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rekapLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 11 }).map((_, j) => (
-                        <TableCell key={j}>
-                          <Skeleton className="h-4 w-full rounded-md" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : !rekapData?.data?.length ? (
-                  <TableRow>
-                    <TableCell colSpan={11} className="p-0">
-                      <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 px-4">
-                        <Package className="h-12 w-12 mb-3 opacity-50" />
-                        <p className="text-sm font-medium">
-                          {rekapSearch
-                            ? "Tidak ada hasil pencarian"
-                            : "Data masih kosong"}
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rekapData.data.map(
-                    (item: ItemStocksSummary, index: number) => {
-                      const selisih =
-                        (item.sellPrice ?? 0) - (item.buyPrice ?? 0);
-                      return (
-                        <TableRow key={`${item.itemId}-${index}`}>
-                          <TableCell className="font-medium text-muted-foreground">
-                            {(rekapPage - 1) * rekapLimit + index + 1}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm font-medium">
-                            {item.itemId}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {item.name}
-                          </TableCell>
-                          <TableCell>
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                              {item.category}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {item.initialStock} {item.measureUnit}
-                          </TableCell>
-                          <TableCell className="text-green-600 font-medium">
-                            +{item.totalIn ?? 0}
-                          </TableCell>
-                          <TableCell className="text-red-500 font-medium">
-                            -{item.totalOut ?? 0}
-                          </TableCell>
-                          <TableCell
-                            className={`font-medium ${(item.currentStock ?? 0) <= 0 ? "text-red-500" : ""}`}
-                          >
-                            {item.currentStock} {item.measureUnit}
-                          </TableCell>
-                          <TableCell>
-                            {formatCurrency(item.buyPrice ?? 0)}
-                          </TableCell>
-                          <TableCell>
-                            {formatCurrency(item.sellPrice ?? 0)}
-                          </TableCell>
-                          <TableCell
-                            className={`font-medium ${selisih > 0 ? "text-green-600" : selisih < 0 ? "text-red-500" : ""}`}
-                          >
-                            {selisih > 0 ? "+" : ""}
-                            {formatCurrency(selisih)}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    },
-                  )
-                )}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TableCell colSpan={4} className="font-bold text-right">
-                    Total Harga Halaman Ini
-                  </TableCell>
-                  <TableCell className="font-bold">
-                    {rekapData?.data?.reduce(
-                      (acc, s) => acc + (s.initialStock ?? 0),
-                      0,
-                    ) ?? 0}
-                  </TableCell>
-                  <TableCell className="font-bold text-green-600">
-                    +
-                    {rekapData?.data?.reduce(
-                      (acc, s) => acc + (s.totalIn ?? 0),
-                      0,
-                    ) ?? 0}
-                  </TableCell>
-                  <TableCell className="font-bold text-red-500">
-                    -
-                    {rekapData?.data?.reduce(
-                      (acc, s) => acc + (s.totalOut ?? 0),
-                      0,
-                    ) ?? 0}
-                  </TableCell>
-                  <TableCell className="font-bold">
-                    {rekapData?.data?.reduce(
-                      (acc, s) => acc + (s.currentStock ?? 0),
-                      0,
-                    ) ?? 0}
-                  </TableCell>
-                  <TableCell className="font-bold">
-                    {formatCurrency(
-                      rekapData?.data?.reduce(
-                        (acc, s) => acc + (s.buyPrice ?? 0),
-                        0,
-                      ) ?? 0,
-                    )}
-                  </TableCell>
-                  <TableCell className="font-bold">
-                    {formatCurrency(
-                      rekapData?.data?.reduce(
-                        (acc, s) => acc + (s.sellPrice ?? 0),
-                        0,
-                      ) ?? 0,
-                    )}
-                  </TableCell>
-                  <TableCell className="font-bold text-green-600">
-                    {formatCurrency(
-                      rekapData?.data?.reduce(
-                        (acc, s) =>
-                          acc + ((s.sellPrice ?? 0) - (s.buyPrice ?? 0)),
-                        0,
-                      ) ?? 0,
-                    )}
-                  </TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </div>
-          <div className="px-2 pb-2 pt-1">
-            <DataTablePagination
-              currentPage={rekapPage}
-              pageSize={rekapLimit}
-              totalPages={rekapData?.paging?.totalPage || 1}
-              totalItems={rekapData?.paging?.totalItem || 0}
-              onPageChange={setRekapPage}
-              onPageSizeChange={(n) => {
-                setRekapLimit(n);
-                setRekapPage(1);
               }}
             />
           </div>

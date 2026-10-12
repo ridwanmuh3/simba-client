@@ -95,7 +95,7 @@ const DeleteUserDialog = ({ userId, username }: DeleteUserDialogProps) => {
           />
         </div>
         {errorMsg && (
-          <p className="text-sm text-red-500 text-center">{errorMsg}</p>
+          <p className="text-sm text-destructive text-center">{errorMsg}</p>
         )}
         <DialogFooter>
           <Button

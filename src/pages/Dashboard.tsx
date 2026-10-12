@@ -11,16 +11,21 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const DashboardSkeleton = () => (
   <>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
-      {Array.from({ length: 6 }).map((_, i) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      {[0, 1].map((i) => (
         <Card key={i}>
-          <CardContent className="pt-6">
-            <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-8 w-20" />
-              </div>
-              <Skeleton className="w-12 h-12 rounded-xl" />
+          <CardContent className="p-4">
+            <Skeleton className="h-4 w-24 mb-3" />
+            <div className="grid grid-cols-3 gap-3">
+              {[0, 1, 2].map((j) => (
+                <div key={j} className="flex items-center gap-3">
+                  <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-5 w-16" />
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -110,13 +115,13 @@ const Dashboard = () => {
       color: "primary",
     },
     {
-      title: "Stok Bahan Masuk",
+      title: "Masuk",
       value: stockIn.toLocaleString("id-ID", { maximumFractionDigits: 4 }),
       icon: PackagePlus,
       color: "success",
     },
     {
-      title: "Stok Bahan Keluar",
+      title: "Keluar",
       value: stockOut.toLocaleString("id-ID", { maximumFractionDigits: 4 }),
       icon: PackageMinus,
       color: "destructive",
@@ -125,19 +130,19 @@ const Dashboard = () => {
 
   const budgetStats: BudgetStats[] = [
     {
-      title: "Total Anggaran (1 Tahun)",
+      title: "Total Anggaran",
       value: formatCurrency(totalBudget),
       icon: Wallet,
       color: "primary",
     },
     {
-      title: "Anggaran Masuk (1 Tahun)",
+      title: "Masuk",
       value: formatCurrency(budgetIn),
       icon: Wallet,
       color: "success",
     },
     {
-      title: "Anggaran Keluar (1 Tahun)",
+      title: "Keluar",
       value: formatCurrency(budgetOut),
       icon: Wallet,
       color: "destructive",

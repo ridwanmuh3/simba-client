@@ -50,44 +50,29 @@ const SummarySection = memo(function SummarySection({
   summary,
 }: SummarySectionProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Pemasukan</p>
-          <p className="text-lg font-bold text-green-600">
-            {formatCurrency(summary.totalIn)}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Pengeluaran</p>
-          <p className="text-lg font-bold text-red-600">
-            {formatCurrency(summary.totalOut)}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Laba / Rugi</p>
-          <p
-            className={`text-lg font-bold ${
-              summary.profit >= 0 ? "text-chart-1" : "text-chart-2"
-            }`}
-          >
-            {formatCurrency(summary.profit)}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Transaksi</p>
-          <p className="text-lg font-bold">{summary.count}</p>
-        </CardContent>
-      </Card>
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border bg-card p-4">
+      <div>
+        <p className="text-xs text-muted-foreground">Pemasukan</p>
+        <p className="text-sm font-bold tabular-nums text-success">
+          {formatCurrency(summary.totalIn)}
+        </p>
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">Pengeluaran</p>
+        <p className="text-sm font-bold tabular-nums text-destructive">
+          {formatCurrency(summary.totalOut)}
+        </p>
+      </div>
+      <div>
+        <p className="text-xs text-muted-foreground">Laba / Rugi</p>
+        <p className={`text-sm font-bold tabular-nums ${summary.profit >= 0 ? "text-success" : "text-destructive"}`}>
+          {formatCurrency(summary.profit)}
+        </p>
+      </div>
+      <div className="ml-auto">
+        <p className="text-xs text-muted-foreground">Transaksi</p>
+        <p className="text-sm font-bold tabular-nums">{summary.count}</p>
+      </div>
     </div>
   );
 });

@@ -11,8 +11,45 @@ export const axiosInstance = axios.create({
   },
 });
 
+const CSRF_COOKIE_NAME = "csrf_";
+const CSRF_HEADER_NAME = "X-Csrf-Token";
+const UNSAFE_METHODS = new Set(["post", "put", "patch", "delete"]);
+
+let csrfTokenPromise: Promise<string> | null = null;
+
+const isUnsafeMethod = (method?: string) =>
+  UNSAFE_METHODS.has((method ?? "get").toLowerCase());
+
+const readCookie = (name: string) => {
+  if (typeof document === "undefined") return "";
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+};
+
+const fetchCsrfToken = async () => {
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = axios
+      .get("/auth/csrf", {
+        baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+        withCredentials: true,
+      })
+      .then(() => readCookie(CSRF_COOKIE_NAME))
+      .finally(() => {
+        csrfTokenPromise = null;
+      });
+  }
+  return csrfTokenPromise;
+};
+
+const ensureCsrfToken = async () => {
+  const existing = readCookie(CSRF_COOKIE_NAME);
+  if (existing) return existing;
+  return fetchCsrfToken();
+};
+
 axiosInstance.interceptors.request.use(
-  (config) => {
+  async (config) => {
     if (
       config.data &&
       isPlainObject(config.data) &&
@@ -25,13 +62,23 @@ axiosInstance.interceptors.request.use(
       config.params = snakecaseKeys(config.params, { deep: true });
     }
 
+    if (isUnsafeMethod(config.method) && config.url !== "/auth/csrf") {
+      const token = await ensureCsrfToken();
+      if (token) {
+        config.headers.set(CSRF_HEADER_NAME, token);
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error),
 );
 
 let isRefreshing = false;
-type RetryableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+  _csrfRetry?: boolean;
+};
 
 interface FailedQueuePromise {
   resolve: () => void;
@@ -61,6 +108,21 @@ axiosInstance.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
+
+    if (
+      error.response?.status === 403 &&
+      originalRequest &&
+      isUnsafeMethod(originalRequest.method) &&
+      !originalRequest._csrfRetry &&
+      originalRequest.url !== "/auth/csrf"
+    ) {
+      originalRequest._csrfRetry = true;
+      const token = await fetchCsrfToken();
+      if (token) {
+        originalRequest.headers.set(CSRF_HEADER_NAME, token);
+      }
+      return axiosInstance(originalRequest);
+    }
 
     if (
       error.response?.status === 401 &&

@@ -18,10 +18,10 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
+        <div role="alert" className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
           <p className="text-lg font-semibold">Terjadi kesalahan tak terduga.</p>
           <button
-            className="text-sm underline text-muted-foreground"
+            className="text-sm underline text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
             onClick={() => window.location.reload()}
           >
             Muat ulang halaman

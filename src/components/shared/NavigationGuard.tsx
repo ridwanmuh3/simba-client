@@ -1,4 +1,4 @@
-import { useBlocker } from "react-router";
+import { useEffect } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,8 +10,33 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+/**
+ * Navigation guard for forms with unsaved changes.
+ *
+ * react-router's `useBlocker` only works inside a *data router*
+ * (createBrowserRouter / RouterProvider). This app is mounted on a component
+ * router (`<BrowserRouter>` + `<Routes>`), where `useBlocker` throws
+ * "useBlocker must be used within a data router" and crashes the items page
+ * (rendered inside the items tabs). We therefore fall back to the
+ * always-available `beforeunload` event, which guards tab close / refresh, and
+ * expose an inert blocker object so the existing NavigationGuardDialog call
+ * sites keep compiling.
+ *
+ * ponytail: when the app migrates to a data router, restore
+ * `useBlocker(isDirty)` here to re-enable the in-app "Tinggalkan halaman?" dialog.
+ */
 export function useNavigationGuard(isDirty: boolean) {
-  return useBlocker(isDirty);
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  return { state: "idle", reset: () => {}, proceed: () => {} };
 }
 
 type Blocker = ReturnType<typeof useNavigationGuard>;

@@ -220,7 +220,7 @@ const SelectDapur = () => {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="dapur-name">Nama Dapur <span className="text-red-500">*</span></Label>
+              <Label htmlFor="dapur-name">Nama Dapur <span className="text-destructive">*</span></Label>
               <Input
                 id="dapur-name"
                 value={createName}

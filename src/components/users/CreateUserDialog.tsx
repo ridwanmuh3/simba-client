@@ -115,7 +115,7 @@ const CreateUserDialog = () => {
               autoComplete="false"
             />
             {form.formState.errors.fullname && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive">
                 {form.formState.errors.fullname.message}
               </p>
             )}
@@ -130,7 +130,7 @@ const CreateUserDialog = () => {
               autoComplete="false"
             />
             {form.formState.errors.username && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive">
                 {form.formState.errors.username.message}
               </p>
             )}
@@ -170,6 +170,8 @@ const CreateUserDialog = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                aria-pressed={showPassword}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showPassword ? (
@@ -180,7 +182,7 @@ const CreateUserDialog = () => {
               </button>
             </div>
             {form.formState.errors.password && (
-              <p className="text-xs text-red-500">
+              <p className="text-xs text-destructive">
                 {form.formState.errors.password.message}
               </p>
             )}
@@ -203,7 +205,7 @@ const CreateUserDialog = () => {
           </Button>
         </DialogFooter>
         {errorMsg && (
-          <p className="text-xs text-red-500 text-center">{errorMsg}</p>
+          <p className="text-xs text-destructive text-center">{errorMsg}</p>
         )}
       </DialogContent>
     </Dialog>

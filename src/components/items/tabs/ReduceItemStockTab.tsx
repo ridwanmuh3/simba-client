@@ -51,6 +51,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import Spinner from "@/components/shared/Spinner";
 import RequiredInputIdentifier from "@/components/shared/RequiredInputIdentifier";
 import InvoiceDialog from "../InvoiceDialog";
+import { useNavigationGuard, NavigationGuardDialog } from "@/components/shared/NavigationGuard";
 
 const ReduceItemStockTab = () => {
   const form = useForm<UpdateItemStockFormInputs>({
@@ -245,6 +246,8 @@ const ReduceItemStockTab = () => {
     setErrMsg("");
   };
 
+  const blocker = useNavigationGuard(form.formState.isDirty);
+
   return (
     <TabsContent value="bahan-keluar" className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -376,7 +379,7 @@ const ReduceItemStockTab = () => {
                       disabled={updateStockItem.isPending}
                     >
                       {updateStockItem.isPending ? (
-                        <Spinner color="text-background" />
+                        <Spinner color="text-background" inline />
                       ) : (
                         <>
                           <Save className="w-4 h-4 mr-0.5" />
@@ -392,7 +395,7 @@ const ReduceItemStockTab = () => {
                     disabled={updateStockItem.isPending}
                   >
                     {updateStockItem.isPending ? (
-                      <Spinner color="text-background" />
+                      <Spinner color="text-background" inline />
                     ) : (
                       <>
                         <Save className="w-4 h-4 mr-0.5" />
@@ -406,6 +409,7 @@ const ReduceItemStockTab = () => {
                 <p className="text-sm text-destructive text-center">{errMsg}</p>
               )}
             </form>
+            <NavigationGuardDialog blocker={blocker} />
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">
@@ -577,7 +581,7 @@ const ReduceItemStockTab = () => {
                           {t.previousStock} {t.item?.measureUnit}
                         </TableCell>
                         <TableCell>
-                          <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-600 ring-1 ring-inset ring-red-500/20">
+                          <span className="inline-flex items-center rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive ring-1 ring-inset ring-destructive/20">
                             -{t.amount}
                           </span>
                         </TableCell>
@@ -601,7 +605,7 @@ const ReduceItemStockTab = () => {
                     </TableCell>
                     <TableCell />
                     <TableCell className="font-bold">
-                      <span className="inline-flex items-center rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-bold text-red-600 ring-1 ring-inset ring-red-500/20">
+                      <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-bold text-destructive ring-1 ring-inset ring-destructive/20">
                         -
                         {stocksData?.data?.reduce(
                           (acc, curr) => acc + curr.amount,

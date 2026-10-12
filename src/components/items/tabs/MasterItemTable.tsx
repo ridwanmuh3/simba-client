@@ -123,7 +123,7 @@ const MasterItemTable = ({ selectedItemId, onSelectItem }: MasterItemTableProps)
         <div className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-lg flex items-center gap-2">
             Daftar Bahan
-            {isFetching && !isItemsLoading && <Spinner color="text-muted-foreground" />}
+            {isFetching && !isItemsLoading && <Spinner color="text-muted-foreground" inline size="h-5 w-5" />}
           </CardTitle>
           <div className="flex gap-2 shrink-0">
             <DropdownMenu>
