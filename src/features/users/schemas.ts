@@ -1,5 +1,11 @@
 import z from "zod";
 
+const strongPasswordMessage =
+  "Password minimal 8 karakter, maksimal 30 karakter, wajib memiliki 1 huruf besar, 1 angka, dan 1 simbol";
+
+const strongPasswordRegex =
+  /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])[\x20-\x7E]{8,30}$/;
+
 export const createUserSchema = z.object({
   username: z
     .string()
@@ -22,12 +28,7 @@ export const createUserSchema = z.object({
   }),
   password: z
     .string()
-    .min(4, "Password minimal 4 karakter")
-    .max(30, "Password maksimal 30 karakter")
-    .refine(
-      (val) => /^[\x20-\x7E]+$/.test(val),
-      "Password hanya boleh karakter ASCII",
-    ),
+    .refine((val) => strongPasswordRegex.test(val), strongPasswordMessage),
 });
 
 export const editUserSchema = z.object({
@@ -43,12 +44,8 @@ export const editUserSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) =>
-        !val ||
-        (val.length >= 4 &&
-          val.length <= 30 &&
-          /^[\x20-\x7E]+$/.test(val)),
-      "Password minimal 4 karakter (atau kosongkan jika tidak ingin mengubah)",
+      (val) => !val || strongPasswordRegex.test(val),
+      `${strongPasswordMessage} (atau kosongkan jika tidak ingin mengubah)`,
     ),
 });
 

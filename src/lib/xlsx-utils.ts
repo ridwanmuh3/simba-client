@@ -284,10 +284,26 @@ const buildZip = (files: { path: string; content: string }[]) => {
   });
 };
 
+// Excel rejects workbooks with duplicate sheet names (compared case-insensitively).
+const uniqueSheetName = (name: string, used: Set<string>) => {
+  let candidate = name;
+  let suffix = 2;
+
+  while (used.has(candidate.toLowerCase())) {
+    const marker = ` (${suffix})`;
+    candidate = `${name.slice(0, 31 - marker.length)}${marker}`;
+    suffix += 1;
+  }
+
+  used.add(candidate.toLowerCase());
+  return candidate;
+};
+
 export const createXlsxBlob = (sheets: XlsxSheet[]) => {
+  const used = new Set<string>();
   const safeSheets = sheets.map((sheet) => ({
     ...sheet,
-    name: sanitizeSheetName(sheet.name),
+    name: uniqueSheetName(sanitizeSheetName(sheet.name), used),
   }));
 
   return buildZip([

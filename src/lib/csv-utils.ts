@@ -105,7 +105,55 @@ export const exportFinanceToCSV = (
   }, 1000);
 };
 
-export const parseCSV = (csvText: string): Item[] => {
+const parseNumber = (value: string): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+// RFC 4180 style field parser: commas inside quotes are literal, `""` inside a
+// quoted field is one literal quote, and a quote that is not at a field
+// boundary is kept as-is.
+const parseCSVLine = (line: string): string[] => {
+  const values: string[] = [];
+  let current = "";
+  let inQuotes = false;
+  let atFieldStart = true;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += char;
+      }
+      continue;
+    }
+
+    if (char === '"' && atFieldStart) {
+      inQuotes = true;
+      atFieldStart = false;
+    } else if (char === ",") {
+      values.push(current.trim());
+      current = "";
+      atFieldStart = true;
+    } else {
+      current += char;
+      if (char.trim() !== "") atFieldStart = false;
+    }
+  }
+
+  values.push(current.trim());
+  return values;
+};
+
+const toDataLines = (csvText: string): string[] => {
   const lines = csvText
     .split(/\r?\n/)
     .filter((line) => line.trim())
@@ -120,24 +168,12 @@ export const parseCSV = (csvText: string): Item[] => {
     );
   }
 
-  const dataLines = lines.slice(1);
+  return lines.slice(1);
+};
 
-  return dataLines.map((line, index) => {
-    const values: string[] = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (const char of line) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === "," && !inQuotes) {
-        values.push(current.trim());
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
+export const parseCSV = (csvText: string): Item[] => {
+  return toDataLines(csvText).map((line, index) => {
+    const values = parseCSVLine(line);
 
     if (values.length < 5) {
       throw new Error(`Baris ${index + 2} tidak memiliki kolom yang cukup`);
@@ -147,58 +183,29 @@ export const parseCSV = (csvText: string): Item[] => {
       id: values[0],
       name: values[1],
       category: values[2],
-      stock: parseFloat(values[3]) || 0,
+      stock: parseNumber(values[3]),
       measureUnit: values[4],
-      unitPrice: parseFloat(values[5]) || 0,
+      unitPrice: parseNumber(values[5]),
     };
   });
 };
 
 export const parseFinanceCSV = (csvText: string): FinanceData[] => {
-  const lines = csvText
-    .split(/\r?\n/)
-    .filter((line) => line.trim())
-    .filter((line, index) => {
-      if (index !== 0) return true;
-      return !line.trim().toLowerCase().startsWith("sep=");
-    });
-
-  if (lines.length < 2) {
-    throw new Error(
-      "File CSV harus memiliki header dan minimal satu baris data",
-    );
-  }
-
-  const dataLines = lines.slice(1);
-
-  return dataLines.map((line, index) => {
-    const values: string[] = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (const char of line) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === "," && !inQuotes) {
-        values.push(current.trim());
-        current = "";
-      } else {
-        current += char;
-      }
-    }
-
-    values.push(current.trim());
+  return toDataLines(csvText).map((line, index) => {
+    const values = parseCSVLine(line);
 
     if (values.length < 8) {
       throw new Error(`Baris ${index + 2} tidak memiliki kolom yang cukup`);
     }
 
+    const rawId = Number(values[0]);
+
     return {
-      id: values[0] ? Number(values[0]) : undefined,
-      type: values[1] || "",
+      id: values[0] && Number.isFinite(rawId) ? rawId : undefined,
+      type: (values[1] || "") as FinanceData["type"],
       category: values[2] || "",
       description: values[3] || "",
-      amount: values[4] ? Number(values[4]) : 0,
+      amount: parseNumber(values[4]),
       proofImage: values[5] || "",
       extraNote: values[6] || "",
       createdAt: values[7] || "",
